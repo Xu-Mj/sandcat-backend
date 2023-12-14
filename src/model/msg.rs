@@ -1,6 +1,4 @@
-use std::fmt::Formatter;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde::de::{Error, Visitor};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum ContentType {
@@ -12,21 +10,6 @@ pub enum ContentType {
     File,
     Emoji,
 }
-
-// 手动实现序列化接口，
-// impl Serialize for ContentType {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-//         match self {
-//             ContentType::Default => serializer.serialize_u8(0),
-//             ContentType::Text => serializer.serialize_u8(1),
-//             ContentType::Image => serializer.serialize_u8(2),
-//             ContentType::Video => serializer.serialize_u8(3),
-//             ContentType::File => serializer.serialize_u8(4),
-//             ContentType::Emoji => serializer.serialize_u8(5),
-//         }
-//     }
-// }
-
 
 #[derive(Clone, Default, Copy, Debug, Serialize, Deserialize)]
 pub enum MessageType {

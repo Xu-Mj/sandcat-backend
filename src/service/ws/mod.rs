@@ -49,8 +49,7 @@ async fn websocket(id: i32, ws: WebSocket, state: Manager) {
 
                     let result = serde_json::from_str(&text);
                     if result.is_err() {
-                        let err = result.err();
-                        // tracing::error!("反序列化错误: {:?}", result.err());
+                        tracing::error!("反序列化错误: {:?}", result.err());
                         continue;
                     }
                     // 数据入库
