@@ -6,16 +6,13 @@ mod routes;
 mod service;
 mod utils;
 
-use crate::errors::internal_error;
 use crate::routes::app_routes;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
 use dotenvy::dotenv;
 use std::env;
-use std::net::SocketAddr;
 use tokio::sync::mpsc;
 use tracing::Level;
-use crate::handlers::users::UserRequest;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -40,16 +37,9 @@ async fn main() {
     let manager = Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
     let pool = Pool::builder(manager).build().unwrap();
     let app_state = AppState { pool, hub };
-    let app = app_routes(app_state.clone()).with_state(app_state);
+    let app = app_routes(app_state);
 
-    // let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    let address = "0.0.0.0:3000".to_string();
-
-    let socket_addr: SocketAddr = address.parse().unwrap();
-    tracing::debug!("listening on {}", address);
-    axum::Server::bind(&socket_addr)
-        .serve(app.into_make_service())
-        .await
-        .map_err(internal_error)
-        .unwrap()
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
 }
