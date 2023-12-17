@@ -2,8 +2,6 @@
 use axum::extract::State;
 use axum::Json;
 use nanoid::nanoid;
-use serde::{Deserialize, Serialize};
-
 use crate::domain::model::user::{User, UserError};
 use crate::infra::repositories::user_repo::{get, insert, NewUserDb};
 use crate::utils::{JsonExtractor, PathExtractor};
