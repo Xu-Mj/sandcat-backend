@@ -1,19 +1,19 @@
-use axum::extract::{Path, State, WebSocketUpgrade};
+use crate::domain::model::manager::Manager;
+use crate::domain::model::msg::Msg;
+use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures::{SinkExt, StreamExt};
-use crate::model::manager::Manager;
-use crate::model::msg::Msg;
 
 pub const HEART_BEAT_INTERVAL: u64 = 10;
-
 
 pub async fn websocket_handler(
     Path(id): Path<i32>,
     ws: WebSocketUpgrade,
-    State(state): State<Manager>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| websocket(id, socket, state))
+    ws.on_upgrade(move |socket| websocket(id, socket, state.hub))
 }
 
 async fn websocket(id: i32, ws: WebSocket, state: Manager) {
