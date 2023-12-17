@@ -1,3 +1,4 @@
+mod config;
 mod domain;
 mod errors;
 mod handlers;
@@ -13,6 +14,7 @@ use dotenvy::dotenv;
 use std::env;
 use tokio::sync::mpsc;
 use tracing::Level;
+use tracing_subscriber::fmt::format;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -30,16 +32,20 @@ async fn main() {
     tokio::spawn(async move {
         cloned_hub.run(rx).await;
     });
-    dotenv().expect("need .env file");
     // create pool
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = config::config().await.db_url();
     // Create a connection pool to the PostgreSQL database
     let manager = Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
     let pool = Pool::builder(manager).build().unwrap();
     let app_state = AppState { pool, hub };
     let app = app_routes(app_state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let addr = format!(
+        "{}:{}",
+        config::config().await.server_host(),
+        config::config().await.server_port()
+    );
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
