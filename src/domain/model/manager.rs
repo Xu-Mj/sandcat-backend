@@ -4,7 +4,7 @@ use axum::extract::ws::Message;
 use futures::SinkExt;
 use tokio::sync::{mpsc, RwLock};
 use tokio::sync::mpsc::error::SendError;
-use crate::model::{ClientSender, Hub, msg::{MessageType, Msg}};
+use crate::domain::model::{ClientSender, Hub, msg::{MessageType, Msg}};
 
 #[derive(Clone)]
 pub struct Manager {
