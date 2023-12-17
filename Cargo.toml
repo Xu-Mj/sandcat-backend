@@ -9,7 +9,8 @@ unused = "allow"
 
 
 [dependencies]
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.6", features = ["ws", "macros"] }
+axum-macros = "0.3"
 futures = "0.3"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1.14"
