@@ -8,11 +8,11 @@ diesel::table! {
         avatar -> Varchar,
         gender -> Varchar,
         #[max_length = 20]
-        phone -> Nullable<VarChar>,
+        phone -> Nullable<Varchar>,
         #[max_length = 64]
-        email -> Nullable<VarChar>,
+        email -> Nullable<Varchar>,
         #[max_length = 1024]
-        address -> Nullable<VarChar>,
+        address -> Nullable<Varchar>,
         birthday -> Nullable<Timestamp>,
         create_time -> Timestamp,
         update_time -> Timestamp,
