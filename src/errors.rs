@@ -11,10 +11,11 @@ type Path = String;
 #[derive(Debug)]
 pub enum AppError {
     // 500
-    InternalServer(String),
+    InternalServer(Msg),
     // 400
     BodyParsing(Msg, Path),
     PathParsing(Msg, Option<Location>),
+    UnAuthorized(Msg, Path),
 }
 
 pub fn internal_error<E: Error>(err: E) -> AppError {
@@ -39,6 +40,10 @@ impl IntoResponse for AppError {
                 }
                 (StatusCode::BAD_REQUEST, msg)
             }
+            AppError::UnAuthorized(msg,path) =>  (
+                StatusCode::UNAUTHORIZED,
+                format!("Bad Request error: {{ message: {}, path: {}}}", msg, path),
+            )
         };
         (status, Json(json!({"message":msg}))).into_response()
     }
