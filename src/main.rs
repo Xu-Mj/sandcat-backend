@@ -10,16 +10,15 @@ mod utils;
 use crate::routes::app_routes;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
-use dotenvy::dotenv;
-use std::env;
+use redis::Client;
 use tokio::sync::mpsc;
 use tracing::Level;
-use tracing_subscriber::fmt::format;
 
 #[derive(Clone)]
 pub struct AppState {
     pool: Pool,
     hub: manager::Manager,
+    redis: Client,
 }
 #[tokio::main]
 async fn main() {
@@ -37,7 +36,8 @@ async fn main() {
     // Create a connection pool to the PostgreSQL database
     let manager = Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
     let pool = Pool::builder(manager).build().unwrap();
-    let app_state = AppState { pool, hub };
+    let redis = redis::Client::open(config::config().await.redis_url()).expect("redis can't open");
+    let app_state = AppState { pool, hub, redis };
     let app = app_routes(app_state);
 
     let addr = format!(
