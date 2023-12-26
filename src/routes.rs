@@ -1,14 +1,21 @@
+use crate::handlers::friends::friend_handlers::{
+    agree, black_list, create, deny, get_apply_list_by_user_id, get_friends_list_by_user_id,
+    get_friends_list_by_user_id2, update_friend_remark,
+};
 use crate::handlers::users::user_handlers::logout;
 use crate::handlers::users::{create_user, get_user_by_id, login};
+use crate::handlers::ws::ws_handlers::get_list;
 use crate::service::ws::ws_service::websocket_handler;
 use crate::AppState;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()
         .nest("/user", user_routes(state.clone()))
+        .nest("/friend", friend_routes(state.clone()))
         .nest("/ws", ws_routes(state.clone()))
+        .nest("/test", test(state.clone()))
 }
 
 fn user_routes(state: AppState) -> Router {
@@ -19,9 +26,23 @@ fn user_routes(state: AppState) -> Router {
         .route("/logout/:uuid", delete(logout))
         .with_state(state)
 }
+fn friend_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/", post(create))
+        .route("/:id", get(get_friends_list_by_user_id2))
+        .route("/:id/apply/:status", get(get_apply_list_by_user_id))
+        .route("/agree", post(agree))
+        .route("/blacklist", put(black_list))
+        .route("/remark", put(update_friend_remark))
+        .route("/:user_id/deny/:friend_id", post(deny))
+        .with_state(state)
+}
 
 fn ws_routes(state: AppState) -> Router {
     Router::new()
-        .route("/:id", get(websocket_handler))
+        .route("/:id/conn/:token/:user_id", get(websocket_handler))
         .with_state(state)
+}
+fn test(state: AppState) -> Router {
+    Router::new().route("/", get(get_list)).with_state(state)
 }

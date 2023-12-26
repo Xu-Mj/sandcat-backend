@@ -1,0 +1,179 @@
+use crate::domain::model::user::User;
+use crate::infra::db::schema::{friends, friendships, users};
+use crate::infra::errors::{adapt_infra_error, InfraError};
+use crate::infra::repositories::friendship_repo::FriendShipDb;
+use deadpool_diesel::postgres::Pool;
+use diesel::{
+    Associations, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable,
+    RunQueryDsl, Selectable, SelectableHelper,
+};
+use serde::Serialize;
+
+#[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
+#[diesel(table_name=friends)]
+#[diesel(belongs_to(User))]
+// 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct FriendDb {
+    pub id: String,
+    pub user_id: String,
+    pub friend_id: String,
+    // 0: delete; 1: friend; 2: blacklist
+    pub status: String,
+    pub remark: Option<String>,
+    pub source: Option<String>,
+    pub create_time: chrono::NaiveDateTime,
+    pub update_time: chrono::NaiveDateTime,
+}
+
+#[derive(Serialize)]
+pub struct FriendWithUser {
+    pub id: String,
+    pub friend_id: String,
+    pub remark: Option<String>,
+    pub status: String,
+    pub create_time: chrono::NaiveDateTime,
+    pub update_time: chrono::NaiveDateTime,
+    pub from: Option<String>,
+    pub name: String,
+    pub account: String,
+    pub avatar: String,
+    pub gender: String,
+    pub age: i32,
+    pub phone: Option<String>,
+    pub email: Option<String>,
+    pub address: Option<String>,
+    pub birthday: Option<chrono::NaiveDateTime>,
+}
+
+// 获取好友列表
+pub async fn get_friend_list(
+    pool: &Pool,
+    user_id: String,
+) -> Result<Vec<FriendWithUser>, InfraError> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
+    let users = conn
+        .interact(move |conn| {
+            friends::table
+                .inner_join(users::table)
+                .filter(
+                    friends::user_id
+                        .eq(user_id.clone())
+                        .and(friends::status.eq("1")),
+                )
+                .select((FriendDb::as_select(), User::as_select()))
+                .load::<(FriendDb, User)>(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    let mut friend_with_user = Vec::<FriendWithUser>::new();
+    for (friend, user) in users {
+        friend_with_user.push(FriendWithUser {
+            id: friend.id,
+            friend_id: friend.friend_id,
+            remark: friend.remark,
+            status: friend.status,
+            create_time: friend.create_time,
+            update_time: friend.update_time,
+            from: friend.source,
+            name: user.name,
+            account: user.account,
+            avatar: user.avatar,
+            gender: user.gender,
+            age: user.age,
+            phone: user.phone,
+            email: user.email,
+            address: user.address,
+            birthday: user.birthday,
+        });
+    }
+
+    Ok(friend_with_user)
+}
+
+pub async fn create_friend(pool: &Pool, friend_db: Vec<FriendDb>) -> Result<FriendDb, InfraError> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
+    let friend = conn
+        .interact(|conn| {
+            diesel::insert_into(friends::table)
+                .values(friend_db)
+                .returning(FriendDb::as_returning())
+                .get_result(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    Ok(friend)
+}
+
+// 更新好友信息，就是更新remark、status、
+pub async fn update_remark(
+    pool: &Pool,
+    user_id: String,
+    friend_id: String,
+    remark: String,
+) -> Result<FriendDb, InfraError> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
+
+    let friend = conn
+        .interact(|conn| {
+            diesel::update(friends::table)
+                .filter(
+                    friends::user_id
+                        .eq(user_id)
+                        .and(friends::friend_id.eq(friend_id)),
+                )
+                .set((
+                    friends::remark.eq(remark),
+                    friends::update_time.eq(chrono::Local::now().naive_local()),
+                ))
+                .returning(FriendDb::as_returning())
+                .get_result(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    Ok(friend)
+}
+// 更新好友信息，就是更新status、
+pub async fn update_friend_status(
+    pool: &Pool,
+    user_id: String,
+    friend_id: String,
+    status: String,
+) -> Result<FriendDb, InfraError> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
+
+    let friend = conn
+        .interact(|conn| {
+            diesel::update(friends::table)
+                .filter(
+                    friends::user_id
+                        .eq(user_id)
+                        .and(friends::friend_id.eq(friend_id)),
+                )
+                .set((
+                    friends::remark.eq(status),
+                    friends::update_time.eq(chrono::Local::now().naive_local()),
+                ))
+                .returning(FriendDb::as_returning())
+                .get_result(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    Ok(friend)
+}
