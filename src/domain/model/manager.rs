@@ -1,10 +1,14 @@
+use axum::extract::ws::Message;
+use deadpool_diesel::postgres::Pool;
+use futures::SinkExt;
 use std::collections::HashMap;
 use std::sync::Arc;
-use axum::extract::ws::Message;
-use futures::SinkExt;
-use tokio::sync::{mpsc, RwLock};
 use tokio::sync::mpsc::error::SendError;
-use crate::domain::model::{ClientSender, Hub, msg::{MessageType, Msg}};
+use tokio::sync::{mpsc, RwLock};
+
+use crate::domain::model::{msg::Msg, Client, Hub};
+use crate::infra::repositories::friendship_repo::create_friend_ship;
+use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
 #[derive(Clone)]
 pub struct Manager {
@@ -20,35 +24,132 @@ impl Manager {
         }
     }
 
+    pub async fn send_msg(&self, obj_id: &str, msg: &Msg) {
+        let mut guard = self.hub.write().await;
+
+        if let Some(clients) = guard.get_mut(obj_id) {
+            let content = serde_json::to_string(&msg).expect("序列化出错");
+            for (_, client) in clients {
+                if let Err(e) = client
+                    .sender
+                    .write()
+                    .await
+                    .send(Message::Text(content.clone()))
+                    .await
+                {
+                    // 不能直接删除客户端，会有所有权问题，因为已经借用为mut了
+                    tracing::error!("msg send error: {:?}", e);
+                } else {
+                    // tracing::debug!("消息发送成功--{:?}", client.id.clone());
+                }
+            }
+        }
+    }
     // 注册客户端
-    pub async fn register(&self, id: i32, sender: ClientSender) {
-        self.hub.write().await.insert(id, sender);
+    pub async fn register(&self, id: String, client: Client) {
+        // self.hub.write().await.insert(id, sender);
+        let mut guard = self.hub.write().await;
+        if let Some(cli) = guard.get_mut(&id) {
+            cli.insert(client.id.clone(), client);
+        } else {
+            let mut hash_map = HashMap::new();
+            hash_map.insert(client.id.clone(), client);
+            guard.insert(id, hash_map);
+        }
     }
     // 删除客户端
-    pub async fn unregister(&self, id: i32) {
-        self.hub.write().await.remove(&id);
+    pub async fn unregister(&self, id: String, printer_id: String) {
+        // self.hub.write().await.remove(&id);
+        let mut guard = self.hub.write().await;
+        if let Some(clients) = guard.get_mut(&id) {
+            if clients.len() == 1 {
+                guard.remove(&id);
+            } else {
+                clients.remove(&printer_id);
+            }
+        }
     }
-    pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {
+    pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>, pool: Pool) {
         tracing::info!("manager start");
         // 循环读取消息
-        while let Some(msg) = receiver.recv().await {
-            let mut guard = self.hub.write().await;
-            match msg.msg_type() {
-                MessageType::Single => {
-                    if let Some(client) = guard.get_mut(&msg.friend_id()) {
-                        client.send(Message::Text(serde_json::to_string(&msg).expect("序列化出错"))).await.expect("发送消息错误")
-                    };
+        while let Some(message) = receiver.recv().await {
+            match message.clone() {
+                Msg::Single(msg) => {
+                    tracing::info!("received message: {:?}", &msg);
+                    // 数据入库
+                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                        tracing::error!("消息入库错误！！{:?}", err);
+                        continue;
+                    }
+                    // 入库成功后给客户端回复消息已送达的通知
+                    self.send_msg(&msg.friend_id, &message).await;
                 }
-                MessageType::Group => {
+                Msg::Group(_msg) => {
                     // 根据组id， 查询所有组下的客户端id
                 }
-                MessageType::Default => {
-                    for item in guard.iter_mut() {
-                        if let Err(e) = item.1.send(Message::Text(serde_json::to_string(&msg).expect("序列化出错"))).await {
-                            // 不能直接删除客户端，会有所有权问题，因为已经借用为mut了
-                            tracing::error!("msg send error: {:?}", e);
-                        }
+                Msg::DeliveredNotice(msg) => {
+                    //  消息已送达，更新数据库
+                    if let Err(err) = msg_delivered(&pool, vec![msg.msg_id]).await {
+                        tracing::error!("更新送达状态错误: {:?}", err);
                     }
+                }
+                Msg::ReadNotice(msg) => {
+                    tracing::info!("received read notice msg: {:?}", &msg);
+                    // 更新数据库
+                    if let Err(err) = msg_read(&pool, msg.msg_ids).await {
+                        tracing::error!("更新已读状态错误: {:?}", err);
+                    }
+                }
+                Msg::SendRelationshipReq(msg) => {
+                    tracing::info!("received message: {:?}", msg.clone());
+                    // 数据入库
+                    let friend_id = msg.friend_id.clone();
+                    let res = match create_friend_ship(&pool, msg).await {
+                        Err(err) => {
+                            tracing::error!("消息入库错误！！{:?}", err);
+                            continue;
+                        }
+                        Ok(res) => res,
+                    };
+                    // 入库成功后给客户端回复消息已送达的通知
+                    // Fixme 可能存在bug
+                    let res = Msg::RecRelationship(res);
+                    self.send_msg(&friend_id, &res).await;
+                }
+                Msg::OfflineSync(_) => {}
+                Msg::RecRelationship(_) => {}
+                Msg::SingleVideoOffer(msg) => {
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleVideoAgree(msg) => {
+                    tracing::info!("received agree: {:?}", &msg);
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::NewIceCandidate(msg) => {
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleVideoInvite(msg) => {
+                    tracing::info!("received video invite msg: {:?}", &msg);
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleInviteAnswer(msg) => {
+                    tracing::info!("received answer message: {:?}", &msg);
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleInviteCancel(msg) => {
+                    // todo 入库
+                    tracing::info!("received cancel message: {:?}", &msg);
+
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleVideoHangUp(msg) => {
+                    tracing::info!("received hangup: {:?}", &msg);
+                    // todo 入库
+                    self.send_msg(&msg.friend_id, &message).await;
+                }
+                Msg::SingleNotAnswer(msg) => {
+                    tracing::info!("received not answer message: {:?}", &msg);
+                    self.send_msg(&msg.friend_id, &message).await;
                 }
             }
         }
