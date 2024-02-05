@@ -1,13 +1,9 @@
 use crate::domain::model::user::User;
-use crate::infra::db::schema::{friends, friendships, users};
+use crate::infra::db::schema::{friends, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
-use crate::infra::repositories::friendship_repo::FriendShipDb;
 use deadpool_diesel::postgres::Pool;
-use diesel::{
-    Associations, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable,
-    RunQueryDsl, Selectable, SelectableHelper,
-};
-use serde::Serialize;
+use diesel::{Associations, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable, SelectableHelper, JoinOnDsl};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
 #[diesel(table_name=friends)]
@@ -26,7 +22,7 @@ pub struct FriendDb {
     pub update_time: chrono::NaiveDateTime,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Queryable, Deserialize)]
 pub struct FriendWithUser {
     pub id: String,
     pub friend_id: String,
@@ -58,41 +54,34 @@ pub async fn get_friend_list(
     let users = conn
         .interact(move |conn| {
             friends::table
-                .inner_join(users::table)
-                .filter(
-                    friends::user_id
-                        .eq(user_id.clone())
-                        .and(friends::status.eq("1")),
-                )
-                .select((FriendDb::as_select(), User::as_select()))
-                .load::<(FriendDb, User)>(conn)
+                .inner_join(users::table.on(users::id.eq(friends::friend_id)))
+                .filter(friends::user_id.eq(user_id.clone()))
+                .filter(friends::status.eq("1"))
+                .select((
+                    friends::id,
+                    friends::friend_id,
+                    friends::remark,
+                    friends::status,
+                    friends::create_time,
+                    friends::update_time,
+                    friends::source,
+                    users::name,
+                    users::account,
+                    users::avatar,
+                    users::gender,
+                    users::age,
+                    users::phone,
+                    users::email,
+                    users::address,
+                    users::birthday,
+                ))
+                .load::<FriendWithUser>(conn)
         })
         .await
         .map_err(adapt_infra_error)?
         .map_err(adapt_infra_error)?;
-    let mut friend_with_user = Vec::<FriendWithUser>::new();
-    for (friend, user) in users {
-        friend_with_user.push(FriendWithUser {
-            id: friend.id,
-            friend_id: friend.friend_id,
-            remark: friend.remark,
-            status: friend.status,
-            create_time: friend.create_time,
-            update_time: friend.update_time,
-            from: friend.source,
-            name: user.name,
-            account: user.account,
-            avatar: user.avatar,
-            gender: user.gender,
-            age: user.age,
-            phone: user.phone,
-            email: user.email,
-            address: user.address,
-            birthday: user.birthday,
-        });
-    }
 
-    Ok(friend_with_user)
+    Ok(users)
 }
 
 pub async fn create_friend(pool: &Pool, friend_db: Vec<FriendDb>) -> Result<FriendDb, InfraError> {
