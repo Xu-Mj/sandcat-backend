@@ -1,48 +1,41 @@
+use crate::infra::db::schema::users;
 use crate::infra::errors::InfraError;
-use crate::infra::repositories::user_repo::UserDb;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-#[derive(Clone, Serialize, Default, Deserialize)]
+#[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable)]
+#[diesel(table_name=users)]
+// 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     pub account: String,
+    #[serde(skip)]
+    pub password: String,
     pub avatar: String,
     pub gender: String,
+    pub age: i32,
     pub phone: Option<String>,
     pub email: Option<String>,
     pub address: Option<String>,
     pub birthday: Option<chrono::NaiveDateTime>,
     pub create_time: chrono::NaiveDateTime,
     pub update_time: chrono::NaiveDateTime,
-    // pub is_delete: bool,
+    #[serde(skip)]
+    pub is_delete: bool,
 }
 
-impl From<UserDb> for User {
-    fn from(user_db: UserDb) -> Self {
-        Self {
-            id: user_db.id,
-            name: user_db.name,
-            avatar: user_db.avatar,
-            account: user_db.account,
-            gender: user_db.gender,
-            phone: user_db.phone,
-            email: user_db.email,
-            address: user_db.address,
-            birthday: user_db.birthday,
-            create_time: user_db.create_time,
-            update_time: user_db.update_time,
-        }
-    }
-}
-type ID = i32;
+type ID = String;
+#[derive(Debug)]
 pub enum UserError {
     InternalServerError(String),
     NotFound(ID),
+    LoginError,
     InfraError(InfraError),
 }
 
@@ -58,6 +51,10 @@ impl IntoResponse for UserError {
             UserError::InfraError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Internal Server Error: {}", err),
+            ),
+            UserError::LoginError => (
+                StatusCode::FORBIDDEN,
+                String::from("Account Or Password Error"),
             ),
         };
         (
