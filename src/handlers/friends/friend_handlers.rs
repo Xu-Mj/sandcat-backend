@@ -4,10 +4,12 @@ use crate::domain::model::friends::FriendError;
 use crate::domain::model::user::User;
 use crate::handlers::friends::FriendRequest;
 use crate::infra::errors::InfraError;
-use crate::infra::repositories::friends::{get_friend_list, update_friend_status, FriendWithUser, update_remark};
+use crate::infra::repositories::friends::{
+    get_friend_list, update_friend_status, update_remark, FriendWithUser,
+};
 use crate::infra::repositories::friendship_repo::{
     agree_apply, create_friend_ship, get_by_user_id_and_status, get_list_by_user_id,
-    update_friend_ship, FriendShipDb, NewFriend,
+    update_friend_ship, FriendShipDb, FriendShipWithUser, NewFriend,
 };
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
@@ -46,9 +48,9 @@ pub async fn get_friends_list_by_user_id2(
 // 获取好友申请列表
 pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor((id, status)): PathWithAuthExtractor<(String, String)>,
-) -> Result<Json<Vec<User>>, FriendError> {
-    let list = get_by_user_id_and_status(&app_state.pool, id.clone(), status)
+    PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
+) -> Result<Json<Vec<FriendShipWithUser>>, FriendError> {
+    let list = get_by_user_id_and_status(&app_state.pool, id.clone())
         .await
         .map_err(|err| match err {
             InfraError::InternalServerError(msg) => FriendError::InternalServerError(msg),
@@ -68,16 +70,17 @@ pub async fn create(
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
     // 查找在线用户
-    for (_, client) in app_state
-        .hub
-        .hub
-        .write()
-        .await
-        .iter_mut()
-        .filter(|(id, client)| client.id == friend_id)
-    {
-        if let Err(e) = client.sender.send(Message::Text("".to_owned())).await {
-            tracing::error!("发送在线消息错误 -- 好友请求: {:?}", e)
+    if let Some(clients) = app_state.hub.hub.write().await.get_mut(&friend_id) {
+        for client in clients.values() {
+            if let Err(e) = client
+                .sender
+                .write()
+                .await
+                .send(Message::Text("".to_owned()))
+                .await
+            {
+                tracing::error!("发送在线消息错误 -- 好友请求: {:?}", e)
+            }
         }
     }
     Ok(())
@@ -91,6 +94,7 @@ pub fn get_friend_from_friend_req(friend: FriendRequest) -> FriendShipDb {
         status: friend.status,
         apply_msg: friend.apply_msg,
         source: friend.source,
+        is_delivered: false,
         create_time: chrono::Local::now().naive_local(),
         update_time: chrono::Local::now().naive_local(),
     }
@@ -99,13 +103,12 @@ pub fn get_friend_from_friend_req(friend: FriendRequest) -> FriendShipDb {
 // 同意好友请求
 pub async fn agree(
     State(app_state): State<AppState>,
-    // 前面的是被申请人，后面的是申请人
-    JsonWithAuthExtractor(new_friend): JsonWithAuthExtractor<NewFriend>,
-) -> Result<(), FriendError> {
-    agree_apply(&app_state.pool, new_friend)
+    PathWithAuthExtractor(friendship_id): PathWithAuthExtractor<String>,
+) -> Result<Json<FriendWithUser>, FriendError> {
+    let user = agree_apply(&app_state.pool, friendship_id)
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
-    Ok(())
+    Ok(Json(user))
 }
 
 // 拒绝好友请求
