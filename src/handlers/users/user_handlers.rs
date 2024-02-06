@@ -1,5 +1,5 @@
 use crate::config::CONFIG;
-use crate::domain::model::user::{User, UserError};
+use crate::domain::model::user::{RegisterErrState, User, UserError};
 use crate::handlers::users::UserRegister;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
@@ -30,10 +30,17 @@ pub async fn create_user(
 
     // 查询验证码
 
-    redis_conn
+    let result: Option<String> = redis_conn
         .get(&new_user.email)
         .await
         .map_err(|err| UserError::InternalServerError(err.to_string()))?;
+    if let Some(code) = result {
+        if code != new_user.code {
+            return Err(UserError::Register(RegisterErrState::CodeErr));
+        }
+    } else {
+        return Err(UserError::Register(RegisterErrState::CodeErr));
+    }
     // 结构体转换
     let user2db = NewUserDb {
         id: nanoid!(),
@@ -188,13 +195,13 @@ pub async fn send_email(
     let e = email.email.clone();
     tokio::spawn(async move {
         let _: () = redis_conn
-            .set_ex(e, num, 60 * 5)
+            .set_ex(&e, num, 60 * 5)
             .await
             .map_err(|err| UserError::InternalServerError(err.to_string()))
             .unwrap();
+        tracing::debug!("验证码：{:?}, 邮箱: {:?}", num, &e);
     });
 
-    tracing::debug!("验证码：{:?}, 邮箱: {:?}", num, &email.email);
     let email = Message::builder()
         .from(
             "653609824@qq.com"
