@@ -7,9 +7,10 @@ publish = false
 [workspace.lint.rust]
 unused = "allow"
 
-
+[profile.dev]
+incremental = true
 [dependencies]
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.7", features = ["ws", "multipart"] }
 #axum-macros = "0.3"
 futures = "0.3"
 tokio = { version = "1", features = ["full"] }
@@ -22,6 +23,14 @@ serde_json = "1.0"
 tower-http = { version = "0.5.0", features = ["cors"] }
 dotenvy = "0.15.7"
 chrono = { version = "0.4.31", features = ["serde"] }
-diesel = { version = "2.1.4", features = ["postgres", "chrono", "serde_json"] }
+diesel = { version = "2", features = ["postgres", "chrono", "serde_json"] }
 deadpool-diesel = { version = "0.4.0", features = ["postgres"] }
+deadpool="0.10"
 nanoid = "0.4.0"
+jsonwebtoken = "9"
+redis = { version = "0.24.0", features = ["tokio-comp"] }
+hyper = "1.1"
+mime = "0.3.17"
+headers="0.4"
+lettre = "0.11"
+rand = "0.8.5"
