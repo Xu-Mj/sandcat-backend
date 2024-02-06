@@ -16,7 +16,7 @@ use crate::AppState;
 use axum::extract::ws::Message;
 use axum::extract::State;
 use axum::Json;
-use futures::SinkExt;
+use futures::{SinkExt, TryFutureExt};
 use nanoid::nanoid;
 
 // 获取好友列表
@@ -66,17 +66,18 @@ pub async fn create(
 ) -> Result<(), FriendError> {
     // 需要根据目标用户id查找是否在线，如果在线直接发送消息过去
     let friend_id = new_friend.friend_id.clone();
-    let _user = create_friend_ship(&app_state.pool, get_friend_from_friend_req(new_friend))
+    let friendship = create_friend_ship(&app_state.pool, get_friend_from_friend_req(new_friend))
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
     // 查找在线用户
     if let Some(clients) = app_state.hub.hub.write().await.get_mut(&friend_id) {
+        // 查询申请者信息
         for client in clients.values() {
             if let Err(e) = client
                 .sender
                 .write()
                 .await
-                .send(Message::Text("".to_owned()))
+                .send(Message::Text(serde_json::to_string(&friendship).unwrap()))
                 .await
             {
                 tracing::error!("发送在线消息错误 -- 好友请求: {:?}", e)
