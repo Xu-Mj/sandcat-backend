@@ -84,7 +84,7 @@ pub async fn search(pool: &Pool, pattern: String) -> Result<Vec<User>, InfraErro
     let users = conn
         .interact(move |conn| {
             users::table
-                .filter(users::account.eq(pattern.clone()).or(users::name.like(pattern)).and(users::is_delete.eq(false)))
+                .filter(users::account.eq(&pattern).or(users::name.like(&pattern)).or(users::phone.eq(&pattern)).and(users::is_delete.eq(false)))
                 .select(User::as_select())
                 .get_results(conn)
         })
