@@ -7,7 +7,7 @@ use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-#[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable)]
+#[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable, Debug)]
 #[diesel(table_name=users)]
 // 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -37,8 +37,13 @@ pub enum UserError {
     NotFound(ID),
     LoginError,
     InfraError(InfraError),
+    Register(RegisterErrState),
 }
 
+#[derive(Debug)]
+pub enum RegisterErrState {
+    CodeErr,
+}
 // 将用户错误转为axum响应
 impl IntoResponse for UserError {
     fn into_response(self) -> Response {
@@ -56,6 +61,9 @@ impl IntoResponse for UserError {
                 StatusCode::FORBIDDEN,
                 String::from("Account Or Password Error"),
             ),
+            UserError::Register(state) => match state {
+                RegisterErrState::CodeErr => (StatusCode::BAD_REQUEST, String::from("CODE ERROR")),
+            },
         };
         (
             status,
