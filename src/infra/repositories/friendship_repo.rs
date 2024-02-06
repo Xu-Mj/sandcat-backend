@@ -197,7 +197,7 @@ pub async fn agree_friend_ship(
         .interact(|conn| {
             diesel::update(friendships::table)
                 .filter(friendships::id.eq(friendship_id))
-                .set(friendships::status.eq("1"))
+                .set((friendships::status.eq("1"), friendships::is_delivered.eq(false)))
                 .returning(FriendShipDb::as_returning())
                 .get_result(conn)
         })
@@ -217,6 +217,7 @@ pub struct NewFriend {
 }
 pub async fn agree_apply(pool: &Pool, friendship_id: String) -> Result<FriendWithUser, InfraError> {
     let friendship = agree_friend_ship(pool, friendship_id).await?;
+    let friend_id = friendship.user_id.clone();
     let now = chrono::Local::now().naive_local();
     let friends = vec![
         FriendDb {
@@ -242,11 +243,11 @@ pub async fn agree_apply(pool: &Pool, friendship_id: String) -> Result<FriendWit
     ];
 
     let _friend_db = create_friend(pool, friends).await?;
-
-    let user = get(pool, _friend_db.friend_id.clone()).await?;
+    let user = get(pool, friend_id).await?;
+    tracing::debug!("friendship user: {:?}", &user);
     let friend = FriendWithUser {
         id: _friend_db.id,
-        friend_id: _friend_db.friend_id,
+        friend_id: user.id,
         remark: _friend_db.remark,
         status: _friend_db.status,
         create_time: _friend_db.create_time,
