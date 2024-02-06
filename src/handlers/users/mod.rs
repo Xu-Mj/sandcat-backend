@@ -11,4 +11,5 @@ pub struct UserRegister {
     pub name: String,
     pub password: String,
     pub email: String,
+    pub code: String,
 }
