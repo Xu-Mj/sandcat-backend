@@ -7,6 +7,7 @@ use tokio::sync::mpsc::error::SendError;
 use tokio::sync::{mpsc, RwLock};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
+use crate::infra::repositories::friendship_repo;
 use crate::infra::repositories::friendship_repo::create_friend_ship;
 use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
@@ -87,7 +88,7 @@ impl Manager {
                 Msg::Group(_msg) => {
                     // 根据组id， 查询所有组下的客户端id
                 }
-                Msg::DeliveredNotice(msg) => {
+                Msg::SingleDeliveredNotice(msg) => {
                     //  消息已送达，更新数据库
                     if let Err(err) = msg_delivered(&pool, vec![msg.msg_id]).await {
                         tracing::error!("更新送达状态错误: {:?}", err);
@@ -118,25 +119,25 @@ impl Manager {
                 }
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
-                Msg::SingleVideoOffer(msg) => {
+                Msg::SingleCallOffer(msg) => {
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleVideoAgree(msg) => {
+                Msg::SingleCallAgree(msg) => {
                     tracing::info!("received agree: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::NewIceCandidate(msg) => {
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleVideoInvite(msg) => {
+                Msg::SingleCallInvite(msg) => {
                     tracing::info!("received video invite msg: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleInviteAnswer(msg) => {
+                Msg::SingleCallInviteAnswer(msg) => {
                     tracing::info!("received answer message: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleInviteCancel(msg) => {
+                Msg::SingleCallInviteCancel(msg) => {
                     // todo 入库
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
                         tracing::error!("消息入库错误！！{:?}", err);
@@ -146,7 +147,7 @@ impl Manager {
 
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleVideoHangUp(msg) => {
+                Msg::SingleCallHangUp(msg) => {
                     tracing::info!("received hangup: {:?}", &msg);
                     // todo 入库
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
@@ -155,7 +156,7 @@ impl Manager {
                     }
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::SingleNotAnswer(msg) => {
+                Msg::SingleCallNotAnswer(msg) => {
                     tracing::info!("received not answer message: {:?}", &msg);
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
                         tracing::error!("消息入库错误！！{:?}", err);
