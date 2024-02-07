@@ -1,4 +1,4 @@
-use crate::domain::model::msg::{MessageType, Msg, Single};
+use crate::domain::model::msg::{ContentType, Hangup, InviteCancelMsg, InviteNotAnswerMsg, InviteType, MessageType, Msg, Single};
 use crate::infra::db::schema::messages;
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
@@ -7,6 +7,7 @@ use diesel::{
     Selectable, SelectableHelper,
 };
 use serde::{Deserialize, Serialize};
+use crate::utils;
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(table_name=messages)]
@@ -47,6 +48,79 @@ impl From<Single> for NewMsgDb {
             send_id: msg.send_id,
             friend_id: msg.friend_id,
             content_type: msg.content_type.to_string(),
+            is_read: false,
+            delivered: false,
+            create_time: chrono::Local::now().naive_local(),
+        }
+    }
+}
+
+impl From<Hangup> for NewMsgDb {
+    fn from(msg: Hangup) -> Self {
+        let content_type = match msg.invite_type {
+            InviteType::Video => {
+                ContentType::Video.to_string()
+            }
+            InviteType::Audio => {
+                ContentType::Audio.to_string()
+            }
+        };
+        let content = utils::format_milliseconds(msg.sustain);
+        Self {
+            msg_type: MessageType::Single.to_string(),
+            msg_id: msg.msg_id,
+            content,
+            send_id: msg.send_id,
+            friend_id: msg.friend_id,
+            content_type,
+            is_read: false,
+            delivered: false,
+            create_time: chrono::Local::now().naive_local(),
+        }
+    }
+}
+
+impl From<InviteNotAnswerMsg> for NewMsgDb {
+    fn from(msg: InviteNotAnswerMsg) -> Self {
+        let content_type = match msg.invite_type {
+            InviteType::Video => {
+                ContentType::Video.to_string()
+            }
+            InviteType::Audio => {
+                ContentType::Audio.to_string()
+            }
+        };
+        Self {
+            msg_type: MessageType::Single.to_string(),
+            msg_id: msg.msg_id,
+            content: "Not Answer".to_string(),
+            send_id: msg.send_id,
+            friend_id: msg.friend_id,
+            content_type,
+            is_read: false,
+            delivered: false,
+            create_time: chrono::Local::now().naive_local(),
+        }
+    }
+}
+
+impl From<InviteCancelMsg> for NewMsgDb {
+    fn from(msg: InviteCancelMsg) -> Self {
+        let content_type = match msg.invite_type {
+            InviteType::Video => {
+                ContentType::Video.to_string()
+            }
+            InviteType::Audio => {
+                ContentType::Audio.to_string()
+            }
+        };
+        Self {
+            msg_type: MessageType::Single.to_string(),
+            msg_id: msg.msg_id,
+            content: "Canceled By Caller".to_string(),
+            send_id: msg.send_id,
+            friend_id: msg.friend_id,
+            content_type,
             is_read: false,
             delivered: false,
             create_time: chrono::Local::now().naive_local(),

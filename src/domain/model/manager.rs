@@ -138,6 +138,10 @@ impl Manager {
                 }
                 Msg::SingleInviteCancel(msg) => {
                     // todo 入库
+                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                        tracing::error!("消息入库错误！！{:?}", err);
+                        continue;
+                    }
                     tracing::info!("received cancel message: {:?}", &msg);
 
                     self.send_msg(&msg.friend_id, &message).await;
@@ -145,10 +149,18 @@ impl Manager {
                 Msg::SingleVideoHangUp(msg) => {
                     tracing::info!("received hangup: {:?}", &msg);
                     // todo 入库
+                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                        tracing::error!("消息入库错误！！{:?}", err);
+                        continue;
+                    }
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleNotAnswer(msg) => {
                     tracing::info!("received not answer message: {:?}", &msg);
+                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                        tracing::error!("消息入库错误！！{:?}", err);
+                        continue;
+                    }
                     self.send_msg(&msg.friend_id, &message).await;
                 }
             }

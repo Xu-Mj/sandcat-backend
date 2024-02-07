@@ -12,6 +12,7 @@ pub enum ContentType {
     Video,
     File,
     Emoji,
+    Audio,
 }
 
 impl ContentType {
@@ -20,6 +21,7 @@ impl ContentType {
             "Text" => Self::Text,
             "Image" => Self::Image,
             "Video" => Self::Video,
+            "Audio" => Self::Audio,
             "File" => Self::File,
             "Emoji" => Self::Emoji,
             _ => Self::Default,
@@ -35,6 +37,7 @@ impl Display for ContentType {
             ContentType::Video => write!(f, "Video"),
             ContentType::File => write!(f, "File"),
             ContentType::Emoji => write!(f, "Emoji"),
+            ContentType::Audio => write!(f, "Audio"),
         }
     }
 }
@@ -168,7 +171,6 @@ pub struct InviteAnswerMsg {
     pub agree: bool,
     pub invite_type: InviteType,
 }
-
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct Offer {
