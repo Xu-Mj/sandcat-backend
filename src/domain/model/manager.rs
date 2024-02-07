@@ -164,6 +164,12 @@ impl Manager {
                     }
                     self.send_msg(&msg.friend_id, &message).await;
                 }
+                Msg::FriendshipDeliveredNotice(msg) => {
+                    //  消息已送达，更新数据库
+                    if let Err(err) = friendship_repo::msg_delivered(&pool, vec![msg.msg_id]).await {
+                        tracing::error!("更新送达状态错误: {:?}", err);
+                    }
+                }
             }
         }
     }

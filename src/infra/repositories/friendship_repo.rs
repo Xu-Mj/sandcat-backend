@@ -304,3 +304,22 @@ pub async fn get_by_user_id_and_status(
         .map_err(adapt_infra_error)?;
     Ok(users)
 }
+
+// 消息送达
+pub async fn msg_delivered(pool: &Pool, ids: Vec<String>) -> Result<usize, InfraError> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
+    let count = conn
+        .interact(|conn| {
+            diesel::update(friendships::table)
+                .filter(friendships::id.eq_any(ids))
+                .set(friendships::is_delivered.eq(true))
+                .execute(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    Ok(count)
+}
