@@ -2,7 +2,10 @@ use crate::domain::model::user::User;
 use crate::infra::db::schema::{friends, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
-use diesel::{Associations, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable, SelectableHelper, JoinOnDsl};
+use diesel::{
+    Associations, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl, QueryDsl,
+    Queryable, RunQueryDsl, Selectable, SelectableHelper,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]

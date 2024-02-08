@@ -2,7 +2,10 @@ use crate::domain::model::user::{User, UserError};
 use crate::infra::db::schema::users;
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
-use diesel::{BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable, SelectableHelper, TextExpressionMethods};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl,
+    Selectable, SelectableHelper, TextExpressionMethods,
+};
 use serde::{Deserialize, Serialize};
 
 // #[derive(Serialize, Queryable, Selectable, Debug)]
@@ -84,7 +87,13 @@ pub async fn search(pool: &Pool, pattern: String) -> Result<Vec<User>, InfraErro
     let users = conn
         .interact(move |conn| {
             users::table
-                .filter(users::account.eq(&pattern).or(users::name.like(&pattern)).or(users::phone.eq(&pattern)).and(users::is_delete.eq(false)))
+                .filter(
+                    users::account
+                        .eq(&pattern)
+                        .or(users::name.like(&pattern))
+                        .or(users::phone.eq(&pattern))
+                        .and(users::is_delete.eq(false)),
+                )
                 .select(User::as_select())
                 .get_results(conn)
         })

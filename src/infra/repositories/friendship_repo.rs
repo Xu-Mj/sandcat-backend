@@ -197,7 +197,10 @@ pub async fn agree_friend_ship(
         .interact(|conn| {
             diesel::update(friendships::table)
                 .filter(friendships::id.eq(friendship_id))
-                .set((friendships::status.eq("1"), friendships::is_delivered.eq(false)))
+                .set((
+                    friendships::status.eq("1"),
+                    friendships::is_delivered.eq(false),
+                ))
                 .returning(FriendShipDb::as_returning())
                 .get_result(conn)
         })

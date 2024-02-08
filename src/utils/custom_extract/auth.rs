@@ -12,8 +12,10 @@ use axum::{
 use serde::de::DeserializeOwned;
 
 pub struct JsonWithAuthExtractor<T>(pub T);
+
 const AUTHORIZATION_HEADER: &str = "Authorization";
 const BEARER: &str = "Bearer";
+
 // 这里的鉴权采用浏览器指纹加过用户标识，否则如果一个用户永久开着电脑到达过期时间的话直接强制下线是不合理的
 // 在用户关闭网页、应用时记录用户关闭时间，下次打开时判断时间间隔，超过七天则需要重新登录
 #[async_trait]

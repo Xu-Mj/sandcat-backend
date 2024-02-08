@@ -65,9 +65,6 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(
-    friends,
-    friendships,
-    messages,
-    users,
-);
+diesel::joinable!(friendships ->users(user_id));
+diesel::joinable!(friends ->users(friend_id));
+diesel::allow_tables_to_appear_in_same_query!(friends, friendships, messages, users,);

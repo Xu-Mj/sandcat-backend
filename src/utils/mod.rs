@@ -1,11 +1,10 @@
-pub(crate) use custom_extract::json_extractor::JsonExtractor;
-pub(crate) use custom_extract::path_extractor::PathExtractor;
 pub(crate) use custom_extract::auth::JsonWithAuthExtractor;
 pub(crate) use custom_extract::auth::PathWithAuthExtractor;
+pub(crate) use custom_extract::json_extractor::JsonExtractor;
+pub(crate) use custom_extract::path_extractor::PathExtractor;
 
 mod custom_extract;
-pub(crate) mod  redis;
-
+pub(crate) mod redis;
 
 /// 格式化时间
 pub fn format_milliseconds(millis: i64) -> String {

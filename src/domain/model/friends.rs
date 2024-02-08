@@ -1,9 +1,9 @@
+use crate::infra::errors::InfraError;
 use axum::http::StatusCode;
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use chrono::TimeZone;
 use serde_json::json;
-use crate::infra::errors::InfraError;
 
 // 朋友模型，对应friends表，提供对朋友的增删改查
 // 好友请求，同意请求，拒绝等
@@ -16,6 +16,7 @@ pub struct Friend {
     created_time: i64,
     updated_time: i64,
 }
+
 impl Friend {
     pub fn new(user_id: i32, friend_id: i32, status: i32) -> Friend {
         Friend {
@@ -38,7 +39,9 @@ impl Friend {
     //
     // }
 }
+
 type ID = String;
+
 pub enum FriendError {
     InternalServerError(String),
     Parameter(String),
@@ -60,10 +63,7 @@ impl IntoResponse for FriendError {
                 format!("Internal Server Error: {}", err),
             ),
             FriendError::Parameter(msg) => {
-                (
-                    StatusCode::BAD_REQUEST,
-                    format!("Parameter Error: {}", msg),
-                )
+                (StatusCode::BAD_REQUEST, format!("Parameter Error: {}", msg))
             }
         };
         (

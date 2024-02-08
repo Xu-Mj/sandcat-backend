@@ -19,6 +19,7 @@ pub struct ServerConfig {
 pub struct DatabaseConfig {
     url: String,
 }
+
 pub struct RedisConfig {
     url: String,
 }

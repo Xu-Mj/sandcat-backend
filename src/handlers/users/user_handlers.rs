@@ -71,6 +71,7 @@ pub async fn get_user_by_id(
         })?;
     Ok(Json(user))
 }
+
 pub async fn search_user(
     State(app_state): State<AppState>,
     PathExtractor(pattern): PathExtractor<String>,
@@ -96,6 +97,7 @@ pub async fn logout(
     tracing::debug!("user logout");
     Ok(())
 }
+
 pub async fn test_auth(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(test): JsonWithAuthExtractor<LoginRequest>,
@@ -103,6 +105,7 @@ pub async fn test_auth(
     tracing::debug!("Test: {:?}", test);
     Ok(())
 }
+
 #[derive(Serialize)]
 pub struct Token {
     id: String,
@@ -137,6 +140,7 @@ impl Claims {
         }
     }
 }
+
 pub async fn login(
     State(app_state): State<AppState>,
     JsonExtractor(login): JsonExtractor<LoginRequest>,
@@ -174,6 +178,7 @@ pub async fn login(
 pub struct Email {
     pub email: String,
 }
+
 pub async fn send_email(
     State(state): State<AppState>,
     JsonExtractor(email): JsonExtractor<Email>,

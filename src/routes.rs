@@ -1,7 +1,7 @@
 use crate::handlers::files::files::{get_file_by_name, upload};
 use crate::handlers::friends::friend_handlers::{
-    agree, black_list, create, deny, get_apply_list_by_user_id,
-    get_friends_list_by_user_id2, update_friend_remark,
+    agree, black_list, create, deny, get_apply_list_by_user_id, get_friends_list_by_user_id2,
+    update_friend_remark,
 };
 use crate::handlers::users::user_handlers::{logout, search_user};
 use crate::handlers::users::{create_user, get_user_by_id, login, send_email};
@@ -30,6 +30,7 @@ fn user_routes(state: AppState) -> Router {
         .route("/mail/send", post(send_email))
         .with_state(state)
 }
+
 fn friend_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create))
@@ -47,12 +48,14 @@ fn ws_routes(state: AppState) -> Router {
         .route("/:user_id/conn/:token/:pointer_id", get(websocket_handler))
         .with_state(state)
 }
+
 fn file_routes(state: AppState) -> Router {
     Router::new()
         .route("/upload", post(upload))
         .route("/get/:filename", get(get_file_by_name))
         .with_state(state)
 }
+
 fn test(state: AppState) -> Router {
     Router::new().route("/", get(get_list)).with_state(state)
 }

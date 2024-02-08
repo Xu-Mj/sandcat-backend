@@ -10,6 +10,7 @@ pub enum InfraError {
 pub fn adapt_infra_error<E: Error>(err: E) -> InfraError {
     err.as_infra_error()
 }
+
 // 自定义错误特征，用来转为基础设施错误
 pub trait Error {
     fn as_infra_error(&self) -> InfraError;

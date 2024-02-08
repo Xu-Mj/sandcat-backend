@@ -7,6 +7,7 @@ use std::error::Error;
 type Msg = String;
 type Location = String;
 type Path = String;
+
 /// 全局变量
 #[derive(Debug)]
 pub enum AppError {
@@ -21,6 +22,7 @@ pub enum AppError {
 pub fn internal_error<E: Error>(err: E) -> AppError {
     AppError::InternalServer(err.to_string())
 }
+
 // 实现axum的into response特征，将自定义错误转为axum的响应
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
@@ -40,10 +42,10 @@ impl IntoResponse for AppError {
                 }
                 (StatusCode::BAD_REQUEST, msg)
             }
-            AppError::UnAuthorized(msg,path) =>  (
+            AppError::UnAuthorized(msg, path) => (
                 StatusCode::UNAUTHORIZED,
                 format!("Bad Request error: {{ message: {}, path: {}}}", msg, path),
-            )
+            ),
         };
         (status, Json(json!({"message":msg}))).into_response()
     }

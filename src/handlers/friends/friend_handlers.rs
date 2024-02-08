@@ -32,6 +32,7 @@ pub async fn get_friends_list_by_user_id(
         })?;
     Ok(Json(list))
 }
+
 pub async fn get_friends_list_by_user_id2(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
@@ -138,6 +139,7 @@ pub async fn black_list(
     .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
     Ok(())
 }
+
 pub async fn update_friend_remark(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(relation): JsonWithAuthExtractor<NewFriend>,

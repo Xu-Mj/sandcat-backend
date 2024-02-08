@@ -28,6 +28,7 @@ impl ContentType {
         }
     }
 }
+
 impl Display for ContentType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -89,6 +90,7 @@ impl Msg {
         Self::Single(single)
     }
 }
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Msg {
     Single(Single),
@@ -118,6 +120,7 @@ pub struct Single {
     pub content_type: ContentType,
     pub create_time: i64,
 }
+
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct Candidate {
     pub candidate: String,
@@ -147,6 +150,7 @@ pub struct InviteCancelMsg {
     pub create_time: i64,
     pub invite_type: InviteType,
 }
+
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct InviteNotAnswerMsg {
     pub msg_id: String,
@@ -217,6 +221,7 @@ pub struct ReadNotice {
     pub friend_id: String,
     pub create_time: i64,
 }
+
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct DeliveredNotice {
     pub msg_id: String,

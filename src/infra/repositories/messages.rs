@@ -1,13 +1,15 @@
-use crate::domain::model::msg::{ContentType, Hangup, InviteCancelMsg, InviteNotAnswerMsg, InviteType, MessageType, Msg, Single};
+use crate::domain::model::msg::{
+    ContentType, Hangup, InviteCancelMsg, InviteNotAnswerMsg, InviteType, MessageType, Msg, Single,
+};
 use crate::infra::db::schema::messages;
 use crate::infra::errors::{adapt_infra_error, InfraError};
+use crate::utils;
 use deadpool_diesel::postgres::Pool;
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl,
     Selectable, SelectableHelper,
 };
 use serde::{Deserialize, Serialize};
-use crate::utils;
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(table_name=messages)]
@@ -58,12 +60,8 @@ impl From<Single> for NewMsgDb {
 impl From<Hangup> for NewMsgDb {
     fn from(msg: Hangup) -> Self {
         let content_type = match msg.invite_type {
-            InviteType::Video => {
-                ContentType::Video.to_string()
-            }
-            InviteType::Audio => {
-                ContentType::Audio.to_string()
-            }
+            InviteType::Video => ContentType::Video.to_string(),
+            InviteType::Audio => ContentType::Audio.to_string(),
         };
         let content = utils::format_milliseconds(msg.sustain);
         Self {
@@ -83,12 +81,8 @@ impl From<Hangup> for NewMsgDb {
 impl From<InviteNotAnswerMsg> for NewMsgDb {
     fn from(msg: InviteNotAnswerMsg) -> Self {
         let content_type = match msg.invite_type {
-            InviteType::Video => {
-                ContentType::Video.to_string()
-            }
-            InviteType::Audio => {
-                ContentType::Audio.to_string()
-            }
+            InviteType::Video => ContentType::Video.to_string(),
+            InviteType::Audio => ContentType::Audio.to_string(),
         };
         Self {
             msg_type: MessageType::Single.to_string(),
@@ -107,12 +101,8 @@ impl From<InviteNotAnswerMsg> for NewMsgDb {
 impl From<InviteCancelMsg> for NewMsgDb {
     fn from(msg: InviteCancelMsg) -> Self {
         let content_type = match msg.invite_type {
-            InviteType::Video => {
-                ContentType::Video.to_string()
-            }
-            InviteType::Audio => {
-                ContentType::Audio.to_string()
-            }
+            InviteType::Video => ContentType::Video.to_string(),
+            InviteType::Audio => ContentType::Audio.to_string(),
         };
         Self {
             msg_type: MessageType::Single.to_string(),
