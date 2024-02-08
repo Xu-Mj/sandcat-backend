@@ -93,21 +93,38 @@ impl Msg {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Msg {
+    /// 一对一聊天
     Single(Single),
+    /// 群聊
     Group(Single),
+    /// 一对一通话offer
     SingleCallOffer(Offer),
+    /// 一对一通话邀请
     SingleCallInvite(InviteMsg),
+    /// 一对一通话邀请回复
     SingleCallInviteAnswer(InviteAnswerMsg),
+    /// 一对一通话取消
     SingleCallInviteCancel(InviteCancelMsg),
+    /// 一对一通话建立，被邀请方同意通话后，建立连接最后一步
     SingleCallAgree(Agree),
+    /// 通话未接听
     SingleCallNotAnswer(InviteNotAnswerMsg),
+    /// 挂断
     SingleCallHangUp(Hangup),
+    /// 发送好友请求
     SendRelationshipReq(FriendShipDb),
+    /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方
     RecRelationship(FriendShipWithUser),
+    /// 回复好友请求（同意）
+    RelationshipRes(FriendShipWithUser),
+    /// 消息已读
     ReadNotice(ReadNotice),
+    /// 一对一消息送达
     SingleDeliveredNotice(DeliveredNotice),
+    /// 好友请求送达
     FriendshipDeliveredNotice(DeliveredNotice),
     OfflineSync(Single),
+    /// 通话协商消息
     NewIceCandidate(Candidate),
 }
 
@@ -179,11 +196,9 @@ pub struct InviteAnswerMsg {
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct Offer {
-    // pub msg_id: String,
     pub sdp: String,
     pub send_id: String,
     pub friend_id: String,
-    // pub content_type: ContentType,
     pub create_time: i64,
 }
 
@@ -192,7 +207,6 @@ pub struct Agree {
     pub sdp: Option<String>,
     pub send_id: String,
     pub friend_id: String,
-    // pub content_type: ContentType,
     pub create_time: i64,
 }
 
@@ -225,8 +239,6 @@ pub struct ReadNotice {
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct DeliveredNotice {
     pub msg_id: String,
-    // pub send_id: String,
-    // pub friend_id: String,
     pub create_time: i64,
 }
 
