@@ -3,10 +3,18 @@ use serde::Deserialize;
 pub mod friend_handlers;
 
 #[derive(Debug, Deserialize)]
-pub struct FriendRequest {
+pub struct FriendShipRequest {
     user_id: String,
     friend_id: String,
     status: String,
     apply_msg: Option<String>,
     source: Option<String>,
+    remark: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FriendShipAgree {
+    friendship_id: String,
+    response_msg: Option<String>,
+    remark: Option<String>,
 }
