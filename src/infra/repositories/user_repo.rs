@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 // 新建用户结构体
 #[derive(Deserialize, Insertable, Default)]
 // 指定表明
-#[diesel(table_name=users)]
+#[diesel(table_name = users)]
 pub struct NewUserDb {
     pub id: String,
     pub name: String,
@@ -82,7 +82,42 @@ pub async fn get(pool: &Pool, id: String) -> Result<User, InfraError> {
     // tracing::debug!("get user by id: {:?}", &user);
     Ok(user)
 }
-pub async fn search(pool: &Pool, pattern: String) -> Result<Vec<User>, InfraError> {
+
+pub async fn get_by_2id(
+    pool: &Pool,
+    user_id: String,
+    friend_id: String,
+) -> Result<(User, User), InfraError> {
+    let conn = pool.get().await.map_err(adapt_infra_error)?;
+    let cloned_user_id = user_id.clone();
+    let mut users = conn
+        .interact(move |conn| {
+            users::table
+                .filter(
+                    users::id
+                        .eq_any(vec![cloned_user_id, friend_id])
+                        .and(users::is_delete.eq(false)),
+                )
+                .select(User::as_select())
+                .get_results(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    let user1 = users.remove(0);
+    // tracing::debug!("get user by id: {:?}", &user);
+    Ok(if user1.id == user_id.clone() {
+        (user1, users.remove(0))
+    } else {
+        (users.remove(0), user1)
+    })
+}
+
+pub async fn search(
+    pool: &Pool,
+    user_id: String,
+    pattern: String,
+) -> Result<Vec<User>, InfraError> {
     let conn = pool.get().await.map_err(adapt_infra_error)?;
     let users = conn
         .interact(move |conn| {
@@ -92,7 +127,8 @@ pub async fn search(pool: &Pool, pattern: String) -> Result<Vec<User>, InfraErro
                         .eq(&pattern)
                         .or(users::name.like(&pattern))
                         .or(users::phone.eq(&pattern))
-                        .and(users::is_delete.eq(false)),
+                        .and(users::is_delete.eq(false))
+                        .and(users::id.ne(user_id)),
                 )
                 .select(User::as_select())
                 .get_results(conn)
