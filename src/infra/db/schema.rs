@@ -3,11 +3,13 @@
 diesel::table! {
     friends (id) {
         id -> Varchar,
+        friendship_id -> Varchar,
         user_id -> Varchar,
         friend_id -> Varchar,
         #[max_length = 1]
         status -> Bpchar,
         remark -> Nullable<Varchar>,
+        hello -> Nullable<Varchar>,
         source -> Nullable<Varchar>,
         create_time -> Timestamp,
         update_time -> Timestamp,
@@ -22,6 +24,9 @@ diesel::table! {
         #[max_length = 1]
         status -> Bpchar,
         apply_msg -> Nullable<Varchar>,
+        req_remark -> Nullable<Varchar>,
+        response_msg -> Nullable<Varchar>,
+        res_remark -> Nullable<Varchar>,
         source -> Nullable<Varchar>,
         is_delivered -> Bool,
         create_time -> Timestamp,
