@@ -36,7 +36,7 @@ fn friend_routes(state: AppState) -> Router {
         .route("/", post(create))
         .route("/:id", get(get_friends_list_by_user_id2))
         .route("/:id/apply", get(get_apply_list_by_user_id))
-        .route("/agree/:friendship_id", put(agree))
+        .route("/agree", put(agree))
         .route("/blacklist", put(black_list))
         .route("/remark", put(update_friend_remark))
         .route("/:user_id/deny/:friend_id", post(deny))
