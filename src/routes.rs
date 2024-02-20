@@ -24,7 +24,7 @@ fn user_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_user))
         .route("/:id", get(get_user_by_id))
-        .route("/search/:pattern", get(search_user))
+        .route("/:user_id/search/:pattern", get(search_user))
         .route("/login", post(login))
         .route("/logout/:uuid", delete(logout))
         .route("/mail/send", post(send_email))
