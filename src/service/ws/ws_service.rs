@@ -93,7 +93,7 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         }
 
         // 查询好友请求，
-        match get_by_user_id_and_status(&pool, user_id.clone()).await {
+        match get_by_user_id_and_status(&pool, user_id.clone(), String::from("2")).await {
             Ok(list) => {
                 for msg in list {
                     let msg = Msg::RecRelationship(msg);
@@ -111,6 +111,22 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         }
 
         // 查询请求回复
+        /* match get_by_user_id_and_status(&pool, user_id.clone(), String::from("1")).await {
+            Ok(list) => {
+                for msg in list {
+                    let msg = Msg::RelationshipRes(msg);
+                    if let Err(err) = guard
+                        .send(Message::Text(serde_json::to_string(&msg).unwrap()))
+                        .await
+                    {
+                        tracing::error!("发送离线消息错误: {:?}", err);
+                    }
+                }
+            }
+            Err(err) => {
+                tracing::error!("查询好友请求列表错误: {:?}", err);
+            }
+        }*/
     }
     // drop(guard);
     tracing::debug!("离线消息发送完成");
@@ -168,7 +184,9 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
                     // tracing::debug!("收到心跳回复消息");
                 }
                 Message::Close(info) => {
-                    tracing::warn!("client closed {}", info.unwrap().reason);
+                    if let Some(info) = info {
+                        tracing::warn!("client closed {}", info.reason);
+                    }
                     break;
                 }
 
