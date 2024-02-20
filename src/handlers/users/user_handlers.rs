@@ -5,7 +5,7 @@ use crate::infra::errors::InfraError;
 use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
 use crate::service::ws::ws_service::register_ws;
 use crate::utils::redis::redis_crud;
-use crate::utils::{JsonExtractor, JsonWithAuthExtractor, PathExtractor};
+use crate::utils::{JsonExtractor, JsonWithAuthExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::AppState;
 use axum::extract::State;
 use axum::Json;
@@ -74,9 +74,9 @@ pub async fn get_user_by_id(
 
 pub async fn search_user(
     State(app_state): State<AppState>,
-    PathExtractor(pattern): PathExtractor<String>,
+    PathWithAuthExtractor((user_id, pattern)): PathWithAuthExtractor<(String, String)>,
 ) -> Result<Json<Vec<User>>, UserError> {
-    let users = search(&app_state.pool, pattern.clone())
+    let users = search(&app_state.pool, user_id, pattern)
         .await
         .unwrap_or_else(|_| vec![]);
     Ok(Json(users))
