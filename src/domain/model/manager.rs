@@ -102,7 +102,20 @@ impl Manager {
                     }
                 }
                 Msg::SendRelationshipReq(msg) => {
-                    tracing::info!("received message: {:?}", msg.clone());
+                    // FIXME 目前走的http的方式，存在这巨大的逻辑问题
+                    // 1. 好友发送请求
+                    // 2. 数据入库，返回FriendshipWithUser
+                    // 3.1 被请求方在线，直接将SendRelationshipReq(FriendshipWithUser)消息发送给目标用户，
+                    //       服务端不需要处理SendRelationshipReq(FriendshipWithUser)类型，只需要客户端处理
+                    // 3.2 被请求方不在线，--等待上线时查询好友请求列表，ws返回SendRelationshipReq消息
+                    // 3.3 客户端处理
+                    // 4. 被请求方同意好友请求
+                    // 4.1 发送http请求调用agree
+                    // 5 update数据库，根据friendship数据查询相关用户数据，生成FriendWithUser并返回
+                    // 5.1 请求方如果在线，发送RelationshipRes(FriendWithUser)
+                    // 5.2 请求方不在线，--等待上线时查询好友请求响应列表，ws返回RelationshipRes消息
+                    // 5.3 客户端处理
+                    /*  tracing::info!("received message: {:?}", msg.clone());
                     // 数据入库
                     let friend_id = msg.friend_id.clone();
                     let res = match create_friend_ship(&pool, msg).await {
@@ -115,8 +128,9 @@ impl Manager {
                     // 入库成功后给客户端回复消息已送达的通知
                     // Fixme 可能存在bug
                     let res = Msg::RecRelationship(res);
-                    self.send_msg(&friend_id, &res).await;
+                    self.send_msg(&friend_id, &res).await;*/
                 }
+                Msg::RelationshipRes(msg) => {}
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
                 Msg::SingleCallOffer(msg) => {

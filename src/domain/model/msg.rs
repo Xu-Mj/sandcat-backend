@@ -1,3 +1,4 @@
+use crate::infra::repositories::friends::FriendWithUser;
 use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser, NewFriend};
 use crate::infra::repositories::messages::MsgDb;
 use serde::{Deserialize, Serialize};
@@ -116,7 +117,7 @@ pub enum Msg {
     /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方
     RecRelationship(FriendShipWithUser),
     /// 回复好友请求（同意）
-    RelationshipRes(FriendShipWithUser),
+    RelationshipRes(FriendWithUser),
     /// 消息已读
     ReadNotice(ReadNotice),
     /// 一对一消息送达
