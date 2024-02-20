@@ -9,27 +9,30 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
-#[diesel(table_name=friends)]
+#[diesel(table_name = friends)]
 #[diesel(belongs_to(User))]
 // 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct FriendDb {
     pub id: String,
+    pub friendship_id: String,
     pub user_id: String,
     pub friend_id: String,
     // 0: delete; 1: friend; 2: blacklist
     pub status: String,
     pub remark: Option<String>,
+    pub hello: Option<String>,
     pub source: Option<String>,
     pub create_time: chrono::NaiveDateTime,
     pub update_time: chrono::NaiveDateTime,
 }
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, Clone, Debug)]
 pub struct FriendWithUser {
     pub id: String,
     pub friend_id: String,
     pub remark: Option<String>,
+    pub hello: Option<String>,
     pub status: String,
     pub create_time: chrono::NaiveDateTime,
     pub update_time: chrono::NaiveDateTime,
@@ -64,6 +67,7 @@ pub async fn get_friend_list(
                     friends::id,
                     friends::friend_id,
                     friends::remark,
+                    friends::hello,
                     friends::status,
                     friends::create_time,
                     friends::update_time,
@@ -87,22 +91,32 @@ pub async fn get_friend_list(
     Ok(users)
 }
 
-pub async fn create_friend(pool: &Pool, friend_db: Vec<FriendDb>) -> Result<FriendDb, InfraError> {
+pub async fn create_friend(pool: &Pool, friends: Vec<FriendDb>) -> Result<(), InfraError> {
     let conn = pool
         .get()
         .await
         .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
-    let friend = conn
-        .interact(|conn| {
+    let _ = conn
+        .interact(move |conn| {
             diesel::insert_into(friends::table)
-                .values(friend_db)
-                .returning(FriendDb::as_returning())
-                .get_result(conn)
+                .values(&friends)
+                .execute(conn)
+            // .returning(FriendDb::as_returning())
+            // .get_results(conn)
         })
         .await
-        .map_err(adapt_infra_error)?
-        .map_err(adapt_infra_error)?;
-    Ok(friend)
+        .map_err(|err| {
+            tracing::error!("create user error: {:?}", err);
+            adapt_infra_error(err)
+        })?
+        .map_err(|err| {
+            tracing::error!("create user error: {:?}", err);
+            adapt_infra_error(err)
+        })?;
+    /*if friends.len() != 2 {
+        return Err(InfraError::InternalServerError("Insert Error".to_string()));
+    }*/
+    Ok((/*friends.remove(0), friends.remove(0)*/))
 }
 
 // 更新好友信息，就是更新remark、status、
@@ -137,6 +151,7 @@ pub async fn update_remark(
         .map_err(adapt_infra_error)?;
     Ok(friend)
 }
+
 // 更新好友信息，就是更新status、
 pub async fn update_friend_status(
     pool: &Pool,
