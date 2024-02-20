@@ -1,8 +1,9 @@
 // 根据用户id查询好友列表
 
 use crate::domain::model::friends::FriendError;
+use crate::domain::model::msg::Msg;
 use crate::domain::model::user::User;
-use crate::handlers::friends::FriendRequest;
+use crate::handlers::friends::{FriendShipAgree, FriendShipRequest};
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friends::{
     get_friend_list, update_friend_status, update_remark, FriendWithUser,
@@ -51,7 +52,7 @@ pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<Json<Vec<FriendShipWithUser>>, FriendError> {
-    let list = get_by_user_id_and_status(&app_state.pool, id.clone())
+    let list = get_by_user_id_and_status(&app_state.pool, id.clone(), String::from("2"))
         .await
         .map_err(|err| match err {
             InfraError::InternalServerError(msg) => FriendError::InternalServerError(msg),
@@ -63,38 +64,35 @@ pub async fn get_apply_list_by_user_id(
 // 创建好友请求
 pub async fn create(
     State(app_state): State<AppState>,
-    JsonWithAuthExtractor(new_friend): JsonWithAuthExtractor<FriendRequest>,
-) -> Result<(), FriendError> {
+    JsonWithAuthExtractor(new_friend): JsonWithAuthExtractor<FriendShipRequest>,
+) -> Result<Json<FriendShipWithUser>, FriendError> {
     // 需要根据目标用户id查找是否在线，如果在线直接发送消息过去
+    tracing::debug!("{:?}", &new_friend);
     let friend_id = new_friend.friend_id.clone();
-    let friendship = create_friend_ship(&app_state.pool, get_friend_from_friend_req(new_friend))
-        .await
-        .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
+    let (fs_req, fs_send) =
+        create_friend_ship(&app_state.pool, get_friend_from_friend_req(new_friend))
+            .await
+            .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
     // 查找在线用户
-    if let Some(clients) = app_state.hub.hub.write().await.get_mut(&friend_id) {
-        // 查询申请者信息
-        for client in clients.values() {
-            if let Err(e) = client
-                .sender
-                .write()
-                .await
-                .send(Message::Text(serde_json::to_string(&friendship).unwrap()))
-                .await
-            {
-                tracing::error!("发送在线消息错误 -- 好友请求: {:?}", e)
-            }
-        }
-    }
-    Ok(())
+    app_state
+        .hub
+        .send_msg(&friend_id, &Msg::RecRelationship(fs_send))
+        .await;
+    // 用户id为好友id
+    // friendship.user_id = friend_id;
+    Ok(Json(fs_req))
 }
 
-pub fn get_friend_from_friend_req(friend: FriendRequest) -> FriendShipDb {
+pub fn get_friend_from_friend_req(friend: FriendShipRequest) -> FriendShipDb {
     FriendShipDb {
         id: nanoid!(),
         user_id: friend.user_id,
         friend_id: friend.friend_id,
         status: friend.status,
         apply_msg: friend.apply_msg,
+        req_remark: friend.remark,
+        response_msg: None,
+        res_remark: None,
         source: friend.source,
         is_delivered: false,
         create_time: chrono::Local::now().naive_local(),
@@ -102,14 +100,28 @@ pub fn get_friend_from_friend_req(friend: FriendRequest) -> FriendShipDb {
     }
 }
 
-// 同意好友请求
+// 同意好友请求， 需要friend db参数
 pub async fn agree(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(friendship_id): PathWithAuthExtractor<String>,
+    // PathWithAuthExtractor(friendship_id): PathWithAuthExtractor<String>,
+    JsonWithAuthExtractor(agree): JsonWithAuthExtractor<FriendShipAgree>,
 ) -> Result<Json<FriendWithUser>, FriendError> {
-    let user = agree_apply(&app_state.pool, friendship_id)
-        .await
-        .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
+    // 同意好友添加请求，需要向同意方返回请求方的个人信息，向请求方发送同意方的个人信息
+
+    let (user, friend) = agree_apply(
+        &app_state.pool,
+        agree.friendship_id,
+        agree.response_msg,
+        agree.remark,
+    )
+    .await
+    .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
+    // 发送消息
+    // 查找在线用户
+    app_state
+        .hub
+        .send_msg(&user.friend_id, &Msg::RelationshipRes(friend))
+        .await;
     Ok(Json(user))
 }
 
