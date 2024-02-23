@@ -109,7 +109,7 @@ pub async fn create_friend_ship(
     // 需要给请求方返回对方的个人信息，给被请求方发送请求方的个人信息
     let user_id = new_friend.user_id.clone();
     let friend_id = new_friend.friend_id.clone();
-    let friendship_id = new_friend.id.clone();
+    // let friendship_id = new_friend.id.clone();
     let update_time = new_friend.update_time.clone();
     let apply_msg = new_friend.apply_msg.clone();
     let source = new_friend.source.clone();
@@ -118,24 +118,25 @@ pub async fn create_friend_ship(
         .get()
         .await
         .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
-    conn.interact(move |conn| {
-        // 如果已经存在一条请求信息，那么执行更新操作
-        diesel::insert_into(friendships::table)
-            .values(&new_friend)
-            .on_conflict((friendships::user_id, friendships::friend_id))
-            .do_update()
-            .set((
-                friendships::status.eq(&new_friend.status),
-                friendships::apply_msg.eq(&new_friend.apply_msg),
-                friendships::source.eq(&new_friend.source),
-                friendships::update_time.eq(&new_friend.update_time),
-                friendships::is_delivered.eq(false),
-            ))
-            .execute(conn)
-    })
-    .await
-    .map_err(adapt_infra_error)?
-    .map_err(adapt_infra_error)?;
+    let friendship: FriendShipDb = conn
+        .interact(move |conn| {
+            // 如果已经存在一条请求信息，那么执行更新操作
+            diesel::insert_into(friendships::table)
+                .values(&new_friend)
+                .on_conflict((friendships::user_id, friendships::friend_id))
+                .do_update()
+                .set((
+                    friendships::status.eq(&new_friend.status),
+                    friendships::apply_msg.eq(&new_friend.apply_msg),
+                    friendships::source.eq(&new_friend.source),
+                    friendships::update_time.eq(&new_friend.update_time),
+                    friendships::is_delivered.eq(false),
+                ))
+                .get_result(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
     let cloned_user_id = user_id.clone();
     let cloned_friend_id = friend_id.clone();
     let mut users = conn
@@ -157,7 +158,7 @@ pub async fn create_friend_ship(
     };
     // 发送给被请求方，如果不在线那么丢弃
     let fs_send = FriendShipWithUser {
-        friendship_id: friendship_id.clone(),
+        friendship_id: friendship.id.clone(),
         user_id,
         name: user.name,
         avatar: user.avatar,
@@ -170,7 +171,7 @@ pub async fn create_friend_ship(
     };
     // 返回给请求方
     let fs_req = FriendShipWithUser {
-        friendship_id,
+        friendship_id: friendship.id,
         user_id: friend_id,
         name: friend.name,
         avatar: friend.avatar,
