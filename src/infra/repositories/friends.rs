@@ -6,6 +6,7 @@ use diesel::{
     Associations, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl, QueryDsl,
     Queryable, RunQueryDsl, Selectable, SelectableHelper,
 };
+use diesel::upsert::excluded;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
@@ -100,9 +101,15 @@ pub async fn create_friend(pool: &Pool, friends: Vec<FriendDb>) -> Result<(), In
         .interact(move |conn| {
             diesel::insert_into(friends::table)
                 .values(&friends)
+                .on_conflict((friends::user_id, friends::friend_id))
+                .do_update()
+                .set((
+                    friends::status.eq(excluded(friends::status)),
+                    friends::remark.eq(excluded(friends::remark)),
+                    friends::hello.eq(excluded(friends::hello)),
+                    friends::source.eq(excluded(friends::source)),
+                ))
                 .execute(conn)
-            // .returning(FriendDb::as_returning())
-            // .get_results(conn)
         })
         .await
         .map_err(|err| {
@@ -113,10 +120,7 @@ pub async fn create_friend(pool: &Pool, friends: Vec<FriendDb>) -> Result<(), In
             tracing::error!("create user error: {:?}", err);
             adapt_infra_error(err)
         })?;
-    /*if friends.len() != 2 {
-        return Err(InfraError::InternalServerError("Insert Error".to_string()));
-    }*/
-    Ok((/*friends.remove(0), friends.remove(0)*/))
+    Ok(())
 }
 
 // 更新好友信息，就是更新remark、status、
