@@ -11,5 +11,6 @@ create table friends
     create_time   timestamp not null default now(),
     update_time   timestamp not null default now(),
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (friend_id) REFERENCES users (id)
+    FOREIGN KEY (friend_id) REFERENCES users (id),
+    CONSTRAINT unique_user_friend UNIQUE (user_id, friend_id)
 )-- Your SQL goes here
