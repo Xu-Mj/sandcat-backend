@@ -2,7 +2,6 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
-use std::error::Error;
 
 type Msg = String;
 type Location = String;
@@ -17,10 +16,6 @@ pub enum AppError {
     BodyParsing(Msg, Path),
     PathParsing(Msg, Option<Location>),
     UnAuthorized(Msg, Path),
-}
-
-pub fn internal_error<E: Error>(err: E) -> AppError {
-    AppError::InternalServer(err.to_string())
 }
 
 // 实现axum的into response特征，将自定义错误转为axum的响应

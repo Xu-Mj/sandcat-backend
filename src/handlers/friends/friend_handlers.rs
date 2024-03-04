@@ -2,25 +2,23 @@
 
 use crate::domain::model::friends::FriendError;
 use crate::domain::model::msg::Msg;
-use crate::domain::model::user::User;
 use crate::handlers::friends::{FriendShipAgree, FriendShipRequest};
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friends::{
     get_friend_list, update_friend_status, update_remark, FriendWithUser,
 };
 use crate::infra::repositories::friendship_repo::{
-    agree_apply, create_friend_ship, get_by_user_id_and_status, get_list_by_user_id,
-    update_friend_ship, FriendShipDb, FriendShipWithUser, NewFriend,
+    agree_apply, create_friend_ship, get_by_user_id_and_status, update_friend_ship, FriendShipDb,
+    FriendShipWithUser, NewFriend,
 };
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 use axum::extract::State;
 use axum::Json;
-use futures::TryFutureExt;
 use nanoid::nanoid;
 
 // 获取好友列表
-pub async fn get_friends_list_by_user_id(
+/*pub async fn get_friends_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<Json<Vec<User>>, FriendError> {
@@ -32,7 +30,7 @@ pub async fn get_friends_list_by_user_id(
         })?;
     Ok(Json(list))
 }
-
+*/
 pub async fn get_friends_list_by_user_id2(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(id): PathWithAuthExtractor<String>,

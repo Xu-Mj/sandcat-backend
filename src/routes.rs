@@ -1,4 +1,4 @@
-use crate::handlers::files::files::{get_file_by_name, upload};
+use crate::handlers::files::file::{get_file_by_name, upload};
 use crate::handlers::friends::friend_handlers::{
     agree, black_list, create, deny, get_apply_list_by_user_id, get_friends_list_by_user_id2,
     update_friend_remark,

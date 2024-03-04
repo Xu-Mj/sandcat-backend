@@ -48,7 +48,7 @@ pub struct FriendShipDb {
 }
 
 // 获取好友列表
-pub async fn get_list_by_user_id(pool: &Pool, user_id: String) -> Result<Vec<User>, InfraError> {
+/*pub async fn get_list_by_user_id(pool: &Pool, user_id: String) -> Result<Vec<User>, InfraError> {
     let conn = pool
         .get()
         .await
@@ -82,7 +82,7 @@ pub async fn get_list_by_user_id(pool: &Pool, user_id: String) -> Result<Vec<Use
         .map_err(adapt_infra_error)?;
     Ok(users)
 }
-
+*/
 #[derive(Serialize, Debug, Clone, Deserialize, Queryable)]
 pub struct FriendShipWithUser {
     pub friendship_id: String,
@@ -109,7 +109,7 @@ pub async fn create_friend_ship(
     let user_id = new_friend.user_id.clone();
     let friend_id = new_friend.friend_id.clone();
     // let friendship_id = new_friend.id.clone();
-    let update_time = new_friend.update_time.clone();
+    let update_time = new_friend.update_time;
     let apply_msg = new_friend.apply_msg.clone();
     let source = new_friend.source.clone();
     let status = new_friend.status.clone();
@@ -166,7 +166,7 @@ pub async fn create_friend_ship(
         status: status.clone(),
         apply_msg: apply_msg.clone(),
         source: source.clone(),
-        update_time: update_time.clone(),
+        update_time,
     };
     // 返回给请求方
     let fs_req = FriendShipWithUser {

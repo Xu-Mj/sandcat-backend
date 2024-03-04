@@ -199,20 +199,3 @@ pub async fn msg_read(pool: &Pool, ids: Vec<String>) -> Result<usize, InfraError
         .map_err(adapt_infra_error)?;
     Ok(count)
 }
-pub async fn msg_read_single(pool: &Pool, id: String) -> Result<usize, InfraError> {
-    let conn = pool
-        .get()
-        .await
-        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
-    let count = conn
-        .interact(|conn| {
-            diesel::update(messages::table)
-                .filter(messages::msg_id.eq(id))
-                .set(messages::is_read.eq(true))
-                .execute(conn)
-        })
-        .await
-        .map_err(adapt_infra_error)?
-        .map_err(adapt_infra_error)?;
-    Ok(count)
-}

@@ -29,7 +29,7 @@ impl Manager {
 
         if let Some(clients) = guard.get_mut(obj_id) {
             let content = serde_json::to_string(&msg).expect("序列化出错");
-            for (_, client) in clients {
+            for client in clients.values_mut() {
                 if let Err(e) = client
                     .sender
                     .write()
@@ -100,7 +100,7 @@ impl Manager {
                         tracing::error!("更新已读状态错误: {:?}", err);
                     }
                 }
-                Msg::SendRelationshipReq(msg) => {
+                Msg::SendRelationshipReq(_msg) => {
                     // FIXME 目前走的http的方式，存在这巨大的逻辑问题
                     // 1. 好友发送请求
                     // 2. 数据入库，返回FriendshipWithUser
@@ -129,7 +129,7 @@ impl Manager {
                     let res = Msg::RecRelationship(res);
                     self.send_msg(&friend_id, &res).await;*/
                 }
-                Msg::RelationshipRes(msg) => {}
+                Msg::RelationshipRes(_msg) => {}
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
                 Msg::SingleCallOffer(msg) => {

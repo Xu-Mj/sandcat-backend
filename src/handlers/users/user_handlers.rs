@@ -1,11 +1,11 @@
 use crate::config::CONFIG;
 use crate::domain::model::user::{RegisterErrState, User, UserError};
 use crate::handlers::users::UserRegister;
+use crate::handlers::ws::register_ws;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
-use crate::handlers::ws::register_ws;
 use crate::utils::redis::redis_crud;
-use crate::utils::{JsonExtractor, JsonWithAuthExtractor, PathExtractor, PathWithAuthExtractor};
+use crate::utils::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::AppState;
 use axum::extract::State;
 use axum::Json;
@@ -15,7 +15,7 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
-use redis::{AsyncCommands, Commands};
+use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
 pub async fn create_user(
@@ -95,14 +95,6 @@ pub async fn logout(
         .await
         .map_err(|err| UserError::InternalServerError(err.to_string()))?;
     tracing::debug!("user logout");
-    Ok(())
-}
-
-pub async fn test_auth(
-    State(app_state): State<AppState>,
-    JsonWithAuthExtractor(test): JsonWithAuthExtractor<LoginRequest>,
-) -> Result<(), UserError> {
-    tracing::debug!("Test: {:?}", test);
     Ok(())
 }
 

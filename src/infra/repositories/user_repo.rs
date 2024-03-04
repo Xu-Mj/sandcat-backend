@@ -3,7 +3,8 @@ use crate::infra::db::schema::users;
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
 use diesel::{
-    BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, SelectableHelper, TextExpressionMethods,
+    BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, SelectableHelper,
+    TextExpressionMethods,
 };
 use serde::Deserialize;
 

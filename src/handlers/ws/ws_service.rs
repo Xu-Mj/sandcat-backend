@@ -5,7 +5,7 @@ use crate::domain::model;
 use crate::domain::model::msg::Msg;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friendship_repo::get_by_user_id_and_status;
-use crate::infra::repositories::messages::{get_offline_msg, MsgDb};
+use crate::infra::repositories::messages::get_offline_msg;
 use crate::utils::redis::redis_crud;
 use crate::utils::PathExtractor;
 use crate::AppState;

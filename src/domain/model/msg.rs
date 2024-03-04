@@ -54,18 +54,6 @@ pub enum MessageType {
     DeliveredNotice,
 }
 
-impl MessageType {
-    pub fn from_str(value: &str) -> Self {
-        match value {
-            "Single" => Self::Single,
-            "Group" => Self::Group,
-            "ReadNotice" => Self::ReadNotice,
-            "DeliveredNotice" => Self::DeliveredNotice,
-            _ => Self::Default,
-        }
-    }
-}
-
 impl Display for MessageType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

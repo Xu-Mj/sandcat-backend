@@ -10,7 +10,6 @@ use crate::routes::app_routes;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
 use redis::Client;
-use tokio::signal;
 use tokio::sync::mpsc;
 use tracing::Level;
 
