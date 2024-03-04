@@ -3,7 +3,7 @@ use crate::domain::model::user::{RegisterErrState, User, UserError};
 use crate::handlers::users::UserRegister;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
-use crate::service::ws::ws_service::register_ws;
+use crate::handlers::ws::register_ws;
 use crate::utils::redis::redis_crud;
 use crate::utils::{JsonExtractor, JsonWithAuthExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::AppState;
