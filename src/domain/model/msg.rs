@@ -1,5 +1,5 @@
 use crate::infra::repositories::friends::FriendWithUser;
-use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser, NewFriend};
+use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser};
 use crate::infra::repositories::messages::MsgDb;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};

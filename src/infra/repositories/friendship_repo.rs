@@ -1,9 +1,8 @@
 use crate::domain::model::user::User;
-use crate::handlers::friends::FriendShipAgree;
 use crate::infra::db::schema::{friendships, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use crate::infra::repositories::friends::{create_friend, FriendDb, FriendWithUser};
-use crate::infra::repositories::user_repo::{get, get_by_2id};
+use crate::infra::repositories::user_repo::get_by_2id;
 use deadpool_diesel::postgres::Pool;
 use diesel::pg::Pg;
 use diesel::{

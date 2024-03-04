@@ -1,5 +1,5 @@
 use crate::domain::model::msg::{
-    ContentType, Hangup, InviteCancelMsg, InviteNotAnswerMsg, InviteType, MessageType, Msg, Single,
+    ContentType, Hangup, InviteCancelMsg, InviteNotAnswerMsg, InviteType, MessageType, Single,
 };
 use crate::infra::db::schema::messages;
 use crate::infra::errors::{adapt_infra_error, InfraError};

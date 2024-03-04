@@ -14,10 +14,9 @@ use crate::infra::repositories::friendship_repo::{
 };
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
-use axum::extract::ws::Message;
 use axum::extract::State;
 use axum::Json;
-use futures::{SinkExt, TryFutureExt};
+use futures::TryFutureExt;
 use nanoid::nanoid;
 
 // 获取好友列表

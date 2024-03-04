@@ -1,12 +1,11 @@
-use crate::domain::model::user::{User, UserError};
+use crate::domain::model::user::User;
 use crate::infra::db::schema::users;
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
 use diesel::{
-    BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl,
-    Selectable, SelectableHelper, TextExpressionMethods,
+    BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, SelectableHelper, TextExpressionMethods,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 // #[derive(Serialize, Queryable, Selectable, Debug)]
 // // 指定表明

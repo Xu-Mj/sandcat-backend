@@ -8,7 +8,6 @@ use tokio::sync::{mpsc, RwLock};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
-use crate::infra::repositories::friendship_repo::create_friend_ship;
 use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
 #[derive(Clone)]
