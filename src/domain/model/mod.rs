@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub(crate) mod friends;
+mod group;
 pub(crate) mod manager;
 pub(crate) mod msg;
 pub(crate) mod user;

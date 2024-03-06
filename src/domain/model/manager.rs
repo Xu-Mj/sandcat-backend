@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::{mpsc, RwLock};
+use tracing::{debug, error, info};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
@@ -38,9 +39,9 @@ impl Manager {
                     .await
                 {
                     // 不能直接删除客户端，会有所有权问题，因为已经借用为mut了
-                    tracing::error!("msg send error: {:?}", e);
+                    error!("msg send error: {:?}", e);
                 } else {
-                    // tracing::debug!("消息发送成功--{:?}", client.id.clone());
+                    // debug!("消息发送成功--{:?}", client.id.clone());
                 }
             }
         }
@@ -70,34 +71,35 @@ impl Manager {
         }
     }
     pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>, pool: Pool) {
-        tracing::info!("manager start");
+        info!("manager start");
         // 循环读取消息
         while let Some(message) = receiver.recv().await {
             match message.clone() {
                 Msg::Single(msg) => {
-                    tracing::info!("received message: {:?}", &msg);
+                    info!("received message: {:?}", &msg);
                     // 数据入库
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        tracing::error!("消息入库错误！！{:?}", err);
+                        error!("消息入库错误！！{:?}", err);
                         continue;
                     }
                     // 入库成功后给客户端回复消息已送达的通知
                     self.send_msg(&msg.friend_id, &message).await;
                 }
-                Msg::Group(_msg) => {
+                Msg::Group(msg) => {
                     // 根据组id， 查询所有组下的客户端id
+                    debug!("received group message: {:?}", msg);
                 }
                 Msg::SingleDeliveredNotice(msg) => {
                     //  消息已送达，更新数据库
                     if let Err(err) = msg_delivered(&pool, vec![msg.msg_id]).await {
-                        tracing::error!("更新送达状态错误: {:?}", err);
+                        error!("更新送达状态错误: {:?}", err);
                     }
                 }
                 Msg::ReadNotice(msg) => {
-                    tracing::info!("received read notice msg: {:?}", &msg);
+                    info!("received read notice msg: {:?}", &msg);
                     // 更新数据库
                     if let Err(err) = msg_read(&pool, msg.msg_ids).await {
-                        tracing::error!("更新已读状态错误: {:?}", err);
+                        error!("更新已读状态错误: {:?}", err);
                     }
                 }
                 Msg::SendRelationshipReq(_msg) => {
@@ -114,12 +116,12 @@ impl Manager {
                     // 5.1 请求方如果在线，发送RelationshipRes(FriendWithUser)
                     // 5.2 请求方不在线，--等待上线时查询好友请求响应列表，ws返回RelationshipRes消息
                     // 5.3 客户端处理
-                    /*  tracing::info!("received message: {:?}", msg.clone());
+                    /*  info!("received message: {:?}", msg.clone());
                     // 数据入库
                     let friend_id = msg.friend_id.clone();
                     let res = match create_friend_ship(&pool, msg).await {
                         Err(err) => {
-                            tracing::error!("消息入库错误！！{:?}", err);
+                            error!("消息入库错误！！{:?}", err);
                             continue;
                         }
                         Ok(res) => res,
@@ -136,43 +138,43 @@ impl Manager {
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallAgree(msg) => {
-                    tracing::info!("received agree: {:?}", &msg);
+                    info!("received agree: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::NewIceCandidate(msg) => {
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInvite(msg) => {
-                    tracing::info!("received video invite msg: {:?}", &msg);
+                    info!("received video invite msg: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInviteAnswer(msg) => {
-                    tracing::info!("received answer message: {:?}", &msg);
+                    info!("received answer message: {:?}", &msg);
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInviteCancel(msg) => {
                     // todo 入库
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        tracing::error!("消息入库错误！！{:?}", err);
+                        error!("消息入库错误！！{:?}", err);
                         continue;
                     }
-                    tracing::info!("received cancel message: {:?}", &msg);
+                    info!("received cancel message: {:?}", &msg);
 
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallHangUp(msg) => {
-                    tracing::info!("received hangup: {:?}", &msg);
+                    info!("received hangup: {:?}", &msg);
                     // todo 入库
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        tracing::error!("消息入库错误！！{:?}", err);
+                        error!("消息入库错误！！{:?}", err);
                         continue;
                     }
                     self.send_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallNotAnswer(msg) => {
-                    tracing::info!("received not answer message: {:?}", &msg);
+                    info!("received not answer message: {:?}", &msg);
                     if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        tracing::error!("消息入库错误！！{:?}", err);
+                        error!("消息入库错误！！{:?}", err);
                         continue;
                     }
                     self.send_msg(&msg.friend_id, &message).await;
@@ -181,7 +183,7 @@ impl Manager {
                     //  消息已送达，更新数据库
                     if let Err(err) = friendship_repo::msg_delivered(&pool, vec![msg.msg_id]).await
                     {
-                        tracing::error!("更新送达状态错误: {:?}", err);
+                        error!("更新送达状态错误: {:?}", err);
                     }
                 }
             }

@@ -1,14 +1,16 @@
+use axum::routing::{delete, get, post, put};
+use axum::Router;
+
 use crate::handlers::files::file::{get_file_by_name, upload};
 use crate::handlers::friends::friend_handlers::{
     agree, black_list, create, deny, get_apply_list_by_user_id, get_friends_list_by_user_id2,
     update_friend_remark,
 };
+use crate::handlers::groups::create_group_handler;
 use crate::handlers::users::user_handlers::{logout, search_user};
 use crate::handlers::users::{create_user, get_user_by_id, login, send_email};
 use crate::handlers::ws::websocket_handler;
 use crate::AppState;
-use axum::routing::{delete, get, post, put};
-use axum::Router;
 
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()
@@ -16,6 +18,7 @@ pub(crate) fn app_routes(state: AppState) -> Router {
         .nest("/friend", friend_routes(state.clone()))
         .nest("/ws", ws_routes(state.clone()))
         .nest("/file", file_routes(state.clone()))
+        .nest("/group", group_routes(state.clone()))
 }
 
 fn user_routes(state: AppState) -> Router {
@@ -51,5 +54,11 @@ fn file_routes(state: AppState) -> Router {
     Router::new()
         .route("/upload", post(upload))
         .route("/get/:filename", get(get_file_by_name))
+        .with_state(state)
+}
+
+fn group_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/", post(create_group_handler))
         .with_state(state)
 }

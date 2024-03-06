@@ -35,6 +35,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    groups (id) {
+        id -> Varchar,
+        owner -> Varchar,
+        #[max_length = 255]
+        name -> Varchar,
+        members -> Text,
+        avatar -> Text,
+        description -> Text,
+        announcement -> Text,
+        create_time -> Timestamp,
+    }
+}
+
+diesel::table! {
     messages (msg_id) {
         msg_id -> Varchar,
         msg_type -> Varchar,
@@ -70,6 +84,8 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(groups -> users (owner));
+
 diesel::joinable!(friendships ->users(user_id));
 diesel::joinable!(friends ->users(friend_id));
-diesel::allow_tables_to_appear_in_same_query!(friends, friendships, messages, users,);
+diesel::allow_tables_to_appear_in_same_query!(friends, friendships, groups, messages, users,);

@@ -1,6 +1,3 @@
-use crate::domain::model::user::User;
-use crate::infra::db::schema::{friends, users};
-use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
 use diesel::upsert::excluded;
 use diesel::{
@@ -8,6 +5,10 @@ use diesel::{
     Queryable, RunQueryDsl, Selectable, SelectableHelper,
 };
 use serde::{Deserialize, Serialize};
+
+use crate::domain::model::user::User;
+use crate::infra::db::schema::{friends, users};
+use crate::infra::errors::{adapt_infra_error, InfraError};
 
 #[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
 #[diesel(table_name = friends)]
