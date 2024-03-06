@@ -83,6 +83,22 @@ pub async fn get(pool: &Pool, id: String) -> Result<User, InfraError> {
     Ok(user)
 }
 
+pub async fn get_by_ids(pool: &Pool, id: Vec<String>) -> Result<Vec<User>, InfraError> {
+    let conn = pool.get().await.map_err(adapt_infra_error)?;
+    let users = conn
+        .interact(move |conn| {
+            users::table
+                .filter(users::id.eq_any(id).and(users::is_delete.eq(false)))
+                .select(User::as_select())
+                .get_results(conn)
+        })
+        .await
+        .map_err(adapt_infra_error)?
+        .map_err(adapt_infra_error)?;
+    // tracing::debug!("get user by id: {:?}", &user);
+    Ok(users)
+}
+
 pub async fn get_by_2id(
     pool: &Pool,
     user_id: String,

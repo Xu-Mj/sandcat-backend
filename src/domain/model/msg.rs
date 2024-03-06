@@ -1,5 +1,7 @@
+use crate::domain::model::user::User;
 use crate::infra::repositories::friends::FriendWithUser;
 use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser};
+use crate::infra::repositories::groups::GroupDb;
 use crate::infra::repositories::messages::MsgDb;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -81,11 +83,46 @@ impl Msg {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CreateGroup {
+    pub id: String,
+    pub owner: String,
+    pub avatar: String,
+    pub group_name: String,
+    pub members: Vec<User>,
+}
+
+impl From<GroupDb> for CreateGroup {
+    fn from(value: GroupDb) -> Self {
+        CreateGroup {
+            id: value.id,
+            owner: value.owner,
+            avatar: value.avatar,
+            group_name: value.name,
+            members: vec![],
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Msg {
     /// 一对一聊天
     Single(Single),
     /// 群聊
     Group(Single),
+    CreateGroup(CreateGroup),
+    /// 发送好友请求
+    SendRelationshipReq(FriendShipDb),
+    /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方
+    RecRelationship(FriendShipWithUser),
+    /// 回复好友请求（同意）
+    RelationshipRes(FriendWithUser),
+    /// 消息已读
+    ReadNotice(ReadNotice),
+    /// 一对一消息送达
+    SingleDeliveredNotice(DeliveredNotice),
+    /// 好友请求送达
+    FriendshipDeliveredNotice(DeliveredNotice),
+    OfflineSync(Single),
     /// 一对一通话offer
     SingleCallOffer(Offer),
     /// 一对一通话邀请
@@ -100,19 +137,6 @@ pub enum Msg {
     SingleCallNotAnswer(InviteNotAnswerMsg),
     /// 挂断
     SingleCallHangUp(Hangup),
-    /// 发送好友请求
-    SendRelationshipReq(FriendShipDb),
-    /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方
-    RecRelationship(FriendShipWithUser),
-    /// 回复好友请求（同意）
-    RelationshipRes(FriendWithUser),
-    /// 消息已读
-    ReadNotice(ReadNotice),
-    /// 一对一消息送达
-    SingleDeliveredNotice(DeliveredNotice),
-    /// 好友请求送达
-    FriendshipDeliveredNotice(DeliveredNotice),
-    OfflineSync(Single),
     /// 通话协商消息
     NewIceCandidate(Candidate),
 }

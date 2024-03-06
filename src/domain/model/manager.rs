@@ -24,25 +24,35 @@ impl Manager {
             hub: Arc::new(RwLock::new(HashMap::new())),
         }
     }
+    pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {
+        let guard = self.hub.write().await;
+        for id in obj_ids {
+            if let Some(clients) = guard.get(id) {
+                self.send_msg_to_clients(clients, msg).await;
+            }
+        }
+    }
 
-    pub async fn send_msg(&self, obj_id: &str, msg: &Msg) {
-        let mut guard = self.hub.write().await;
+    pub async fn send_single_msg(&self, obj_id: &str, msg: &Msg) {
+        let guard = self.hub.write().await;
+        if let Some(clients) = guard.get(obj_id) {
+            self.send_msg_to_clients(clients, msg).await;
+        }
+    }
 
-        if let Some(clients) = guard.get_mut(obj_id) {
+    async fn send_msg_to_clients(&self, clients: &HashMap<String, Client>, msg: &Msg) {
+        for client in clients.values() {
             let content = serde_json::to_string(&msg).expect("序列化出错");
-            for client in clients.values_mut() {
-                if let Err(e) = client
-                    .sender
-                    .write()
-                    .await
-                    .send(Message::Text(content.clone()))
-                    .await
-                {
-                    // 不能直接删除客户端，会有所有权问题，因为已经借用为mut了
-                    error!("msg send error: {:?}", e);
-                } else {
-                    // debug!("消息发送成功--{:?}", client.id.clone());
-                }
+            if let Err(e) = client
+                .sender
+                .write()
+                .await
+                .send(Message::Text(content.clone()))
+                .await
+            {
+                error!("msg send error: {:?}", e);
+            } else {
+                // debug!("消息发送成功--{:?}", client.id.clone());
             }
         }
     }
@@ -83,7 +93,7 @@ impl Manager {
                         continue;
                     }
                     // 入库成功后给客户端回复消息已送达的通知
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::Group(msg) => {
                     // 根据组id， 查询所有组下的客户端id
@@ -135,22 +145,22 @@ impl Manager {
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
                 Msg::SingleCallOffer(msg) => {
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallAgree(msg) => {
                     info!("received agree: {:?}", &msg);
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::NewIceCandidate(msg) => {
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInvite(msg) => {
                     info!("received video invite msg: {:?}", &msg);
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInviteAnswer(msg) => {
                     info!("received answer message: {:?}", &msg);
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallInviteCancel(msg) => {
                     // todo 入库
@@ -160,7 +170,7 @@ impl Manager {
                     }
                     info!("received cancel message: {:?}", &msg);
 
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallHangUp(msg) => {
                     info!("received hangup: {:?}", &msg);
@@ -169,7 +179,7 @@ impl Manager {
                         error!("消息入库错误！！{:?}", err);
                         continue;
                     }
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::SingleCallNotAnswer(msg) => {
                     info!("received not answer message: {:?}", &msg);
@@ -177,7 +187,7 @@ impl Manager {
                         error!("消息入库错误！！{:?}", err);
                         continue;
                     }
-                    self.send_msg(&msg.friend_id, &message).await;
+                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::FriendshipDeliveredNotice(msg) => {
                     //  消息已送达，更新数据库
@@ -186,6 +196,8 @@ impl Manager {
                         error!("更新送达状态错误: {:?}", err);
                     }
                 }
+                // use http api way to send this message
+                Msg::CreateGroup(_) => {}
             }
         }
     }

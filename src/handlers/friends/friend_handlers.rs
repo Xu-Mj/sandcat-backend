@@ -73,7 +73,7 @@ pub async fn create(
     // 查找在线用户
     app_state
         .hub
-        .send_msg(&friend_id, &Msg::RecRelationship(fs_send))
+        .send_single_msg(&friend_id, &Msg::RecRelationship(fs_send))
         .await;
     // 用户id为好友id
     // friendship.user_id = friend_id;
@@ -117,7 +117,7 @@ pub async fn agree(
     // 查找在线用户
     app_state
         .hub
-        .send_msg(&user.friend_id, &Msg::RelationshipRes(friend))
+        .send_single_msg(&user.friend_id, &Msg::RelationshipRes(friend))
         .await;
     Ok(Json(user))
 }

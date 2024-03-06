@@ -1,5 +1,3 @@
-use crate::infra::db::schema::users;
-use crate::infra::errors::InfraError;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -7,6 +5,10 @@ use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::infra::db::schema::users;
+use crate::infra::errors::InfraError;
+
+// todo add region attribute
 #[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable, Debug)]
 #[diesel(table_name = users)]
 // 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
@@ -29,7 +31,16 @@ pub struct User {
     #[serde(skip)]
     pub is_delete: bool,
 }
-
+#[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable, Debug)]
+#[diesel(table_name = users)]
+pub struct UserView {
+    pub id: String,
+    pub name: String,
+    pub account: String,
+    pub avatar: String,
+    pub gender: String,
+    pub age: i32,
+}
 type ID = String;
 
 #[derive(Debug)]

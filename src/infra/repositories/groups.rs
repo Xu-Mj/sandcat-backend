@@ -6,7 +6,7 @@ use diesel::{Insertable, Queryable, RunQueryDsl, Selectable};
 use nanoid::nanoid;
 use serde::Serialize;
 
-#[derive(Serialize, Queryable, Selectable, Debug, Insertable)]
+#[derive(Debug, Clone, Serialize, Queryable, Selectable, Insertable)]
 #[diesel(table_name = groups)]
 // 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
 #[diesel(check_for_backend(diesel::pg::Pg))]

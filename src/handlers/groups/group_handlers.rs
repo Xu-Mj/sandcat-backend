@@ -1,10 +1,14 @@
 use crate::domain::model::friends::FriendError;
+use crate::domain::model::msg::{CreateGroup, Msg};
 use crate::infra::repositories::groups::{create_group, GroupDb};
+use crate::infra::repositories::user_repo::get_by_ids;
 use crate::utils::JsonWithAuthExtractor;
 use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 use serde::{Deserialize, Serialize};
+use tokio::task::spawn_local;
+use tracing::error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct GroupRequest {
@@ -34,9 +38,32 @@ pub async fn create_group_handler(
     JsonWithAuthExtractor(new_group): JsonWithAuthExtractor<GroupRequest>,
 ) -> Result<Json<GroupRequest>, FriendError> {
     let pool = app_state.pool.clone();
+    let members_id = new_group.members_id.clone();
     let group = GroupDb::from(new_group);
     let group_db = create_group(&pool, group)
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
-    Ok(Json(group_db.into()))
+    // send message by async way
+    let mut msg = CreateGroup::from(group_db.clone());
+    spawn_local(async move {
+        // select group members info
+        if let Ok(result) = get_by_ids(&pool, members_id.clone())
+            .await
+            .map_err(|err| error!("get_by_ids error: {:#?}", err))
+        {
+            msg.members = result.clone();
+            // send it to online users
+            app_state
+                .hub
+                .send_group(&members_id, &Msg::CreateGroup(msg))
+                .await;
+            // store data to redis
+        }
+        //
+    });
+
+    let group: GroupRequest = group_db.into();
+    // notify other users
+    // make a message
+    Ok(Json(group))
 }
