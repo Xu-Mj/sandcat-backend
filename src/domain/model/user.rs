@@ -41,6 +41,7 @@ pub struct UserView {
     pub gender: String,
     pub age: i32,
 }
+
 type ID = String;
 
 #[derive(Debug)]
