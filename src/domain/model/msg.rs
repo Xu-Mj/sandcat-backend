@@ -1,4 +1,4 @@
-use crate::domain::model::user::User;
+use crate::domain::model::user::UserView;
 use crate::infra::repositories::friends::FriendWithUser;
 use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser};
 use crate::infra::repositories::groups::GroupDb;
@@ -88,7 +88,7 @@ pub struct CreateGroup {
     pub owner: String,
     pub avatar: String,
     pub group_name: String,
-    pub members: Vec<User>,
+    pub members: Vec<UserView>,
 }
 
 impl From<GroupDb> for CreateGroup {

@@ -1,4 +1,4 @@
-use crate::domain::model::user::User;
+use crate::domain::model::user::{User, UserView};
 use crate::infra::db::schema::users;
 use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
@@ -83,13 +83,16 @@ pub async fn get(pool: &Pool, id: String) -> Result<User, InfraError> {
     Ok(user)
 }
 
-pub async fn get_by_ids(pool: &Pool, id: Vec<String>) -> Result<Vec<User>, InfraError> {
+pub async fn get_user_view_by_ids(
+    pool: &Pool,
+    id: Vec<String>,
+) -> Result<Vec<UserView>, InfraError> {
     let conn = pool.get().await.map_err(adapt_infra_error)?;
     let users = conn
         .interact(move |conn| {
             users::table
                 .filter(users::id.eq_any(id).and(users::is_delete.eq(false)))
-                .select(User::as_select())
+                .select(UserView::as_select())
                 .get_results(conn)
         })
         .await

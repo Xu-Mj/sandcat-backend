@@ -1,7 +1,10 @@
-use crate::infra::errors::InfraError;
+use crate::domain::model::user::UserView;
 use redis::aio::Connection;
 use redis::AsyncCommands;
+use redis::Commands;
 use serde::Serialize;
+
+use crate::infra::errors::InfraError;
 
 pub async fn set_string<T: Serialize>(
     mut conn: Connection,
@@ -19,6 +22,33 @@ pub async fn set_string<T: Serialize>(
     Ok(result)
 }
 
+pub fn store_user_views(
+    mut conn: redis::Connection,
+    members: &Vec<UserView>,
+) -> redis::RedisResult<()> {
+    let mut pipe = redis::pipe();
+    for member in members {
+        pipe.set(&member.id, serde_json::to_string(member).unwrap())
+            .ignore();
+    }
+    pipe.query(&mut conn)?;
+    Ok(())
+}
+
+#[allow(dead_code)]
+pub fn get_user_view(
+    mut conn: redis::Connection,
+    user_id: &str,
+) -> redis::RedisResult<Option<UserView>> {
+    let serialized: Option<String> = conn.get(user_id)?;
+    match serialized {
+        Some(s) => {
+            let user_view: UserView = serde_json::from_str(&s).unwrap();
+            Ok(Some(user_view))
+        }
+        None => Ok(None),
+    }
+}
 pub async fn del(mut conn: Connection, key: String) -> Result<(), InfraError> {
     conn.del(key)
         .await
