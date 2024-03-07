@@ -22,7 +22,7 @@ pub async fn set_string<T: Serialize>(
     Ok(result)
 }
 
-pub fn store_user_views(
+pub fn store_group_mems(
     mut conn: redis::Connection,
     members: &Vec<UserView>,
 ) -> redis::RedisResult<()> {

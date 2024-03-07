@@ -5,10 +5,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::{mpsc, RwLock};
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
+use crate::infra::repositories::groups::get_group_by_id;
 use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
 #[derive(Clone)]
@@ -97,7 +98,21 @@ impl Manager {
                 }
                 Msg::Group(msg) => {
                     // 根据组id， 查询所有组下的客户端id
-                    debug!("received group message: {:?}", msg);
+                    match get_group_by_id(&pool, msg.friend_id).await {
+                        Err(err) => {
+                            error!("查询群成员失败: {:?}", err);
+                        }
+                        Ok(group) => {
+                            // 消息写入redis中
+                            // 发送消息
+                            self.send_group(
+                                &group.members.split(',').map(String::from).collect(),
+                                &message,
+                            )
+                            .await;
+                        }
+                    }
+                    // debug!("received group message: {:?}", msg);
                 }
                 Msg::SingleDeliveredNotice(msg) => {
                     //  消息已送达，更新数据库

@@ -1,8 +1,3 @@
-use crate::domain::model::user::User;
-use crate::infra::db::schema::{friendships, users};
-use crate::infra::errors::{adapt_infra_error, InfraError};
-use crate::infra::repositories::friends::{create_friend, FriendDb, FriendWithUser};
-use crate::infra::repositories::user_repo::get_by_2id;
 use deadpool_diesel::postgres::Pool;
 use diesel::pg::Pg;
 use diesel::{
@@ -11,6 +6,12 @@ use diesel::{
 };
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
+
+use crate::domain::model::user::User;
+use crate::infra::db::schema::{friendships, users};
+use crate::infra::errors::{adapt_infra_error, InfraError};
+use crate::infra::repositories::friends::{create_friend, FriendDb, FriendWithUser};
+use crate::infra::repositories::user_repo::get_by_2id;
 
 // status: 0-解除好友关系；1-同意请求；2-申请；3-拒绝
 

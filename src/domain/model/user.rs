@@ -41,6 +41,16 @@ pub struct UserView {
     pub gender: String,
     pub age: i32,
 }
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
+pub struct GroupMember {
+    pub user_id: String,
+    pub name: String,
+    pub account: String,
+    pub avatar: String,
+    pub gender: String,
+    pub age: i32,
+    pub region: Option<String>,
+}
 
 type ID = String;
 

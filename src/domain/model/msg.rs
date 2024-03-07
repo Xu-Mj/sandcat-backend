@@ -84,23 +84,33 @@ impl Msg {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateGroup {
-    pub id: String,
-    pub owner: String,
-    pub avatar: String,
-    pub group_name: String,
+    pub info: GroupInfo,
     pub members: Vec<UserView>,
 }
 
 impl From<GroupDb> for CreateGroup {
     fn from(value: GroupDb) -> Self {
         CreateGroup {
-            id: value.id,
-            owner: value.owner,
-            avatar: value.avatar,
-            group_name: value.name,
+            info: GroupInfo {
+                id: value.id,
+                owner: value.owner,
+                avatar: value.avatar,
+                group_name: value.name,
+                create_time: value.create_time.timestamp(),
+                announcement: value.description,
+            },
             members: vec![],
         }
     }
+}
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+pub struct GroupInfo {
+    pub id: String,
+    pub owner: String,
+    pub avatar: String,
+    pub group_name: String,
+    pub create_time: i64,
+    pub announcement: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
