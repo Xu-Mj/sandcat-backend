@@ -27,7 +27,7 @@ impl From<GroupDb> for GroupRequest {
             owner: value.owner,
             avatar: value.avatar,
             group_name: value.name,
-            members_id: value.members.split(',').map(String::from).collect(),
+            members_id: vec![], // value.members.split(',').map(String::from).collect(),
         }
     }
 }

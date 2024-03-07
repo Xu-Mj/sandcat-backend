@@ -15,11 +15,11 @@ pub struct GroupDb {
     pub id: String,
     pub owner: String,
     pub name: String,
-    pub members: String,
     pub avatar: String,
     pub description: String,
     pub announcement: String,
     pub create_time: chrono::NaiveDateTime,
+    pub update_time: chrono::NaiveDateTime,
 }
 
 impl From<GroupRequest> for GroupDb {
@@ -28,11 +28,11 @@ impl From<GroupRequest> for GroupDb {
             id: nanoid!(),
             owner: value.owner,
             name: value.group_name,
-            members: value.members_id.join(","),
             avatar: value.avatar,
             description: String::new(),
             announcement: String::new(),
             create_time: chrono::Local::now().naive_local(),
+            update_time: chrono::Local::now().naive_local(),
         }
     }
 }

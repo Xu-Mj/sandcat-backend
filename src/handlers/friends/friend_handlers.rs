@@ -1,5 +1,10 @@
 // 根据用户id查询好友列表
 
+use axum::extract::State;
+use axum::Json;
+use nanoid::nanoid;
+
+use crate::domain::model::friend_request_status::FriendStatus;
 use crate::domain::model::friends::FriendError;
 use crate::domain::model::msg::Msg;
 use crate::handlers::friends::{FriendShipAgree, FriendShipRequest};
@@ -13,9 +18,6 @@ use crate::infra::repositories::friendship_repo::{
 };
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
-use axum::extract::State;
-use axum::Json;
-use nanoid::nanoid;
 
 // 获取好友列表
 /*pub async fn get_friends_list_by_user_id(
@@ -49,7 +51,7 @@ pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<Json<Vec<FriendShipWithUser>>, FriendError> {
-    let list = get_by_user_id_and_status(&app_state.pool, id.clone(), String::from("2"))
+    let list = get_by_user_id_and_status(&app_state.pool, id.clone(), FriendStatus::Pending)
         .await
         .map_err(|err| match err {
             InfraError::InternalServerError(msg) => FriendError::InternalServerError(msg),
@@ -127,7 +129,7 @@ pub async fn deny(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, friend_id)): PathWithAuthExtractor<(String, String)>,
 ) -> Result<(), FriendError> {
-    update_friend_ship(&app_state.pool, user_id, friend_id, String::from("3"))
+    update_friend_ship(&app_state.pool, user_id, friend_id, FriendStatus::Rejected)
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
     Ok(())

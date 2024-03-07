@@ -102,14 +102,14 @@ impl Manager {
                         Err(err) => {
                             error!("查询群成员失败: {:?}", err);
                         }
-                        Ok(group) => {
+                        Ok(_group) => {
                             // 消息写入redis中
                             // 发送消息
-                            self.send_group(
-                                &group.members.split(',').map(String::from).collect(),
-                                &message,
-                            )
-                            .await;
+                            // self.send_group(
+                            //     &group.members.split(',').map(String::from).collect(),
+                            //     &message,
+                            // )
+                            // .await;
                         }
                     }
                     // debug!("received group message: {:?}", msg);

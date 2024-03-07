@@ -1,13 +1,21 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "friend_request_status"))]
+    pub struct FriendRequestStatus;
+}
+
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::FriendRequestStatus;
+
     friends (id) {
         id -> Varchar,
         friendship_id -> Varchar,
         user_id -> Varchar,
         friend_id -> Varchar,
-        #[max_length = 1]
-        status -> Bpchar,
+        status -> FriendRequestStatus,
         remark -> Nullable<Varchar>,
         hello -> Nullable<Varchar>,
         source -> Nullable<Varchar>,
@@ -17,12 +25,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::FriendRequestStatus;
+
     friendships (id) {
         id -> Varchar,
         user_id -> Varchar,
         friend_id -> Varchar,
-        #[max_length = 1]
-        status -> Bpchar,
+        status -> FriendRequestStatus,
         apply_msg -> Nullable<Varchar>,
         req_remark -> Nullable<Varchar>,
         response_msg -> Nullable<Varchar>,
@@ -35,16 +45,31 @@ diesel::table! {
 }
 
 diesel::table! {
+    group_members (id) {
+        id -> Int4,
+        group_id -> Varchar,
+        user_id -> Varchar,
+        #[max_length = 128]
+        group_name -> Nullable<Varchar>,
+        #[max_length = 128]
+        group_remark -> Nullable<Varchar>,
+        delivered -> Bool,
+        joined_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     groups (id) {
         id -> Varchar,
+        #[max_length = 256]
         owner -> Varchar,
-        #[max_length = 255]
+        #[max_length = 256]
         name -> Varchar,
-        members -> Text,
         avatar -> Text,
         description -> Text,
         announcement -> Text,
         create_time -> Timestamp,
+        update_time -> Timestamp,
     }
 }
 
@@ -84,8 +109,15 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(group_members -> groups (group_id));
+diesel::joinable!(group_members -> users (user_id));
 diesel::joinable!(groups -> users (owner));
 
-diesel::joinable!(friendships ->users(user_id));
-diesel::joinable!(friends ->users(friend_id));
-diesel::allow_tables_to_appear_in_same_query!(friends, friendships, groups, messages, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    friends,
+    friendships,
+    group_members,
+    groups,
+    messages,
+    users,
+);

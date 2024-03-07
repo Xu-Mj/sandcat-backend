@@ -7,6 +7,7 @@ use diesel::{
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
+use crate::domain::model::friend_request_status::FriendStatus;
 use crate::domain::model::user::User;
 use crate::infra::db::schema::{friendships, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
@@ -34,7 +35,7 @@ pub struct FriendShipDb {
     pub id: String,
     pub user_id: String,
     pub friend_id: String,
-    pub status: String,
+    pub status: FriendStatus,
     pub apply_msg: Option<String>,
     pub req_remark: Option<String>,
     pub response_msg: Option<String>,
@@ -92,7 +93,7 @@ pub struct FriendShipWithUser {
     pub avatar: String,
     pub gender: String,
     pub age: i32,
-    pub status: String,
+    pub status: FriendStatus,
     pub apply_msg: Option<String>,
     pub source: Option<String>,
     #[serde(default)]
@@ -195,7 +196,7 @@ pub async fn update_friend_ship(
     pool: &Pool,
     user_id: String,
     friend_id: String,
-    status: String,
+    status: FriendStatus,
 ) -> Result<FriendShipDb, InfraError> {
     let conn = pool
         .get()
@@ -237,7 +238,7 @@ pub async fn agree_friend_ship(
             diesel::update(friendships::table)
                 .filter(friendships::id.eq(friendship_id))
                 .set((
-                    friendships::status.eq("1"),
+                    friendships::status.eq(FriendStatus::Accepted),
                     friendships::response_msg.eq(response_msg),
                     friendships::res_remark.eq(res_remark),
                     friendships::is_delivered.eq(false),
@@ -283,7 +284,7 @@ pub async fn agree_apply(
             friendship_id: friendship_id.clone(),
             user_id: friendship.user_id.clone(),
             friend_id: friendship.friend_id.clone(),
-            status: "1".to_string(),
+            status: FriendStatus::Accepted,
             remark: friendship.req_remark.clone(),
             hello: friendship.response_msg.clone(),
             source: friendship.source.clone(),
@@ -296,7 +297,7 @@ pub async fn agree_apply(
             friendship_id: friendship_id.clone(),
             user_id: friendship.friend_id.clone(),
             friend_id: friendship.user_id.clone(),
-            status: "1".to_string(),
+            status: FriendStatus::Accepted,
             remark: friendship.res_remark.clone(),
             hello: friendship.apply_msg.clone(),
             source: friendship.source.clone(),
@@ -359,7 +360,7 @@ pub async fn agree_apply(
 pub async fn get_by_user_id_and_status(
     pool: &Pool,
     user_id: String,
-    status: String,
+    status: FriendStatus,
 ) -> Result<Vec<FriendShipWithUser>, InfraError> {
     let conn = pool
         .get()

@@ -1,15 +1,17 @@
-create table friends
+CREATE TYPE friend_request_status AS ENUM ('Pending', 'Accepted', 'Rejected', 'Blacked', 'Cancelled');
+
+CREATE TABLE friends
 (
-    id            varchar primary key,
-    friendship_id varchar   not null,
-    user_id       varchar   not null,
-    friend_id     varchar   not null,
-    status        char      not null default '0',
-    remark        varchar,
-    hello        varchar,
-    source        varchar,
-    create_time   timestamp not null default now(),
-    update_time   timestamp not null default now(),
+    id            VARCHAR primary key,
+    friendship_id VARCHAR              NOT NULL,
+    user_id       VARCHAR              NOT NULL,
+    friend_id     VARCHAR              NOT NULL,
+    status        friend_request_status NOT NULL DEFAULT 'Pending',
+    remark        VARCHAR,
+    hello         VARCHAR,
+    source        VARCHAR,
+    create_time   timestamp            NOT NULL DEFAULT now(),
+    update_time   timestamp            NOT NULL DEFAULT now(),
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (friend_id) REFERENCES users (id),
     CONSTRAINT unique_user_friend UNIQUE (user_id, friend_id)

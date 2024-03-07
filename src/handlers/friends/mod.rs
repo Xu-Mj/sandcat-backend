@@ -1,12 +1,14 @@
+pub mod friend_handlers;
+
 use serde::Deserialize;
 
-pub mod friend_handlers;
+use crate::domain::model::friend_request_status::FriendStatus;
 
 #[derive(Debug, Deserialize)]
 pub struct FriendShipRequest {
     user_id: String,
     friend_id: String,
-    status: String,
+    status: FriendStatus,
     apply_msg: Option<String>,
     source: Option<String>,
     remark: Option<String>,

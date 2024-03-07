@@ -6,6 +6,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::domain::model::friend_request_status::FriendStatus;
 use crate::domain::model::user::User;
 use crate::infra::db::schema::{friends, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
@@ -21,7 +22,7 @@ pub struct FriendDb {
     pub user_id: String,
     pub friend_id: String,
     // 0: delete; 1: friend; 2: blacklist
-    pub status: String,
+    pub status: FriendStatus,
     pub remark: Option<String>,
     pub hello: Option<String>,
     pub source: Option<String>,
@@ -35,7 +36,7 @@ pub struct FriendWithUser {
     pub friend_id: String,
     pub remark: Option<String>,
     pub hello: Option<String>,
-    pub status: String,
+    pub status: FriendStatus,
     pub create_time: chrono::NaiveDateTime,
     pub update_time: chrono::NaiveDateTime,
     pub from: Option<String>,
@@ -64,7 +65,7 @@ pub async fn get_friend_list(
             friends::table
                 .inner_join(users::table.on(users::id.eq(friends::friend_id)))
                 .filter(friends::user_id.eq(user_id.clone()))
-                .filter(friends::status.eq("1"))
+                .filter(friends::status.eq(FriendStatus::Accepted))
                 .select((
                     friends::id,
                     friends::friend_id,

@@ -1,7 +1,14 @@
 use std::sync::Arc;
+
+use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{State, WebSocketUpgrade};
+use axum::response::IntoResponse;
+use futures::{SinkExt, StreamExt};
+use redis::Client;
 use tokio::sync::RwLock;
 
 use crate::domain::model;
+use crate::domain::model::friend_request_status::FriendStatus;
 use crate::domain::model::msg::Msg;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friendship_repo::get_by_user_id_and_status;
@@ -9,11 +16,6 @@ use crate::infra::repositories::messages::get_offline_msg;
 use crate::utils::redis::redis_crud;
 use crate::utils::PathExtractor;
 use crate::AppState;
-use axum::extract::ws::{Message, WebSocket};
-use axum::extract::{State, WebSocketUpgrade};
-use axum::response::IntoResponse;
-use futures::{SinkExt, StreamExt};
-use redis::Client;
 
 pub async fn register_ws(redis: Client, user_id: String) -> Result<String, InfraError> {
     let redis_conn = redis
@@ -93,7 +95,7 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         }
 
         // 查询好友请求，
-        match get_by_user_id_and_status(&pool, user_id.clone(), String::from("2")).await {
+        match get_by_user_id_and_status(&pool, user_id.clone(), FriendStatus::Pending).await {
             Ok(list) => {
                 for msg in list {
                     let msg = Msg::RecRelationship(msg);
