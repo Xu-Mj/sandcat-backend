@@ -8,7 +8,8 @@ CREATE TABLE group_members
     delivered    bool      NOT NULL DEFAULT FALSE,
     joined_at    timestamp NOT NULL DEFAULT now(),
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (group_id) REFERENCES groups (id)
+    -- when group deleted, all members which belong to that group will be deleted
+    FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_group_members_group_id ON group_members (group_id);
 -- when user login, we need to check if there is any unread 'create group' message

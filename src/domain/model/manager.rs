@@ -1,6 +1,7 @@
 use axum::extract::ws::Message;
 use deadpool_diesel::postgres::Pool;
 use futures::SinkExt;
+use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::error::SendError;
@@ -81,7 +82,13 @@ impl Manager {
             }
         }
     }
-    pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>, pool: Pool) {
+    pub async fn run(
+        &mut self,
+        mut receiver: mpsc::Receiver<Msg>,
+        pool: Pool,
+        pg_pool: PgPool,
+        redis: redis::Client,
+    ) {
         info!("manager start");
         // 循环读取消息
         while let Some(message) = receiver.recv().await {
@@ -98,18 +105,20 @@ impl Manager {
                 }
                 Msg::Group(msg) => {
                     // 根据组id， 查询所有组下的客户端id
-                    match get_group_by_id(&pool, msg.friend_id).await {
-                        Err(err) => {
-                            error!("查询群成员失败: {:?}", err);
-                        }
-                        Ok(_group) => {
-                            // 消息写入redis中
-                            // 发送消息
-                            // self.send_group(
-                            //     &group.members.split(',').map(String::from).collect(),
-                            //     &message,
-                            // )
-                            // .await;
+                    if let Ok(mut conn) = redis.get_connection() {
+                        match get_group_by_id(&mut conn, &pg_pool, msg.friend_id).await {
+                            Err(err) => {
+                                error!("查询群成员失败: {:?}", err);
+                            }
+                            Ok(_group) => {
+                                // 消息写入redis中
+                                // 发送消息
+                                // self.send_group(
+                                //     &group.members.split(',').map(String::from).collect(),
+                                //     &message,
+                                // )
+                                // .await;
+                            }
                         }
                     }
                     // debug!("received group message: {:?}", msg);

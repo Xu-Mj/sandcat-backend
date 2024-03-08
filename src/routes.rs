@@ -59,6 +59,6 @@ fn file_routes(state: AppState) -> Router {
 
 fn group_routes(state: AppState) -> Router {
     Router::new()
-        .route("/", post(create_group_handler))
+        .route("/:user_id", post(create_group_handler))
         .with_state(state)
 }

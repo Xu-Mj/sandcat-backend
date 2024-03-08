@@ -38,8 +38,12 @@ async fn main() {
     let hub = manager::Manager::new(tx);
     let mut cloned_hub = hub.clone();
     let cloned_pool = pool.clone();
+    let cloned_pg_pool = pg_pool.clone();
+    let cloned_redis = redis.clone();
     tokio::spawn(async move {
-        cloned_hub.run(rx, cloned_pool).await;
+        cloned_hub
+            .run(rx, cloned_pool, cloned_pg_pool, cloned_redis)
+            .await;
     });
     let app_state = AppState {
         pool,

@@ -1,14 +1,18 @@
-use deadpool_diesel::postgres::Pool;
-use diesel::{ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable};
+use diesel::{Insertable, Queryable, Selectable};
 use nanoid::nanoid;
+use redis::Connection;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::postgres::PgRow;
+use sqlx::{Error, FromRow, PgPool, Row};
+use tracing::warn;
 
 use crate::domain::model::group_members::GroupMemberWithUser;
 use crate::domain::model::msg::CreateGroup;
 use crate::handlers::groups::GroupRequest;
 use crate::infra::db::schema::groups;
-use crate::infra::errors::{adapt_infra_error, InfraError};
+use crate::infra::errors::InfraError;
+use crate::infra::Validator;
+use crate::utils::redis::redis_crud::{get_group_info, get_group_members};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Insertable)]
 #[diesel(table_name = groups)]
@@ -27,6 +31,7 @@ pub struct GroupDb {
 
 impl From<GroupRequest> for GroupDb {
     fn from(value: GroupRequest) -> Self {
+        let now = chrono::Local::now().naive_local();
         GroupDb {
             id: nanoid!(),
             owner: value.owner,
@@ -34,18 +39,42 @@ impl From<GroupRequest> for GroupDb {
             avatar: value.avatar,
             description: String::new(),
             announcement: String::new(),
-            create_time: chrono::Local::now().naive_local(),
-            update_time: chrono::Local::now().naive_local(),
+            create_time: now,
+            update_time: now,
         }
     }
 }
 
+impl Validator for GroupDb {
+    fn validate(&self) -> Result<(), InfraError> {
+        if self.name.is_empty() {
+            return Err(InfraError::ValidateError);
+        }
+        Ok(())
+    }
+}
+
+impl FromRow<'_, PgRow> for GroupDb {
+    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+        Ok(Self {
+            id: row.get("id"),
+            owner: row.get("owner"),
+            name: row.get("name"),
+            avatar: row.get("avatar"),
+            description: row.get("description"),
+            announcement: row.get("announcement"),
+            create_time: row.get("create_time"),
+            update_time: row.get("update_time"),
+        })
+    }
+}
 /// create a new record
 pub async fn create_group_with_members(
     pool: &PgPool,
     mut group: CreateGroup,
     members: Vec<String>,
 ) -> Result<CreateGroup, InfraError> {
+    group.info.validate()?;
     let mut tx = pool.begin().await?;
     // create group
     sqlx::query(
@@ -91,19 +120,93 @@ pub async fn create_group_with_members(
 }
 
 /// query group by group id
-pub async fn get_group_by_id(pool: &Pool, group_id: String) -> Result<GroupDb, InfraError> {
-    let conn = pool
-        .get()
-        .await
-        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
-    let group = conn
-        .interact(move |conn| {
-            groups::table
-                .filter(groups::id.eq(&group_id))
-                .get_result(conn)
-        })
-        .await
-        .map_err(adapt_infra_error)?
-        .map_err(adapt_infra_error)?;
+pub async fn get_group_by_id(
+    redis: &mut Connection,
+    pool: &PgPool,
+    group_id: String,
+) -> Result<GroupDb, InfraError> {
+    // query form redis first
+    match get_group_info(redis, &group_id) {
+        Ok(info) => Ok(info),
+        Err(_err) => {
+            warn!(
+                "query group info from redis failed: {:?}",
+                InfraError::RedisQueryError(_err)
+            );
+            // query from db
+            let group: GroupDb = sqlx::query_as("SELECT * FROM groups WHERE id = $1")
+                .bind(&group_id)
+                .fetch_one(pool)
+                .await?;
+            // todo store to redis
+            Ok(group)
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub async fn query_group_info_with_members_by_group_id(
+    pool: &PgPool,
+    redis: &mut Connection,
+    group_id: String,
+) -> Result<CreateGroup, InfraError> {
+    // query redis first
+    let info: GroupDb = match get_group_info(redis, &group_id) {
+        Ok(info) => info,
+        Err(_) => {
+            // if not found, query db
+            sqlx::query_as("SELECT * FROM groups WHERE id = $1")
+                .bind(&group_id)
+                .fetch_one(pool)
+                .await?
+        }
+    };
+
+    // query members
+    let members: Vec<GroupMemberWithUser> = match get_group_members(redis, &group_id) {
+        Ok(m) => m,
+        Err(_) => {
+            sqlx::query_as(
+                "SELECT id, user_id, group_id, group_name, group_remark, delivered, joined_at FROM group_members WHERE group_id = $1",
+            )
+                .bind(&group_id)
+                .fetch_all(pool)
+                .await?
+        }
+    };
+    let group = CreateGroup { info, members };
+    Ok(group)
+}
+#[allow(dead_code)]
+
+/// update group
+pub async fn update_group(pool: &PgPool, group: GroupDb) -> Result<GroupDb, InfraError> {
+    let now = chrono::Local::now().naive_local();
+    let group: GroupDb = sqlx::query_as(
+        "UPDATE groups SET
+         name = COALESCE(NULLIF($1, ''), name),
+         avatar = COALESCE(NULLIF($2, ''), avatar),
+         description = COALESCE(NULLIF($3, ''), description),
+         announcement = COALESCE(NULLIF($4, ''), announcement),
+         update_time = $5)
+         WHERE id = $6",
+    )
+    .bind(&group.name)
+    .bind(&group.avatar)
+    .bind(&group.description)
+    .bind(&group.announcement)
+    .bind(now)
+    .bind(&group.id)
+    .fetch_one(pool)
+    .await?;
+    Ok(group)
+}
+#[allow(dead_code)]
+
+pub async fn delete_group(pool: &PgPool, group_id: String) -> Result<GroupDb, InfraError> {
+    let group: GroupDb = sqlx::query_as("DELETE FROM groups WHERE id = $1 RETURNING *")
+        .bind(&group_id)
+        .fetch_one(pool)
+        .await?;
     Ok(group)
 }

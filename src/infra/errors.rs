@@ -8,6 +8,10 @@ pub enum InfraError {
     DbError(sqlx::Error),
     #[error("Resource not found error")]
     NotFound,
+    #[error("Validation error")]
+    ValidateError,
+    #[error("Redis query error{0}")]
+    RedisQueryError(redis::RedisError),
     #[error("Unknown error")]
     Unknown,
 }
