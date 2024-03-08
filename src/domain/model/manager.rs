@@ -10,7 +10,7 @@ use tracing::{error, info};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
-use crate::infra::repositories::groups::get_group_by_id;
+use crate::infra::repositories::group_members::query_group_members_id;
 use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
 #[derive(Clone)]
@@ -106,18 +106,16 @@ impl Manager {
                 Msg::Group(msg) => {
                     // 根据组id， 查询所有组下的客户端id
                     if let Ok(mut conn) = redis.get_connection() {
-                        match get_group_by_id(&mut conn, &pg_pool, msg.friend_id).await {
+                        match query_group_members_id(&mut conn, &pg_pool, msg.friend_id).await {
                             Err(err) => {
                                 error!("查询群成员失败: {:?}", err);
                             }
-                            Ok(_group) => {
+                            Ok(mut list) => {
                                 // 消息写入redis中
+                                // delete self id
+                                list.retain(|id| id != &msg.send_id);
                                 // 发送消息
-                                // self.send_group(
-                                //     &group.members.split(',').map(String::from).collect(),
-                                //     &message,
-                                // )
-                                // .await;
+                                self.send_group(&list, &message).await;
                             }
                         }
                     }

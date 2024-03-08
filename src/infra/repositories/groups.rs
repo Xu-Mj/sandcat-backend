@@ -119,6 +119,7 @@ pub async fn create_group_with_members(
     Ok(group)
 }
 
+#[allow(dead_code)]
 /// query group by group id
 pub async fn get_group_by_id(
     redis: &mut Connection,
@@ -145,7 +146,7 @@ pub async fn get_group_by_id(
 }
 
 #[allow(dead_code)]
-pub async fn query_group_info_with_members_by_group_id(
+pub async fn query_group_info_and_members_by_group_id(
     pool: &PgPool,
     redis: &mut Connection,
     group_id: String,

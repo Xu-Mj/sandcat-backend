@@ -36,13 +36,21 @@ pub fn store_group(mut conn: redis::Connection, group: &CreateGroup) -> redis::R
     let mut pipe = redis::pipe();
     for member in &group.members {
         let member_json = serde_json::to_string(&member).unwrap();
-        pipe.hset(&key, member.id, member_json);
+        pipe.hset(&key, &member.user_id, member_json);
     }
-    pipe.execute(&mut conn);
+    pipe.query(&mut conn)?;
 
     Ok(())
 }
 
+pub fn get_members_id(
+    conn: &mut redis::Connection,
+    group_id: &str,
+) -> redis::RedisResult<Vec<String>> {
+    let key = format!("group_members:{}", group_id);
+    let members: Vec<String> = conn.hkeys(&key).unwrap();
+    Ok(members)
+}
 pub fn get_group_info(conn: &mut redis::Connection, group_id: &str) -> redis::RedisResult<GroupDb> {
     let group_info: String = conn.hget("groups_info", group_id)?;
     let group = serde_json::from_str(&group_info).unwrap();
