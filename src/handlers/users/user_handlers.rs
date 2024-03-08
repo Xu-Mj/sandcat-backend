@@ -68,6 +68,7 @@ pub async fn get_user_by_id(
         .map_err(|err| match err {
             InfraError::InternalServerError(e) => UserError::InternalServerError(e),
             InfraError::NotFound => UserError::NotFound(id),
+            _ => UserError::InternalServerError("Unknown Error".to_string()),
         })?;
     Ok(Json(user))
 }
@@ -143,7 +144,7 @@ pub async fn login(
             tracing::error!("login error: {:?}", &err);
             match err {
                 InfraError::InternalServerError(e) => UserError::InternalServerError(e),
-                InfraError::NotFound => UserError::LoginError,
+                _ => UserError::LoginError,
             }
         })?;
     // 生成token

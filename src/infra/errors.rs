@@ -1,10 +1,25 @@
 use deadpool_diesel::InteractError;
-use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum InfraError {
+    #[error("Internal error:{0}")]
     InternalServerError(String),
+    #[error("Database error{0}")]
+    DbError(sqlx::Error),
+    #[error("Resource not found error")]
     NotFound,
+    #[error("Unknown error")]
+    Unknown,
+}
+
+impl From<sqlx::Error> for InfraError {
+    fn from(value: sqlx::Error) -> Self {
+        match value {
+            sqlx::Error::Database(e) => Self::DbError(sqlx::Error::Database(e)),
+            sqlx::Error::RowNotFound => Self::NotFound,
+            _ => InfraError::Unknown,
+        }
+    }
 }
 
 pub fn adapt_infra_error<E: Error>(err: E) -> InfraError {
@@ -17,18 +32,20 @@ pub trait Error {
 }
 
 // 实现Display特征，设置InfraError打印格式
-impl Display for InfraError {
+/*impl Display for InfraError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             InfraError::InternalServerError(err_msg) => {
                 write!(f, "Internal Server Error{}", err_msg)
             }
-            InfraError::NotFound => {
-                write!(f, "Not Found")
+            InfraError::NotFound => write!(f, "Not Found"),
+            InfraError::DbError(e) => {
+                write!(f, "Database Error{:?}", e)
             }
+            InfraError::Unknown => write!(f, "Unknown Error"),
         }
     }
-}
+}*/
 
 // 将diesel错误转为基础设施错误
 impl Error for diesel::result::Error {

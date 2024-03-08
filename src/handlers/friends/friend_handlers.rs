@@ -42,6 +42,7 @@ pub async fn get_friends_list_by_user_id2(
         .map_err(|err| match err {
             InfraError::InternalServerError(msg) => FriendError::InternalServerError(msg),
             InfraError::NotFound => FriendError::NotFound(id),
+            _ => FriendError::InternalServerError("unknown error".to_string()),
         })?;
     Ok(Json(list))
 }
@@ -56,6 +57,7 @@ pub async fn get_apply_list_by_user_id(
         .map_err(|err| match err {
             InfraError::InternalServerError(msg) => FriendError::InternalServerError(msg),
             InfraError::NotFound => FriendError::NotFound(id),
+            _ => FriendError::InternalServerError("unknown error".to_string()),
         })?;
     Ok(Json(list))
 }

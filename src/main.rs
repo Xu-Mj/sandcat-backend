@@ -10,12 +10,14 @@ use crate::routes::app_routes;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
 use redis::Client;
+use sqlx::PgPool;
 use tokio::sync::mpsc;
 use tracing::Level;
 
 #[derive(Clone)]
 pub struct AppState {
     pool: Pool,
+    pg_pool: PgPool,
     hub: manager::Manager,
     redis: Client,
 }
@@ -31,6 +33,7 @@ async fn main() {
     // Create a connection pool to the PostgreSQL database
     let manager = Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
     let pool = Pool::builder(manager).build().unwrap();
+    let pg_pool = PgPool::connect(database_url).await.unwrap();
     let redis = Client::open(config::config().await.redis_url()).expect("redis can't open");
     let hub = manager::Manager::new(tx);
     let mut cloned_hub = hub.clone();
@@ -38,7 +41,12 @@ async fn main() {
     tokio::spawn(async move {
         cloned_hub.run(rx, cloned_pool).await;
     });
-    let app_state = AppState { pool, hub, redis };
+    let app_state = AppState {
+        pool,
+        pg_pool,
+        hub,
+        redis,
+    };
     let app = app_routes(app_state);
 
     let addr = format!(

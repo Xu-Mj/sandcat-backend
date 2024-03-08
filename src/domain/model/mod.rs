@@ -7,6 +7,7 @@ use tokio::sync::RwLock;
 pub(crate) mod friend_request_status;
 pub(crate) mod friends;
 pub(crate) mod group;
+pub(crate) mod group_members;
 pub(crate) mod manager;
 pub(crate) mod msg;
 pub(crate) mod user;

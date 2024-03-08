@@ -1,9 +1,9 @@
-use crate::domain::model::user::UserView;
 use redis::aio::Connection;
 use redis::AsyncCommands;
 use redis::Commands;
 use serde::Serialize;
 
+use crate::domain::model::user::UserView;
 use crate::infra::errors::InfraError;
 
 pub async fn set_string<T: Serialize>(
@@ -22,6 +22,7 @@ pub async fn set_string<T: Serialize>(
     Ok(result)
 }
 
+#[allow(dead_code)]
 pub fn store_group_mems(
     mut conn: redis::Connection,
     members: &Vec<UserView>,

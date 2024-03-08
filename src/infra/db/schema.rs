@@ -46,7 +46,7 @@ diesel::table! {
 
 diesel::table! {
     group_members (id) {
-        id -> Int4,
+        id -> Int8,
         group_id -> Varchar,
         user_id -> Varchar,
         #[max_length = 128]
@@ -102,6 +102,8 @@ diesel::table! {
         email -> Nullable<Varchar>,
         #[max_length = 1024]
         address -> Nullable<Varchar>,
+        #[max_length = 1024]
+        region -> Nullable<Varchar>,
         birthday -> Nullable<Timestamp>,
         create_time -> Timestamp,
         update_time -> Timestamp,

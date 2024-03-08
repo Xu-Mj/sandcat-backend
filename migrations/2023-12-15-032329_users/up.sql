@@ -10,6 +10,7 @@ CREATE TABLE users
     phone       VARCHAR(20),
     email       VARCHAR(64),
     address     VARCHAR(1024),
+    region      VARCHAR(1024),
     birthday    timestamp          DEFAULT now(),
     create_time timestamp NOT NULL DEFAULT now(),
     update_time timestamp NOT NULL DEFAULT now(),

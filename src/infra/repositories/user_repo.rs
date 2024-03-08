@@ -83,6 +83,7 @@ pub async fn get(pool: &Pool, id: String) -> Result<User, InfraError> {
     Ok(user)
 }
 
+#[allow(dead_code)]
 pub async fn get_user_view_by_ids(
     pool: &Pool,
     id: Vec<String>,

@@ -25,6 +25,7 @@ pub struct User {
     pub phone: Option<String>,
     pub email: Option<String>,
     pub address: Option<String>,
+    pub region: Option<String>,
     pub birthday: Option<chrono::NaiveDateTime>,
     pub create_time: chrono::NaiveDateTime,
     pub update_time: chrono::NaiveDateTime,
@@ -40,16 +41,6 @@ pub struct UserView {
     pub avatar: String,
     pub gender: String,
     pub age: i32,
-}
-#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
-pub struct GroupMember {
-    pub user_id: String,
-    pub name: String,
-    pub account: String,
-    pub avatar: String,
-    pub gender: String,
-    pub age: i32,
-    pub region: Option<String>,
 }
 
 type ID = String;

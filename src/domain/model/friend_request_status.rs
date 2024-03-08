@@ -35,12 +35,6 @@ impl FromSql<FriendRequestStatus, Pg> for FriendStatus {
     }
 }
 
-// impl FromSqlRow<FriendRequestStatus, Pg> for FriendStatus {
-//     fn build_from_row<'a>(row: &impl Row<'a, Pg>) -> diesel::deserialize::Result<Self> {
-//         Self::from_sql(row.take())
-//     }
-// }
-
 impl ToSql<FriendRequestStatus, Pg> for FriendStatus {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
         match self {

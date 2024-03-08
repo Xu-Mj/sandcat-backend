@@ -1,12 +1,12 @@
 CREATE TABLE group_members
 (
-    id           serial primary key,
-    group_id     varchar   not null,
-    user_id      varchar   not null,
-    group_name   varchar(128),
-    group_remark varchar(128),
-    delivered    bool      not null default false,
-    joined_at    timestamp not null default now(),
+    id           BIGSERIAL PRIMARY KEY,
+    group_id     VARCHAR   NOT NULL,
+    user_id      VARCHAR   NOT NULL,
+    group_name   VARCHAR(128),
+    group_remark VARCHAR(128),
+    delivered    bool      NOT NULL DEFAULT FALSE,
+    joined_at    timestamp NOT NULL DEFAULT now(),
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (group_id) REFERENCES groups (id)
 );
