@@ -126,6 +126,9 @@ pub struct GroupInfo {
 }
 
 pub type MessageID = String;
+pub type GroupID = String;
+pub type UserID = String;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Msg {
     /// 一对一聊天
@@ -133,6 +136,7 @@ pub enum Msg {
     /// 群聊
     Group(Single),
     GroupInvitation(GroupInvitation),
+    GroupInvitationReceived((UserID, GroupID)),
     /// 发送好友请求
     SendRelationshipReq(FriendShipDb),
     /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方

@@ -10,7 +10,9 @@ use tracing::{error, info};
 
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
-use crate::infra::repositories::group_members::query_group_members_id;
+use crate::infra::repositories::group_members::{
+    group_invitation_delivered, query_group_members_id,
+};
 use crate::infra::repositories::messages::{insert_msg, msg_delivered, msg_read, NewMsgDb};
 
 #[derive(Clone)]
@@ -209,6 +211,14 @@ impl Manager {
                 }
                 // use http api way to send this message
                 Msg::GroupInvitation(_) => {}
+                Msg::GroupInvitationReceived((user_id, group_id)) => {
+                    // update group_members
+                    if let Err(err) =
+                        group_invitation_delivered(&pg_pool, &user_id, &group_id).await
+                    {
+                        error!("update group invitation delivered with group id {group_id}; user id {user_id} error: {:?}", err)
+                    }
+                }
             }
         }
     }

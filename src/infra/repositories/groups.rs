@@ -157,10 +157,11 @@ pub async fn query_group_invitation_by_user_id(
     user_id: String,
 ) -> Result<Vec<GroupInvitation>, InfraError> {
     // query group_members for groups id only by user id
-    let groups: Vec<PgRow> = sqlx::query("SELECT group_id FROM group_members WHERE user_id = $1")
-        .bind(&user_id)
-        .fetch_all(pool)
-        .await?;
+    let groups: Vec<PgRow> =
+        sqlx::query("SELECT group_id FROM group_members WHERE user_id = $1 and delivered = false")
+            .bind(&user_id)
+            .fetch_all(pool)
+            .await?;
     let mut invitations = Vec::with_capacity(groups.len());
     for row in groups {
         let group_id = row.get(0);

@@ -20,18 +20,17 @@ pub async fn query_group_invitation_by_user_id(
     Ok(result)
 }
 
-#[allow(dead_code)]
-pub async fn group_invitation_delivered_by_user_id(
+pub async fn group_invitation_delivered(
     pool: &PgPool,
-    user_id: String,
-) -> Result<GroupMember, InfraError> {
-    let result: GroupMember = sqlx::query_as(
-        "UPDATE group_members SET delivered = true WHERE user_id = $1 AND delivered = false",
-    )
-    .bind(&user_id)
-    .fetch_one(pool)
-    .await?;
-    Ok(result)
+    user_id: &str,
+    group_id: &str,
+) -> Result<(), InfraError> {
+    sqlx::query("UPDATE group_members SET delivered = true WHERE user_id = $1 AND group_id = $2")
+        .bind(user_id)
+        .bind(group_id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 pub async fn query_group_members_id(
