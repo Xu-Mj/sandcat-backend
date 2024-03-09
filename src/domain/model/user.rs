@@ -19,6 +19,7 @@ pub struct User {
     pub account: String,
     #[serde(skip)]
     pub password: String,
+    pub is_online: bool,
     pub avatar: String,
     pub gender: String,
     pub age: i32,
@@ -31,16 +32,6 @@ pub struct User {
     pub update_time: chrono::NaiveDateTime,
     #[serde(skip)]
     pub is_delete: bool,
-}
-#[derive(Clone, Serialize, Default, Deserialize, Selectable, Queryable, Debug)]
-#[diesel(table_name = users)]
-pub struct UserView {
-    pub id: String,
-    pub name: String,
-    pub account: String,
-    pub avatar: String,
-    pub gender: String,
-    pub age: i32,
 }
 
 type ID = String;

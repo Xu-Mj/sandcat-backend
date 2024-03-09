@@ -1,33 +1,15 @@
-use crate::domain::model::user::{User, UserView};
-use crate::infra::db::schema::users;
-use crate::infra::errors::{adapt_infra_error, InfraError};
 use deadpool_diesel::postgres::Pool;
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, SelectableHelper,
     TextExpressionMethods,
 };
 use serde::Deserialize;
+use sqlx::PgPool;
+use tracing::error;
 
-// #[derive(Serialize, Queryable, Selectable, Debug)]
-// // 指定表明
-// #[diesel(table_name=users)]
-// // 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
-// #[diesel(check_for_backend(diesel::pg::Pg))]
-// pub struct UserDb {
-//     pub id: String,
-//     pub name: String,
-//     pub account: String,
-//     pub password: String,
-//     pub avatar: String,
-//     pub gender: String,
-//     pub phone: Option<String>,
-//     pub email: Option<String>,
-//     pub address: Option<String>,
-//     pub birthday: Option<chrono::NaiveDateTime>,
-//     pub create_time: chrono::NaiveDateTime,
-//     pub update_time: chrono::NaiveDateTime,
-//     pub is_delete: bool,
-// }
+use crate::domain::model::user::User;
+use crate::infra::db::schema::users;
+use crate::infra::errors::{adapt_infra_error, InfraError};
 
 // 新建用户结构体
 #[derive(Deserialize, Insertable, Default)]
@@ -38,6 +20,7 @@ pub struct NewUserDb {
     pub name: String,
     pub account: String,
     pub password: String,
+    pub is_online: bool,
     pub avatar: String,
     pub gender: String,
     pub age: i32,
@@ -45,6 +28,20 @@ pub struct NewUserDb {
     pub email: Option<String>,
     pub address: Option<String>,
     pub birthday: Option<chrono::NaiveDateTime>,
+}
+
+/// update online status
+pub async fn update_online(pool: &PgPool, id: &String, is_online: bool) -> Result<(), InfraError> {
+    sqlx::query("UPDATE users SET is_online = $1 WHERE id = $2")
+        .bind(is_online)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("update online status error:{:?}", e);
+            e
+        })?;
+    Ok(())
 }
 
 // 新建
@@ -81,26 +78,6 @@ pub async fn get(pool: &Pool, id: String) -> Result<User, InfraError> {
         .map_err(adapt_infra_error)?;
     // tracing::debug!("get user by id: {:?}", &user);
     Ok(user)
-}
-
-#[allow(dead_code)]
-pub async fn get_user_view_by_ids(
-    pool: &Pool,
-    id: Vec<String>,
-) -> Result<Vec<UserView>, InfraError> {
-    let conn = pool.get().await.map_err(adapt_infra_error)?;
-    let users = conn
-        .interact(move |conn| {
-            users::table
-                .filter(users::id.eq_any(id).and(users::is_delete.eq(false)))
-                .select(UserView::as_select())
-                .get_results(conn)
-        })
-        .await
-        .map_err(adapt_infra_error)?
-        .map_err(adapt_infra_error)?;
-    // tracing::debug!("get user by id: {:?}", &user);
-    Ok(users)
 }
 
 pub async fn get_by_2id(

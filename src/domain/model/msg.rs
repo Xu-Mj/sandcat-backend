@@ -163,6 +163,24 @@ pub enum Msg {
     NewIceCandidate(Candidate),
 }
 
+impl Msg {
+    pub fn get_friend_id(&self) -> Option<&str> {
+        match self {
+            Msg::Single(single) => Some(&single.friend_id),
+            Msg::Group(single) => Some(&single.friend_id),
+            Msg::NewIceCandidate(msg) => Some(&msg.friend_id),
+            Msg::SingleCallAgree(msg) => Some(&msg.friend_id),
+            Msg::SingleCallInvite(msg) => Some(&msg.friend_id),
+            Msg::SingleCallInviteAnswer(msg) => Some(&msg.friend_id),
+            Msg::SingleCallInviteCancel(msg) => Some(&msg.friend_id),
+            Msg::SingleCallOffer(msg) => Some(&msg.friend_id),
+            Msg::SingleCallNotAnswer(msg) => Some(&msg.friend_id),
+
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct Single {
     pub msg_id: String,

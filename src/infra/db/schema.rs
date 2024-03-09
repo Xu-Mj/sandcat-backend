@@ -93,6 +93,7 @@ diesel::table! {
         name -> Varchar,
         account -> Varchar,
         password -> Varchar,
+        is_online -> Bool,
         avatar -> Varchar,
         gender -> Varchar,
         age -> Int4,

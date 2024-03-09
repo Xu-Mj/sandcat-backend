@@ -166,23 +166,13 @@ impl Manager {
                 Msg::RelationshipRes(_msg) => {}
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
-                Msg::SingleCallOffer(msg) => {
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::SingleCallAgree(msg) => {
-                    info!("received agree: {:?}", &msg);
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::NewIceCandidate(msg) => {
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::SingleCallInvite(msg) => {
-                    info!("received video invite msg: {:?}", &msg);
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::SingleCallInviteAnswer(msg) => {
-                    info!("received answer message: {:?}", &msg);
-                    self.send_single_msg(&msg.friend_id, &message).await;
+                Msg::SingleCallOffer(_)
+                | Msg::SingleCallAgree(_)
+                | Msg::NewIceCandidate(_)
+                | Msg::SingleCallInvite(_)
+                | Msg::SingleCallInviteAnswer(_) => {
+                    let friend_id = message.get_friend_id().unwrap();
+                    self.send_single_msg(friend_id, &message).await;
                 }
                 Msg::SingleCallInviteCancel(msg) => {
                     // todo 入库

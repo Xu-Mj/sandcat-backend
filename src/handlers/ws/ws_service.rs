@@ -13,6 +13,7 @@ use crate::domain::model::msg::Msg;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friendship_repo::get_by_user_id_and_status;
 use crate::infra::repositories::messages::get_offline_msg;
+use crate::infra::repositories::user_repo::update_online;
 use crate::utils::redis::redis_crud;
 use crate::utils::PathExtractor;
 use crate::AppState;
@@ -62,14 +63,18 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         pointer_id.clone()
     );
     let pool = state.pool;
-    let state = state.hub;
+    let hub = state.hub;
     let (ws_tx, mut ws_rx) = ws.split();
     let shared_tx = Arc::new(RwLock::new(ws_tx));
     let client = model::Client {
         id: pointer_id.clone(),
         sender: shared_tx.clone(),
     };
-    state.register(user_id.clone(), client).await;
+    hub.register(user_id.clone(), client).await;
+    // mark user online
+    if let Err(err) = update_online(&state.pg_pool, &user_id, true).await {
+        tracing::error!("更新用户在线状态错误: {}", err);
+    }
     // 注册完成后，查询离线消息，以同步的方式发送给客户端
     {
         // 因为这里取得了锁，因此其他消息会阻塞，只有将离线消息都发送给客户端后才能正常进行在线消息的发送
@@ -151,8 +156,9 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
             tokio::time::sleep(tokio::time::Duration::from_secs(HEART_BEAT_INTERVAL)).await;
         }
     });
-    let cloned_hub = state.clone();
+    let cloned_hub = hub.clone();
     let shared_tx = shared_tx.clone();
+    let cloned_user_id = user_id.clone();
     // 读取收到的消息
     let mut rec_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = ws_rx.next().await {
@@ -189,6 +195,10 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
                     if let Some(info) = info {
                         tracing::warn!("client closed {}", info.reason);
                     }
+                    // mark client offline
+                    if let Err(e) = update_online(&state.pg_pool, &cloned_user_id, false).await {
+                        tracing::error!("更新用户在线状态失败: {}", e);
+                    }
                     break;
                 }
 
@@ -201,6 +211,6 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         _ = (&mut ping_task) => rec_task.abort(),
         _ = (&mut rec_task) => ping_task.abort(),
     }
-    state.unregister(user_id, pointer_id).await;
-    tracing::debug!("client thread exit {}", state.hub.read().await.len());
+    hub.unregister(user_id, pointer_id).await;
+    tracing::debug!("client thread exit {}", hub.hub.read().await.len());
 }
