@@ -11,7 +11,7 @@ pub enum InfraError {
     #[error("Validation error")]
     ValidateError,
     #[error("Redis query error{0}")]
-    RedisQueryError(redis::RedisError),
+    RedisError(redis::RedisError),
     #[error("Unknown error")]
     Unknown,
 }

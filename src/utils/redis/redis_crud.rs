@@ -4,7 +4,7 @@ use redis::Commands;
 use serde::Serialize;
 
 use crate::domain::model::group_members::GroupMemberWithUser;
-use crate::domain::model::msg::CreateGroup;
+use crate::domain::model::msg::GroupInvitation;
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::groups::GroupDb;
 
@@ -24,22 +24,35 @@ pub async fn set_string<T: Serialize>(
     Ok(result)
 }
 
-pub fn store_group(mut conn: redis::Connection, group: &CreateGroup) -> redis::RedisResult<()> {
+pub fn store_group(mut conn: redis::Connection, group: &GroupInvitation) -> redis::RedisResult<()> {
+    store_group_info(&mut conn, &group.info)?;
+    store_group_members(&mut conn, &group.info.id, &group.members)?;
+    Ok(())
+}
+
+pub fn store_group_info(conn: &mut redis::Connection, group: &GroupDb) -> redis::RedisResult<()> {
     // Convert the group info to a JSON string
-    let group_info_json = serde_json::to_string(&group.info).unwrap();
+    let group_info_json = serde_json::to_string(group).unwrap();
 
     // Store the group info in a hash with the ID as the key
-    conn.hset("groups_info", &group.info.id, group_info_json)?;
-    let key = format!("group_members:{}", &group.info.id);
+    conn.hset("groups_info", &group.id, group_info_json)?;
+    Ok(())
+}
+
+pub fn store_group_members(
+    conn: &mut redis::Connection,
+    group_id: &str,
+    members: &Vec<GroupMemberWithUser>,
+) -> redis::RedisResult<()> {
+    let key = format!("group_members:{}", group_id);
 
     // Add each member to the set for the group by redis pipe
     let mut pipe = redis::pipe();
-    for member in &group.members {
+    for member in members {
         let member_json = serde_json::to_string(&member).unwrap();
         pipe.hset(&key, &member.user_id, member_json);
     }
-    pipe.query(&mut conn)?;
-
+    pipe.query(conn)?;
     Ok(())
 }
 
@@ -51,6 +64,7 @@ pub fn get_members_id(
     let members: Vec<String> = conn.hkeys(&key).unwrap();
     Ok(members)
 }
+
 pub fn get_group_info(conn: &mut redis::Connection, group_id: &str) -> redis::RedisResult<GroupDb> {
     let group_info: String = conn.hget("groups_info", group_id)?;
     let group = serde_json::from_str(&group_info).unwrap();
@@ -62,7 +76,7 @@ pub fn get_group_members(
     group_id: &str,
 ) -> redis::RedisResult<Vec<GroupMemberWithUser>> {
     let key = format!("group_members:{}", group_id);
-    let members: Vec<String> = conn.smembers(&key)?;
+    let members: Vec<String> = conn.hvals(&key)?;
     let members: Vec<GroupMemberWithUser> = members
         .into_iter()
         .map(|member| serde_json::from_str(&member).unwrap())

@@ -76,7 +76,6 @@ diesel::table! {
 diesel::table! {
     messages (msg_id) {
         msg_id -> Varchar,
-        msg_type -> Varchar,
         content -> Varchar,
         content_type -> Varchar,
         send_id -> Varchar,

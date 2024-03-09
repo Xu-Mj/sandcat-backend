@@ -1,7 +1,7 @@
 CREATE TABLE messages
 (
     msg_id       VARCHAR PRIMARY KEY,
-    msg_type     VARCHAR   NOT NULL,
+--     msg_type     VARCHAR   NOT NULL,
     content      VARCHAR   NOT NULL,
     content_type VARCHAR   NOT NULL,
     send_id      VARCHAR   NOT NULL,

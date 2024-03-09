@@ -45,7 +45,7 @@ pub async fn query_group_members_id(
         Err(err) => {
             warn!(
                 "query group info from redis failed: {:?}",
-                InfraError::RedisQueryError(err)
+                InfraError::RedisError(err)
             );
             // query from db
             let result: Vec<(String,)> =

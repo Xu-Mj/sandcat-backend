@@ -5,7 +5,7 @@ use tracing::error;
 use tracing::log::debug;
 
 use crate::domain::model::friends::FriendError;
-use crate::domain::model::msg::{CreateGroup, Msg};
+use crate::domain::model::msg::{GroupInvitation, Msg};
 use crate::infra::repositories::groups::{create_group_with_members, GroupDb};
 use crate::utils::redis::redis_crud::store_group;
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -38,11 +38,11 @@ pub async fn create_group_handler(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
     JsonWithAuthExtractor(mut new_group): JsonWithAuthExtractor<GroupRequest>,
-) -> Result<Json<CreateGroup>, FriendError> {
+) -> Result<Json<GroupInvitation>, FriendError> {
     let mut members_id = std::mem::take(&mut new_group.members_id);
     let cloned_ids = members_id.clone();
     members_id.push(user_id);
-    let group = CreateGroup::from(new_group);
+    let group = GroupInvitation::from(new_group);
     let group_db = create_group_with_members(&app_state.pg_pool, group, members_id)
         .await
         .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
@@ -58,7 +58,8 @@ pub async fn create_group_handler(
                 .unwrap();
             debug!("group creation success");
             // send it to online users
-            hub.send_group(&cloned_ids, &Msg::CreateGroup(msg)).await;
+            hub.send_group(&cloned_ids, &Msg::GroupInvitation(msg))
+                .await;
         }
     });
 

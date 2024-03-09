@@ -208,7 +208,7 @@ impl Manager {
                     }
                 }
                 // use http api way to send this message
-                Msg::CreateGroup(_) => {}
+                Msg::GroupInvitation(_) => {}
             }
         }
     }

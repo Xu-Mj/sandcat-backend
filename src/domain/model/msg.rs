@@ -86,12 +86,12 @@ impl Msg {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CreateGroup {
+pub struct GroupInvitation {
     pub info: GroupDb,
     pub members: Vec<GroupMemberWithUser>,
 }
 
-impl From<GroupRequest> for CreateGroup {
+impl From<GroupRequest> for GroupInvitation {
     fn from(value: GroupRequest) -> Self {
         Self {
             info: GroupDb::from(value),
@@ -132,7 +132,7 @@ pub enum Msg {
     Single(Single),
     /// 群聊
     Group(Single),
-    CreateGroup(CreateGroup),
+    GroupInvitation(GroupInvitation),
     /// 发送好友请求
     SendRelationshipReq(FriendShipDb),
     /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方

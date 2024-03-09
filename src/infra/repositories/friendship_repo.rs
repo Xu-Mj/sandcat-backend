@@ -379,6 +379,7 @@ pub async fn get_agree_by_user_id(
         .await?;
     Ok(friends)
 }
+
 // 根据用户id以及申请状态查询对应的记录
 pub async fn get_by_user_id_and_status(
     pool: &Pool,
