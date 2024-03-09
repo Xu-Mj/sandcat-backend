@@ -10,6 +10,7 @@ use diesel::{
     Selectable, SelectableHelper,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(table_name=messages)]
@@ -163,22 +164,12 @@ pub async fn get_offline_msg(pool: &Pool, user_id: String) -> Result<Vec<MsgDb>,
 }
 
 // 消息送达
-pub async fn msg_delivered(pool: &Pool, ids: Vec<String>) -> Result<usize, InfraError> {
-    let conn = pool
-        .get()
-        .await
-        .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
-    let count = conn
-        .interact(|conn| {
-            diesel::update(messages::table)
-                .filter(messages::msg_id.eq_any(ids))
-                .set(messages::delivered.eq(true))
-                .execute(conn)
-        })
-        .await
-        .map_err(adapt_infra_error)?
-        .map_err(adapt_infra_error)?;
-    Ok(count)
+pub async fn msg_delivered(pool: &PgPool, id: &str) -> Result<(), InfraError> {
+    sqlx::query("UPDATE messages SET delivered = true WHERE msg_id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 // 消息已读

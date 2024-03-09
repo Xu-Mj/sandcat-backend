@@ -61,6 +61,13 @@ pub async fn websocket_handler(
     ws.on_upgrade(move |socket| websocket(user_id, pointer_id, socket, state))
 }
 
+/// sync single messages
+/// friendship request message
+/// friendship response message
+/// group invitation
+/// group messages
+/// service messages
+/// system publish messages
 async fn sync_offline_msg(
     pool: &Pool,
     pg_pool: &PgPool,
@@ -107,7 +114,7 @@ async fn sync_offline_msg(
         }
     }
 
-    // 查询请求回复
+    // 查询好友请求回复
     match get_agree_by_user_id(pg_pool, user_id.clone()).await {
         Ok(list) => {
             for msg in list {
@@ -124,6 +131,7 @@ async fn sync_offline_msg(
             tracing::error!("查询好友请求列表错误: {:?}", err);
         }
     }
+    // query group invitation
 }
 
 /// user_id
@@ -146,12 +154,12 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
     hub.register(user_id.clone(), client).await;
     // mark user online
     if let Err(err) = update_online(&state.pg_pool, &user_id, true).await {
-        tracing::error!("更新用户在线状态错误: {}", err);
+        tracing::error!("mark user online error: {}", err);
     }
     // 注册完成后，查询离线消息，以同步的方式发送给客户端
     sync_offline_msg(&pool, &state.pg_pool, user_id.clone(), shared_tx.clone()).await;
     // drop(guard);
-    tracing::debug!("离线消息发送完成");
+    tracing::debug!("offline msg sync done");
     // 开启任务发送心跳,这里直接回发即可
     let cloned_tx = shared_tx.clone();
     let mut ping_task = tokio::spawn(async move {
@@ -182,7 +190,7 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
                 Message::Text(text) => {
                     let result = serde_json::from_str(&text);
                     if result.is_err() {
-                        tracing::error!("反序列化错误: {:?}", result.err());
+                        tracing::error!("反序列化错误: {:?}； source: {text}", result.err());
                         continue;
                     }
                     let msg: Msg = result.unwrap();

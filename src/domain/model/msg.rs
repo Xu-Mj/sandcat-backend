@@ -125,6 +125,7 @@ pub struct GroupInfo {
     pub announcement: String,
 }
 
+pub type MessageID = String;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Msg {
     /// 一对一聊天
@@ -141,9 +142,9 @@ pub enum Msg {
     /// 消息已读
     ReadNotice(ReadNotice),
     /// 一对一消息送达
-    SingleDeliveredNotice(DeliveredNotice),
+    SingleDeliveredNotice(MessageID),
     /// 好友请求送达
-    FriendshipDeliveredNotice(DeliveredNotice),
+    FriendshipDeliveredNotice(MessageID),
     OfflineSync(Single),
     /// 一对一通话offer
     SingleCallOffer(Offer),
@@ -289,11 +290,11 @@ pub struct ReadNotice {
     pub create_time: i64,
 }
 
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
-pub struct DeliveredNotice {
-    pub msg_id: String,
-    pub create_time: i64,
-}
+// #[derive(Clone, Default, Debug, Serialize, Deserialize)]
+// pub struct DeliveredNotice {
+//     pub msg_id: String,
+//     pub create_time: i64,
+// }
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub enum RelationStatus {

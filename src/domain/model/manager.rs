@@ -121,9 +121,9 @@ impl Manager {
                     }
                     // debug!("received group message: {:?}", msg);
                 }
-                Msg::SingleDeliveredNotice(msg) => {
+                Msg::SingleDeliveredNotice(msg_id) => {
                     //  消息已送达，更新数据库
-                    if let Err(err) = msg_delivered(&pool, vec![msg.msg_id]).await {
+                    if let Err(err) = msg_delivered(&pg_pool, &msg_id).await {
                         error!("更新送达状态错误: {:?}", err);
                     }
                 }
@@ -201,10 +201,9 @@ impl Manager {
                     }
                     self.send_single_msg(&msg.friend_id, &message).await;
                 }
-                Msg::FriendshipDeliveredNotice(msg) => {
+                Msg::FriendshipDeliveredNotice(msg_id) => {
                     //  消息已送达，更新数据库
-                    if let Err(err) = friendship_repo::msg_delivered(&pool, vec![msg.msg_id]).await
-                    {
+                    if let Err(err) = friendship_repo::msg_delivered(&pg_pool, &msg_id).await {
                         error!("更新送达状态错误: {:?}", err);
                     }
                 }
