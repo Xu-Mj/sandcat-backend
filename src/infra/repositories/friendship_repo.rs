@@ -6,12 +6,14 @@ use diesel::{
 };
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
 use crate::domain::model::friend_request_status::FriendStatus;
+use crate::domain::model::friends::{FriendDb, FriendWithUser};
 use crate::domain::model::user::User;
 use crate::infra::db::schema::{friendships, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
-use crate::infra::repositories::friends::{create_friend, FriendDb, FriendWithUser};
+use crate::infra::repositories::friends::create_friend;
 use crate::infra::repositories::user_repo::get_by_2id;
 
 // status: 0-解除好友关系；1-同意请求；2-申请；3-拒绝
@@ -85,6 +87,7 @@ pub struct FriendShipDb {
     Ok(users)
 }
 */
+/// for friendship
 #[derive(Serialize, Debug, Clone, Deserialize, Queryable)]
 pub struct FriendShipWithUser {
     pub friendship_id: String,
@@ -356,6 +359,26 @@ pub async fn agree_apply(
     Ok((friend1, friend2))
 }
 
+/// 根据用户id查询好友请求同意记录
+pub async fn get_agree_by_user_id(
+    pool: &PgPool,
+    user_id: String,
+) -> Result<Vec<FriendWithUser>, InfraError> {
+    // query friendship table first
+    // query friend table by friend id of friendship query result
+    let friends: Vec<FriendWithUser> =
+        sqlx::query_as("
+        SELECT
+        f.id, f.friend_id, f.req_remark as remark, f.apply_msg as hello, f.status, f.create_time, f.update_time, f.source as from,
+        u.name, u.account, u.avatar, u.gender, u.age, u.phone, u.email, u.address, u.birthday
+        FROM  friendships f
+        INNER JOIN users u ON u.id = f.friend_id
+        WHERE f.user_id = $1 AND f.status = 'Accepted' AND f.is_delivered = false")
+        .bind(&user_id)
+        .fetch_all(pool)
+        .await?;
+    Ok(friends)
+}
 // 根据用户id以及申请状态查询对应的记录
 pub async fn get_by_user_id_and_status(
     pool: &Pool,

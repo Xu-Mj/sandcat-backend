@@ -2,9 +2,9 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
+use crate::domain::model::friends::FriendWithUser;
 use crate::domain::model::group_members::GroupMemberWithUser;
 use crate::handlers::groups::GroupRequest;
-use crate::infra::repositories::friends::FriendWithUser;
 use crate::infra::repositories::friendship_repo::{FriendShipDb, FriendShipWithUser};
 use crate::infra::repositories::groups::GroupDb;
 use crate::infra::repositories::messages::MsgDb;

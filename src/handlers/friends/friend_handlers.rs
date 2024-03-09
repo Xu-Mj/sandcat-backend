@@ -5,13 +5,11 @@ use axum::Json;
 use nanoid::nanoid;
 
 use crate::domain::model::friend_request_status::FriendStatus;
-use crate::domain::model::friends::FriendError;
+use crate::domain::model::friends::{FriendError, FriendWithUser};
 use crate::domain::model::msg::Msg;
 use crate::handlers::friends::{FriendShipAgree, FriendShipRequest};
 use crate::infra::errors::InfraError;
-use crate::infra::repositories::friends::{
-    get_friend_list, update_friend_status, update_remark, FriendWithUser,
-};
+use crate::infra::repositories::friends::{get_friend_list, update_friend_status, update_remark};
 use crate::infra::repositories::friendship_repo::{
     agree_apply, create_friend_ship, get_by_user_id_and_status, update_friend_ship, FriendShipDb,
     FriendShipWithUser, NewFriend,

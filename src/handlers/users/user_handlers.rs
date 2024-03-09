@@ -1,12 +1,3 @@
-use crate::config::CONFIG;
-use crate::domain::model::user::{RegisterErrState, User, UserError};
-use crate::handlers::users::UserRegister;
-use crate::handlers::ws::register_ws;
-use crate::infra::errors::InfraError;
-use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
-use crate::utils::redis::redis_crud;
-use crate::utils::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
-use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -17,6 +8,17 @@ use nanoid::nanoid;
 use rand::Rng;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
+use tracing::error;
+
+use crate::config::CONFIG;
+use crate::domain::model::user::{RegisterErrState, User, UserError};
+use crate::handlers::users::UserRegister;
+use crate::handlers::ws::register_ws;
+use crate::infra::errors::InfraError;
+use crate::infra::repositories::user_repo::{get, insert, search, verify_pwd, NewUserDb};
+use crate::utils::redis::redis_crud;
+use crate::utils::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
+use crate::AppState;
 
 pub async fn create_user(
     State(app_state): State<AppState>,
@@ -79,6 +81,10 @@ pub async fn search_user(
 ) -> Result<Json<Vec<User>>, UserError> {
     let users = search(&app_state.pool, user_id, pattern)
         .await
+        .map_err(|err| {
+            error!("search user error:{:?}", err);
+            err
+        })
         .unwrap_or_else(|_| vec![]);
     Ok(Json(users))
 }

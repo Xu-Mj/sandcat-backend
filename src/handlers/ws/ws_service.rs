@@ -3,21 +3,29 @@ use std::sync::Arc;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
+use deadpool_diesel::postgres::Pool;
+use futures::stream::SplitSink;
 use futures::{SinkExt, StreamExt};
 use redis::Client;
+use sqlx::PgPool;
 use tokio::sync::RwLock;
 
 use crate::domain::model;
 use crate::domain::model::friend_request_status::FriendStatus;
 use crate::domain::model::msg::Msg;
 use crate::infra::errors::InfraError;
-use crate::infra::repositories::friendship_repo::get_by_user_id_and_status;
+use crate::infra::repositories::friendship_repo::{
+    get_agree_by_user_id, get_by_user_id_and_status,
+};
 use crate::infra::repositories::messages::get_offline_msg;
 use crate::infra::repositories::user_repo::update_online;
 use crate::utils::redis::redis_crud;
 use crate::utils::PathExtractor;
 use crate::AppState;
 
+// pub struct WebSocketObject{
+//
+// }
 pub async fn register_ws(redis: Client, user_id: String) -> Result<String, InfraError> {
     let redis_conn = redis
         .get_async_connection()
@@ -39,8 +47,6 @@ pub async fn register_ws(redis: Client, user_id: String) -> Result<String, Infra
 
 pub async fn get_ws_addr() -> Result<String, InfraError> {
     Ok(String::from("ws://172.24.48.1:3000/ws"))
-    // Ok(String::from("wss://172.24.48.1:443/ws"))
-    // Ok(String::from("wss://192.168.28.124:443/ws"))
 }
 
 pub const HEART_BEAT_INTERVAL: u64 = 10;
@@ -55,6 +61,73 @@ pub async fn websocket_handler(
     ws.on_upgrade(move |socket| websocket(user_id, pointer_id, socket, state))
 }
 
+async fn sync_offline_msg(
+    pool: &Pool,
+    pg_pool: &PgPool,
+    user_id: String,
+    shared_tx: Arc<RwLock<SplitSink<WebSocket, Message>>>,
+) {
+    // 因为这里取得了锁，因此其他消息会阻塞，只有将离线消息都发送给客户端后才能正常进行在线消息的发送
+    let mut guard = shared_tx.write().await;
+    // 查询离线消息
+    match get_offline_msg(pool, user_id.clone()).await {
+        Ok(list) => {
+            // guard.send(Message::Binary())
+            // 先循环实现，然后使用trait的方式修改消息
+            for msg in list {
+                let msg = Msg::single_from_db(msg);
+                if let Err(err) = guard
+                    .send(Message::Text(serde_json::to_string(&msg).unwrap()))
+                    .await
+                {
+                    tracing::error!("发送离线消息错误: {:?}", err);
+                }
+            }
+        }
+        Err(err) => {
+            tracing::error!("查询离线消息错误: {:?}", err);
+        }
+    }
+
+    // 查询好友请求，
+    match get_by_user_id_and_status(pool, user_id.clone(), FriendStatus::Pending).await {
+        Ok(list) => {
+            for msg in list {
+                let msg = Msg::RecRelationship(msg);
+                if let Err(err) = guard
+                    .send(Message::Text(serde_json::to_string(&msg).unwrap()))
+                    .await
+                {
+                    tracing::error!("发送离线消息错误: {:?}", err);
+                }
+            }
+        }
+        Err(err) => {
+            tracing::error!("查询好友请求列表错误: {:?}", err);
+        }
+    }
+
+    // 查询请求回复
+    match get_agree_by_user_id(pg_pool, user_id.clone()).await {
+        Ok(list) => {
+            for msg in list {
+                let msg = Msg::RelationshipRes(msg);
+                if let Err(err) = guard
+                    .send(Message::Text(serde_json::to_string(&msg).unwrap()))
+                    .await
+                {
+                    tracing::error!("发送离线消息错误: {:?}", err);
+                }
+            }
+        }
+        Err(err) => {
+            tracing::error!("查询好友请求列表错误: {:?}", err);
+        }
+    }
+}
+
+/// user_id
+/// pointer_id browser fingerprint
 async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: AppState) {
     // 注册客户端
     tracing::debug!(
@@ -76,65 +149,7 @@ async fn websocket(user_id: String, pointer_id: String, ws: WebSocket, state: Ap
         tracing::error!("更新用户在线状态错误: {}", err);
     }
     // 注册完成后，查询离线消息，以同步的方式发送给客户端
-    {
-        // 因为这里取得了锁，因此其他消息会阻塞，只有将离线消息都发送给客户端后才能正常进行在线消息的发送
-        let mut guard = shared_tx.write().await;
-        // 查询离线消息
-        match get_offline_msg(&pool, user_id.clone()).await {
-            Ok(list) => {
-                // guard.send(Message::Binary())
-                // 先循环实现，然后使用trait的方式修改消息
-                for msg in list {
-                    let msg = Msg::single_from_db(msg);
-                    if let Err(err) = guard
-                        .send(Message::Text(serde_json::to_string(&msg).unwrap()))
-                        .await
-                    {
-                        tracing::error!("发送离线消息错误: {:?}", err);
-                    }
-                }
-            }
-            Err(err) => {
-                tracing::error!("查询离线消息错误: {:?}", err);
-            }
-        }
-
-        // 查询好友请求，
-        match get_by_user_id_and_status(&pool, user_id.clone(), FriendStatus::Pending).await {
-            Ok(list) => {
-                for msg in list {
-                    let msg = Msg::RecRelationship(msg);
-                    if let Err(err) = guard
-                        .send(Message::Text(serde_json::to_string(&msg).unwrap()))
-                        .await
-                    {
-                        tracing::error!("发送离线消息错误: {:?}", err);
-                    }
-                }
-            }
-            Err(err) => {
-                tracing::error!("查询好友请求列表错误: {:?}", err);
-            }
-        }
-
-        // 查询请求回复
-        /* match get_by_user_id_and_status(&pool, user_id.clone(), String::from("1")).await {
-            Ok(list) => {
-                for msg in list {
-                    let msg = Msg::RelationshipRes(msg);
-                    if let Err(err) = guard
-                        .send(Message::Text(serde_json::to_string(&msg).unwrap()))
-                        .await
-                    {
-                        tracing::error!("发送离线消息错误: {:?}", err);
-                    }
-                }
-            }
-            Err(err) => {
-                tracing::error!("查询好友请求列表错误: {:?}", err);
-            }
-        }*/
-    }
+    sync_offline_msg(&pool, &state.pg_pool, user_id.clone(), shared_tx.clone()).await;
     // drop(guard);
     tracing::debug!("离线消息发送完成");
     // 开启任务发送心跳,这里直接回发即可

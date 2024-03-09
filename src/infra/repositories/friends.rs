@@ -1,55 +1,12 @@
 use deadpool_diesel::postgres::Pool;
 use diesel::upsert::excluded;
-use diesel::{
-    Associations, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl, QueryDsl,
-    Queryable, RunQueryDsl, Selectable, SelectableHelper,
-};
-use serde::{Deserialize, Serialize};
+use diesel::ExpressionMethods;
+use diesel::{BoolExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl, SelectableHelper};
 
 use crate::domain::model::friend_request_status::FriendStatus;
-use crate::domain::model::user::User;
+use crate::domain::model::friends::{FriendDb, FriendWithUser};
 use crate::infra::db::schema::{friends, users};
 use crate::infra::errors::{adapt_infra_error, InfraError};
-
-#[derive(Serialize, Queryable, Selectable, Associations, Debug, Insertable)]
-#[diesel(table_name = friends)]
-#[diesel(belongs_to(User))]
-// 开启编译期字段检查，主要检查字段类型、数量是否匹配，可选
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct FriendDb {
-    pub id: String,
-    pub friendship_id: String,
-    pub user_id: String,
-    pub friend_id: String,
-    // 0: delete; 1: friend; 2: blacklist
-    pub status: FriendStatus,
-    pub remark: Option<String>,
-    pub hello: Option<String>,
-    pub source: Option<String>,
-    pub create_time: chrono::NaiveDateTime,
-    pub update_time: chrono::NaiveDateTime,
-}
-
-#[derive(Serialize, Queryable, Deserialize, Clone, Debug)]
-pub struct FriendWithUser {
-    pub id: String,
-    pub friend_id: String,
-    pub remark: Option<String>,
-    pub hello: Option<String>,
-    pub status: FriendStatus,
-    pub create_time: chrono::NaiveDateTime,
-    pub update_time: chrono::NaiveDateTime,
-    pub from: Option<String>,
-    pub name: String,
-    pub account: String,
-    pub avatar: String,
-    pub gender: String,
-    pub age: i32,
-    pub phone: Option<String>,
-    pub email: Option<String>,
-    pub address: Option<String>,
-    pub birthday: Option<chrono::NaiveDateTime>,
-}
 
 // 获取好友列表
 pub async fn get_friend_list(

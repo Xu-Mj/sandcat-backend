@@ -12,6 +12,8 @@ use crate::infra::db::schema::sql_types::FriendRequestStatus;
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, AsExpression)]
 #[diesel(sql_type = crate::infra::db::schema::sql_types::FriendRequestStatus)]
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "friend_request_status")]
 pub enum FriendStatus {
     #[default]
     Pending,
@@ -47,6 +49,7 @@ impl ToSql<FriendRequestStatus, Pg> for FriendStatus {
         Ok(diesel::serialize::IsNull::No)
     }
 }
+
 impl Queryable<FriendRequestStatus, Pg> for FriendStatus {
     type Row = Self;
 
@@ -54,6 +57,7 @@ impl Queryable<FriendRequestStatus, Pg> for FriendStatus {
         Ok(row)
     }
 }
+
 impl Display for FriendStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
