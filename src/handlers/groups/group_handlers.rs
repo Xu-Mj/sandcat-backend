@@ -6,7 +6,10 @@ use tracing::log::debug;
 
 use crate::domain::model::friends::FriendError;
 use crate::domain::model::msg::{GroupInvitation, Msg};
-use crate::infra::repositories::groups::{create_group_with_members, GroupDb};
+use crate::infra::errors::InfraError;
+use crate::infra::repositories::groups::{
+    create_group_with_members, delete_group, update_group, GroupDb,
+};
 use crate::utils::redis::redis_crud::store_group;
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
@@ -64,4 +67,34 @@ pub async fn create_group_handler(
     });
 
     Ok(Json(group_db))
+}
+
+pub async fn update_group_handler(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    JsonWithAuthExtractor(group_info): JsonWithAuthExtractor<GroupRequest>,
+) -> Result<Json<GroupDb>, FriendError> {
+    let group_db = GroupDb::from(group_info);
+    println!("user id: {user_id}");
+    match update_group(&app_state.pg_pool, &group_db).await {
+        Ok(group) => Ok(Json(group)),
+        Err(e) => match e {
+            InfraError::NotFound => Err(FriendError::NotFound(group_db.id)),
+            _ => Err(FriendError::InternalServerError(e.to_string())),
+        },
+    }
+}
+
+pub async fn dismiss_group_handler(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    JsonWithAuthExtractor(group_id): JsonWithAuthExtractor<String>,
+) -> Result<Json<()>, FriendError> {
+    match delete_group(&app_state.pg_pool, &group_id, &user_id).await {
+        Ok(_) => Ok(Json(())),
+        Err(e) => match e {
+            InfraError::NotFound => Err(FriendError::NotFound(group_id)),
+            _ => Err(FriendError::InternalServerError(e.to_string())),
+        },
+    }
 }

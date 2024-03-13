@@ -4,6 +4,7 @@ CREATE TABLE users
     name        VARCHAR   NOT NULL,
     account     VARCHAR   NOT NULL,
     password    VARCHAR   NOT NULL,
+    signature   VARCHAR(1024),
     is_online   bool      NOT NULL DEFAULT FALSE,
     avatar      VARCHAR   NOT NULL,
     gender      VARCHAR   NOT NULL,

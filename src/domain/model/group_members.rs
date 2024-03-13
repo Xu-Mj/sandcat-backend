@@ -4,6 +4,7 @@ use sqlx::{Error, FromRow, Row};
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
 pub struct GroupMember {
+    #[serde(skip)]
     pub id: i64,
     pub user_id: String,
     pub group_id: String,

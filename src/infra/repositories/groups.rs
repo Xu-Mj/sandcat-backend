@@ -200,10 +200,9 @@ pub async fn query_group_info_and_members_by_group_id(
     let group = GroupInvitation { info, members };
     Ok(group)
 }
-#[allow(dead_code)]
 
 /// update group
-pub async fn update_group(pool: &PgPool, group: GroupDb) -> Result<GroupDb, InfraError> {
+pub async fn update_group(pool: &PgPool, group: &GroupDb) -> Result<GroupDb, InfraError> {
     let now = chrono::Local::now().naive_local();
     let group: GroupDb = sqlx::query_as(
         "UPDATE groups SET
@@ -224,12 +223,17 @@ pub async fn update_group(pool: &PgPool, group: GroupDb) -> Result<GroupDb, Infr
     .await?;
     Ok(group)
 }
-#[allow(dead_code)]
 
-pub async fn delete_group(pool: &PgPool, group_id: String) -> Result<GroupDb, InfraError> {
-    let group: GroupDb = sqlx::query_as("DELETE FROM groups WHERE id = $1 RETURNING *")
-        .bind(&group_id)
-        .fetch_one(pool)
-        .await?;
+pub async fn delete_group(
+    pool: &PgPool,
+    group_id: &str,
+    owner: &str,
+) -> Result<GroupDb, InfraError> {
+    let group: GroupDb =
+        sqlx::query_as("DELETE FROM groups WHERE id = $1 and owner = $2 RETURNING *")
+            .bind(group_id)
+            .bind(owner)
+            .fetch_one(pool)
+            .await?;
     Ok(group)
 }
