@@ -150,22 +150,42 @@ pub enum Msg {
     /// 好友请求送达
     FriendshipDeliveredNotice(MessageID),
     OfflineSync(Single),
+    SingleCall(SingleCall),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum SingleCall {
     /// 一对一通话offer
-    SingleCallOffer(Offer),
+    Offer(Offer),
     /// 一对一通话邀请
-    SingleCallInvite(InviteMsg),
+    Invite(InviteMsg),
     /// 一对一通话邀请回复
-    SingleCallInviteAnswer(InviteAnswerMsg),
+    InviteAnswer(InviteAnswerMsg),
     /// 一对一通话取消
-    SingleCallInviteCancel(InviteCancelMsg),
+    InviteCancel(InviteCancelMsg),
     /// 一对一通话建立，被邀请方同意通话后，建立连接最后一步
-    SingleCallAgree(Agree),
+    Agree(Agree),
     /// 通话未接听
-    SingleCallNotAnswer(InviteNotAnswerMsg),
+    NotAnswer(InviteNotAnswerMsg),
     /// 挂断
-    SingleCallHangUp(Hangup),
+    HangUp(Hangup),
     /// 通话协商消息
     NewIceCandidate(Candidate),
+}
+
+impl SingleCall {
+    pub fn get_friend_id(&self) -> Option<&str> {
+        match self {
+            SingleCall::Offer(msg) => Some(&msg.friend_id),
+            SingleCall::Invite(msg) => Some(&msg.friend_id),
+            SingleCall::InviteAnswer(msg) => Some(&msg.friend_id),
+            SingleCall::InviteCancel(msg) => Some(&msg.friend_id),
+            SingleCall::Agree(msg) => Some(&msg.friend_id),
+            SingleCall::NotAnswer(msg) => Some(&msg.friend_id),
+            SingleCall::HangUp(msg) => Some(&msg.friend_id),
+            SingleCall::NewIceCandidate(msg) => Some(&msg.friend_id),
+        }
+    }
 }
 
 impl Msg {
@@ -173,13 +193,7 @@ impl Msg {
         match self {
             Msg::Single(single) => Some(&single.friend_id),
             Msg::Group(single) => Some(&single.friend_id),
-            Msg::NewIceCandidate(msg) => Some(&msg.friend_id),
-            Msg::SingleCallAgree(msg) => Some(&msg.friend_id),
-            Msg::SingleCallInvite(msg) => Some(&msg.friend_id),
-            Msg::SingleCallInviteAnswer(msg) => Some(&msg.friend_id),
-            Msg::SingleCallInviteCancel(msg) => Some(&msg.friend_id),
-            Msg::SingleCallOffer(msg) => Some(&msg.friend_id),
-            Msg::SingleCallNotAnswer(msg) => Some(&msg.friend_id),
+            Msg::SingleCall(msg) => msg.get_friend_id(),
 
             _ => None,
         }

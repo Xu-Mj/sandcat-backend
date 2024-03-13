@@ -60,7 +60,7 @@ fn file_routes(state: AppState) -> Router {
 fn group_routes(state: AppState) -> Router {
     Router::new()
         .route("/:user_id", post(create_group_handler))
-        .route("dismiss/:user_id/:group_id", delete(dismiss_group_handler))
-        .route("update/:user_id", post(update_group_handler))
+        .route("/dismiss/:user_id/:group_id", delete(dismiss_group_handler))
+        .route("/update/:user_id", post(update_group_handler))
         .with_state(state)
 }

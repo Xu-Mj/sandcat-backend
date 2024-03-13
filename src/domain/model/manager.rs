@@ -8,6 +8,7 @@ use tokio::sync::mpsc::error::SendError;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{error, info};
 
+use crate::domain::model::msg::SingleCall;
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
 use crate::infra::repositories::group_members::{
@@ -168,40 +169,44 @@ impl Manager {
                 Msg::RelationshipRes(_msg) => {}
                 Msg::OfflineSync(_) => {}
                 Msg::RecRelationship(_) => {}
-                Msg::SingleCallOffer(_)
-                | Msg::SingleCallAgree(_)
-                | Msg::NewIceCandidate(_)
-                | Msg::SingleCallInvite(_)
-                | Msg::SingleCallInviteAnswer(_) => {
-                    let friend_id = message.get_friend_id().unwrap();
-                    self.send_single_msg(friend_id, &message).await;
-                }
-                Msg::SingleCallInviteCancel(msg) => {
-                    // todo 入库
-                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        error!("消息入库错误！！{:?}", err);
-                        continue;
-                    }
-                    info!("received cancel message: {:?}", &msg);
+                Msg::SingleCall(msg) => {
+                    match msg {
+                        SingleCall::InviteCancel(msg) => {
+                            // todo 入库
+                            if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                                error!("消息入库错误！！{:?}", err);
+                                continue;
+                            }
+                            info!("received cancel message: {:?}", &msg);
 
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::SingleCallHangUp(msg) => {
-                    info!("received hangup: {:?}", &msg);
-                    // todo 入库
-                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        error!("消息入库错误！！{:?}", err);
-                        continue;
+                            self.send_single_msg(&msg.friend_id, &message).await;
+                        }
+                        SingleCall::HangUp(msg) => {
+                            info!("received hangup: {:?}", &msg);
+                            // todo 入库
+                            if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                                error!("消息入库错误！！{:?}", err);
+                                continue;
+                            }
+                            self.send_single_msg(&msg.friend_id, &message).await;
+                        }
+                        SingleCall::NotAnswer(msg) => {
+                            info!("received not answer message: {:?}", &msg);
+                            if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
+                                error!("消息入库错误！！{:?}", err);
+                                continue;
+                            }
+                            self.send_single_msg(&msg.friend_id, &message).await;
+                        }
+                        SingleCall::InviteAnswer(_) => {
+                            let friend_id = message.get_friend_id().unwrap();
+                            self.send_single_msg(friend_id, &message).await;
+                        }
+                        SingleCall::Offer(_)
+                        | SingleCall::Invite(_)
+                        | SingleCall::Agree(_)
+                        | SingleCall::NewIceCandidate(_) => {}
                     }
-                    self.send_single_msg(&msg.friend_id, &message).await;
-                }
-                Msg::SingleCallNotAnswer(msg) => {
-                    info!("received not answer message: {:?}", &msg);
-                    if let Err(err) = insert_msg(&pool, NewMsgDb::from(msg.clone())).await {
-                        error!("消息入库错误！！{:?}", err);
-                        continue;
-                    }
-                    self.send_single_msg(&msg.friend_id, &message).await;
                 }
                 Msg::FriendshipDeliveredNotice(msg_id) => {
                     //  消息已送达，更新数据库
