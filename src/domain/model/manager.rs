@@ -198,14 +198,14 @@ impl Manager {
                             }
                             self.send_single_msg(&msg.friend_id, &message).await;
                         }
-                        SingleCall::InviteAnswer(_) => {
-                            let friend_id = message.get_friend_id().unwrap();
-                            self.send_single_msg(friend_id, &message).await;
-                        }
                         SingleCall::Offer(_)
                         | SingleCall::Invite(_)
                         | SingleCall::Agree(_)
-                        | SingleCall::NewIceCandidate(_) => {}
+                        | SingleCall::NewIceCandidate(_)
+                        | SingleCall::InviteAnswer(_) => {
+                            let friend_id = message.get_friend_id().unwrap();
+                            self.send_single_msg(friend_id, &message).await;
+                        }
                     }
                 }
                 Msg::FriendshipDeliveredNotice(msg_id) => {

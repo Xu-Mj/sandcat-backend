@@ -19,6 +19,8 @@ pub enum ContentType {
     File,
     Emoji,
     Audio,
+    VideoCall,
+    AudioCall,
 }
 
 impl ContentType {
@@ -30,6 +32,8 @@ impl ContentType {
             "Audio" => Self::Audio,
             "File" => Self::File,
             "Emoji" => Self::Emoji,
+            "VideoCall" => Self::VideoCall,
+            "AudioCall" => Self::AudioCall,
             _ => Self::Default,
         }
     }
@@ -45,6 +49,8 @@ impl Display for ContentType {
             ContentType::File => write!(f, "File"),
             ContentType::Emoji => write!(f, "Emoji"),
             ContentType::Audio => write!(f, "Audio"),
+            ContentType::VideoCall => write!(f, "VideoCall"),
+            ContentType::AudioCall => write!(f, "AudioCall"),
         }
     }
 }

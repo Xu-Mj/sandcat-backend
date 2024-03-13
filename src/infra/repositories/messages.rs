@@ -112,8 +112,8 @@ impl From<InviteNotAnswerMsg> for NewMsgDb {
 impl From<InviteCancelMsg> for NewMsgDb {
     fn from(msg: InviteCancelMsg) -> Self {
         let content_type = match msg.invite_type {
-            InviteType::Video => ContentType::Video.to_string(),
-            InviteType::Audio => ContentType::Audio.to_string(),
+            InviteType::Video => ContentType::VideoCall.to_string(),
+            InviteType::Audio => ContentType::AudioCall.to_string(),
         };
         Self {
             msg_id: msg.msg_id,
