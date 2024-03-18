@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 
 use crate::domain::model;
 use crate::domain::model::friend_request_status::FriendStatus;
-use crate::domain::model::msg::Msg;
+use crate::domain::model::msg::{GroupMsg, Msg};
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::friendship_repo::{
     get_agree_by_user_id, get_by_user_id_and_status,
@@ -47,7 +47,7 @@ pub async fn register_ws(redis: Client, user_id: String) -> Result<String, Infra
 }
 
 pub async fn get_ws_addr() -> Result<String, InfraError> {
-    Ok(String::from("ws://172.24.48.1:3000/ws"))
+    Ok(String::from("ws://127.0.0.1:3000/ws"))
 }
 
 pub const HEART_BEAT_INTERVAL: u64 = 10;
@@ -142,7 +142,7 @@ async fn sync_offline_msg(
         match query_group_invitation_by_user_id(&pg_pool, redis, user_id.clone()).await {
             Ok(invitation) => {
                 for msg in invitation {
-                    let msg = Msg::GroupInvitation(msg);
+                    let msg = Msg::Group(GroupMsg::Invitation(msg));
                     if let Err(err) = guard
                         .send(Message::Text(serde_json::to_string(&msg).unwrap()))
                         .await

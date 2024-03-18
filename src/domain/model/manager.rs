@@ -8,7 +8,7 @@ use tokio::sync::mpsc::error::SendError;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{error, info};
 
-use crate::domain::model::msg::SingleCall;
+use crate::domain::model::msg::{GroupMsg, SingleCall};
 use crate::domain::model::{msg::Msg, Client, Hub};
 use crate::infra::repositories::friendship_repo;
 use crate::infra::repositories::group_members::{
@@ -106,22 +106,51 @@ impl Manager {
                     // 入库成功后给客户端回复消息已送达的通知
                     self.send_single_msg(&msg.friend_id, &message).await;
                 }
-                Msg::Group(msg) => {
-                    // 根据组id， 查询所有组下的客户端id
-                    if let Ok(mut conn) = redis.get_connection() {
-                        match query_group_members_id(&mut conn, &pg_pool, msg.friend_id).await {
-                            Err(err) => {
-                                error!("查询群成员失败: {:?}", err);
+                Msg::Group(group_msg) => {
+                    match group_msg {
+                        GroupMsg::Message(msg) => {
+                            // 根据组id， 查询所有组下的客户端id
+                            if let Ok(mut conn) = redis.get_connection() {
+                                match query_group_members_id(&mut conn, &pg_pool, msg.friend_id)
+                                    .await
+                                {
+                                    Err(err) => {
+                                        error!("查询群成员失败: {:?}", err);
+                                    }
+                                    Ok(mut list) => {
+                                        // 消息写入redis中
+                                        // delete self id
+                                        list.retain(|id| id != &msg.send_id);
+                                        // 发送消息
+                                        self.send_group(&list, &message).await;
+                                    }
+                                }
                             }
-                            Ok(mut list) => {
-                                // 消息写入redis中
-                                // delete self id
-                                list.retain(|id| id != &msg.send_id);
-                                // 发送消息
-                                self.send_group(&list, &message).await;
+                        }
+                        // use http api way to send this message
+                        GroupMsg::Invitation(_) => {}
+                        GroupMsg::MemberExit(_) => {
+                            // delete from group_members
+                            // notify other members
+
+                            // here's a huge problem: how to notify offline members?
+                        }
+                        GroupMsg::Dismiss(_) => {
+                            // delete from group_members
+
+                            // same with MemberExit
+                        }
+                        GroupMsg::DismissOrExitReceived(_) => {}
+                        GroupMsg::InvitationReceived((user_id, group_id)) => {
+                            // update group_members
+                            if let Err(err) =
+                                group_invitation_delivered(&pg_pool, &user_id, &group_id).await
+                            {
+                                error!("update group invitation delivered with group id {group_id}; user id {user_id} error: {:?}", err)
                             }
                         }
                     }
+
                     // debug!("received group message: {:?}", msg);
                 }
                 Msg::SingleDeliveredNotice(msg_id) => {
@@ -212,16 +241,6 @@ impl Manager {
                     //  消息已送达，更新数据库
                     if let Err(err) = friendship_repo::msg_delivered(&pg_pool, &msg_id).await {
                         error!("更新送达状态错误: {:?}", err);
-                    }
-                }
-                // use http api way to send this message
-                Msg::GroupInvitation(_) => {}
-                Msg::GroupInvitationReceived((user_id, group_id)) => {
-                    // update group_members
-                    if let Err(err) =
-                        group_invitation_delivered(&pg_pool, &user_id, &group_id).await
-                    {
-                        error!("update group invitation delivered with group id {group_id}; user id {user_id} error: {:?}", err)
                     }
                 }
             }

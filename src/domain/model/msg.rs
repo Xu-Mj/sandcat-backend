@@ -106,21 +106,6 @@ impl From<GroupRequest> for GroupInvitation {
     }
 }
 
-/*impl From<GroupDb> for CreateGroup {
-    fn from(value: GroupDb) -> Self {
-        CreateGroup {
-            info: GroupInfo {
-                id: value.id,
-                owner: value.owner,
-                avatar: value.avatar,
-                group_name: value.name,
-                create_time: value.create_time.timestamp(),
-                announcement: value.description,
-            },
-            members: vec![],
-        }
-    }
-}*/
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct GroupInfo {
     pub id: String,
@@ -140,9 +125,9 @@ pub enum Msg {
     /// 一对一聊天
     Single(Single),
     /// 群聊
-    Group(Single),
-    GroupInvitation(GroupInvitation),
-    GroupInvitationReceived((UserID, GroupID)),
+    Group(GroupMsg),
+    // GroupInvitation(GroupInvitation),
+    // GroupInvitationReceived((UserID, GroupID)),
     /// 发送好友请求
     SendRelationshipReq(FriendShipDb),
     /// 收到好友请求，请求方发送SendRelationshipReq消息，转为RecRelationship后发给被请求方
@@ -157,6 +142,16 @@ pub enum Msg {
     FriendshipDeliveredNotice(MessageID),
     OfflineSync(Single),
     SingleCall(SingleCall),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum GroupMsg {
+    Message(Single),
+    Invitation(GroupInvitation),
+    MemberExit((UserID, GroupID)),
+    Dismiss(GroupID),
+    DismissOrExitReceived((UserID, GroupID)),
+    InvitationReceived((UserID, GroupID)),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -198,7 +193,7 @@ impl Msg {
     pub fn get_friend_id(&self) -> Option<&str> {
         match self {
             Msg::Single(single) => Some(&single.friend_id),
-            Msg::Group(single) => Some(&single.friend_id),
+            Msg::Group(GroupMsg::Message(single)) => Some(&single.friend_id),
             Msg::SingleCall(msg) => msg.get_friend_id(),
 
             _ => None,

@@ -5,7 +5,7 @@ use tracing::error;
 use tracing::log::debug;
 
 use crate::domain::model::friends::FriendError;
-use crate::domain::model::msg::{GroupInvitation, Msg};
+use crate::domain::model::msg::{GroupInvitation, GroupMsg, Msg};
 use crate::infra::errors::InfraError;
 use crate::infra::repositories::groups::{
     create_group_with_members, delete_group, update_group, GroupDb,
@@ -61,7 +61,7 @@ pub async fn create_group_handler(
                 .unwrap();
             debug!("group creation success");
             // send it to online users
-            hub.send_group(&cloned_ids, &Msg::GroupInvitation(msg))
+            hub.send_group(&cloned_ids, &Msg::Group(GroupMsg::Invitation(msg)))
                 .await;
         }
     });
