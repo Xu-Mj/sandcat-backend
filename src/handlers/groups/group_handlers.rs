@@ -7,10 +7,11 @@ use tracing::log::debug;
 use crate::domain::model::friends::FriendError;
 use crate::domain::model::msg::{GroupInvitation, GroupMsg, Msg};
 use crate::infra::errors::InfraError;
+use crate::infra::repositories::group_members::{exit_group, query_group_members_id};
 use crate::infra::repositories::groups::{
     create_group_with_members, delete_group, update_group, GroupDb,
 };
-use crate::utils::redis::redis_crud::store_group;
+use crate::utils::redis::redis_crud::{del_group, store_group};
 use crate::utils::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 
@@ -85,16 +86,60 @@ pub async fn update_group_handler(
     }
 }
 
-pub async fn dismiss_group_handler(
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct DeleteGroupRequest {
+    pub user_id: String,
+    pub group_id: String,
+    pub is_dismiss: bool,
+}
+
+pub async fn delete_group_handler(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
-    JsonWithAuthExtractor(group_id): JsonWithAuthExtractor<String>,
+    JsonWithAuthExtractor(group): JsonWithAuthExtractor<DeleteGroupRequest>,
 ) -> Result<Json<()>, FriendError> {
-    match delete_group(&app_state.pg_pool, &group_id, &user_id).await {
-        Ok(_) => Ok(Json(())),
-        Err(e) => match e {
-            InfraError::NotFound => Err(FriendError::NotFound(group_id)),
-            _ => Err(FriendError::InternalServerError(e.to_string())),
-        },
+    let mut members = Vec::new();
+
+    // query members id
+    if let Ok(mut conn) = app_state.redis.get_connection() {
+        if let Ok(mut list) =
+            query_group_members_id(&mut conn, &app_state.pg_pool, group.group_id.clone()).await
+        {
+            list.retain(|v| v != &group.user_id);
+            tracing::debug!("members: {:#?}", list);
+            members = list;
+        }
     }
+
+    let msg = if group.is_dismiss {
+        let group_id = group.group_id.clone();
+
+        // delete group
+        match delete_group(&app_state.pg_pool, &group_id, &group.user_id).await {
+            Ok(_) => {
+                // delete group information and members from redis
+                if let Ok(conn) = app_state.redis.get_connection() {
+                    if let Err(e) = del_group(conn, &group_id) {
+                        error!("delete group error: {:#?}", e);
+                    }
+                }
+                GroupMsg::Dismiss(group_id)
+            }
+            Err(e) => {
+                return match e {
+                    InfraError::NotFound => Err(FriendError::NotFound(group_id)),
+                    _ => Err(FriendError::InternalServerError(e.to_string())),
+                }
+            }
+        }
+    } else {
+        // exit group
+        if let Err(e) = exit_group(&app_state.pg_pool, &group.group_id, &group.user_id).await {
+            return Err(FriendError::InternalServerError(e.to_string()));
+        }
+        GroupMsg::MemberExit((group.user_id, group.group_id))
+    };
+    // notify members
+    debug!("delete group success; send group message");
+    app_state.hub.send_group(&members, &Msg::Group(msg)).await;
+    Ok(Json(()))
 }

@@ -128,17 +128,10 @@ impl Manager {
                             }
                         }
                         // use http api way to send this message
-                        GroupMsg::Invitation(_) => {}
-                        GroupMsg::MemberExit(_) => {
-                            // delete from group_members
-                            // notify other members
-
-                            // here's a huge problem: how to notify offline members?
-                        }
-                        GroupMsg::Dismiss(_) => {
-                            // delete from group_members
-
-                            // same with MemberExit
+                        GroupMsg::Invitation(_)
+                        | GroupMsg::MemberExit(_)
+                        | GroupMsg::Dismiss(_) => {
+                            // delete action at http api layer
                         }
                         GroupMsg::DismissOrExitReceived(_) => {}
                         GroupMsg::InvitationReceived((user_id, group_id)) => {

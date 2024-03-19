@@ -57,3 +57,13 @@ pub async fn query_group_members_id(
     };
     Ok(result)
 }
+
+/// member exit group
+pub async fn exit_group(pool: &PgPool, user_id: &str, group_id: &str) -> Result<(), InfraError> {
+    sqlx::query("DELETE FROM group_members WHERE user_id = $1 AND group_id = $2")
+        .bind(user_id)
+        .bind(group_id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}

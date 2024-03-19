@@ -30,6 +30,13 @@ pub fn store_group(mut conn: redis::Connection, group: &GroupInvitation) -> redi
     Ok(())
 }
 
+pub fn del_group(mut conn: redis::Connection, group_id: &str) -> redis::RedisResult<()> {
+    conn.hdel("groups_info", group_id)?;
+    let key = format!("group_members:{}", group_id);
+    conn.del(&key)?;
+    Ok(())
+}
+
 pub fn store_group_info(conn: &mut redis::Connection, group: &GroupDb) -> redis::RedisResult<()> {
     // Convert the group info to a JSON string
     let group_info_json = serde_json::to_string(group).unwrap();
