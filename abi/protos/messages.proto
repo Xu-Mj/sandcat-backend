@@ -1,0 +1,90 @@
+syntax = "proto3";
+package msg;
+
+
+/// use to send single message or group message;
+/// message ws is used to connect the client by websocket;
+/// and it receive message from clients, then send message to mq;
+/// so only provide the send message function for other rpc service;
+message Single {
+  // unique id
+  string msg_id = 1;
+  // message content
+  string content = 2;
+  // message type
+  string content_type = 3;
+  // from
+  string send_id = 4;
+  // to
+  string receiver_id = 5;
+  // timestamp
+  int64 create_time = 6;
+}
+
+message SendSingleMessageRequest {
+  Single message = 1;
+}
+
+message SendMessageRequest {
+  Single message = 1;
+}
+
+message SendSingleMessageResponse {
+  Single message = 1;
+}
+
+message SendMessageResponse {
+  Single message = 1;
+}
+ /*
+message GroupMsgWrapper{
+  oneof group_msg {
+    Single message = 1;
+    GroupInvitation invitation = 2;
+    UserAndGroupID member_exit = 3;
+    string dismiss = 4;
+    UserAndGroupID dismiss_or_exit_received = 5;
+    UserAndGroupID invitation_received = 6;
+  }
+}
+
+message UserAndGroupID{
+  string user_id = 1;
+  string group_id = 2;
+}
+
+message GroupInvitation{
+  GroupInfo info = 1;
+  repeated GroupMemberInfo members = 2;
+}
+
+message GroupInfo {
+  int64 id = 1;
+  string owner = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  int64 member_count = 7;
+  int64 create_time = 8;
+  int64 update_time = 9;
+}
+
+message GroupMemberInfo {
+  int64 id = 1;
+  int32 age = 2;
+  string group_id = 3;
+  string user_id = 4;
+  string group_name = 5;
+  string avatar = 6;
+  int64 joined_at = 7;
+  optional string region = 8;
+  string gender = 9;
+}
+ */
+service Messages {
+  // send message through rpc
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  // send single message
+  rpc SendSingleMessage(SendSingleMessageRequest) returns (SendSingleMessageResponse);
+}
