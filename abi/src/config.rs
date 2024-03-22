@@ -13,6 +13,7 @@ pub struct Config {
     pub server: ServerConfig,
     pub kafka: KafkaConfig,
     pub redis: RedisConfig,
+    // pub rpc_server: RpcServerConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

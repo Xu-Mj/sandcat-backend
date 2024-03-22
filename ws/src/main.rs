@@ -1,5 +1,5 @@
 use abi::config::Config;
-use ws::WsServer;
+use ws::ws_server::WsServer;
 
 #[tokio::main]
 async fn main() {

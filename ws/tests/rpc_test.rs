@@ -1,12 +1,13 @@
-/* use abi::{
+use tokio::time;
+use tonic::transport::Channel;
+
+use abi::{
     config::Config,
     msg::{
         msg_service_client::MsgServiceClient, msg_wrapper::Msg, MsgWrapper, SendMsgRequest, Single,
     },
 };
-use tokio::time;
-use tonic::transport::Channel;
-use ws::WsServer;
+use ws::ws_server::WsServer;
 
 #[tokio::test]
 async fn send_msg_should_work() {
@@ -36,11 +37,14 @@ fn setup_server(config: &Config) {
         WsServer::start(cloned_config).await;
     });
 }
+
 // get client
 async fn get_client(config: &Config) -> MsgServiceClient<Channel> {
     // start server at first
     setup_server(config);
     let url = config.server.url(false);
+
+    println!("connect to {}", url);
     // try to connect to server
     let future = async move {
         while MsgServiceClient::connect(url.clone()).await.is_err() {
@@ -50,8 +54,10 @@ async fn get_client(config: &Config) -> MsgServiceClient<Channel> {
         MsgServiceClient::connect(url).await.unwrap()
     };
     // set timeout
-    time::timeout(time::Duration::from_secs(5), future)
-        .await
-        .unwrap()
+    match time::timeout(time::Duration::from_secs(5), future).await {
+        Ok(client) => client,
+        Err(e) => {
+            panic!("connect timeout{:?}", e)
+        }
+    }
 }
- */

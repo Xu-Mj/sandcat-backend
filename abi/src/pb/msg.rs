@@ -1,3 +1,5 @@
+/// / message wrapper
+/// / because of the protobuf syntax limited
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -179,6 +181,7 @@ pub struct GroupCreateResponse {
     #[prost(message, optional, tag = "1")]
     pub invitation: ::core::option::Option<GroupInvitation>,
 }
+/// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum ContentType {

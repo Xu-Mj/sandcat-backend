@@ -78,7 +78,11 @@ impl Manager {
         }
     }
 
-    pub async fn run(&mut self, _receiver: mpsc::Receiver<Msg>) {}
+    pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {
+        while let Some(msg) = receiver.recv().await {
+            tracing::debug!("receive msg: {:?}", msg);
+        }
+    }
     pub async fn broadcast(&self, msg: Msg) -> Result<(), Error> {
         self.tx.send(msg).await.map_err(|_| Error::BroadCastError)
     }
