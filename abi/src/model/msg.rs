@@ -55,7 +55,7 @@ impl Display for ContentType {
     }
 }
 
-#[derive(Clone, Default, Copy, Debug, Serialize, Deserialize)]
+/* #[derive(Clone, Default, Copy, Debug, Serialize, Deserialize)]
 pub enum MessageType {
     #[default]
     Default,
@@ -76,7 +76,7 @@ impl Display for MessageType {
         }
     }
 }
-
+ */
 /*impl Msg {
     pub fn single_from_db(msg: MsgDb) -> Self {
         let single = Single {
@@ -117,7 +117,7 @@ impl From<GroupRequest> for GroupInvitation {
     }
 }
 */
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+/* #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct GroupInfo {
     pub id: String,
     pub owner: String,
@@ -126,7 +126,7 @@ pub struct GroupInfo {
     pub create_time: i64,
     pub announcement: String,
 }
-
+ */
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FriendShipDb {
     pub id: String,

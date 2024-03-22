@@ -1,12 +1,14 @@
 mod client;
 mod manager;
+mod rpc;
 
 use std::sync::Arc;
 use std::time::Duration;
 
 use crate::client::Client;
+use crate::rpc::MsgRpcService;
 use abi::config::Config;
-use abi::model::msg::Msg;
+use abi::msg::msg_service_server::MsgServiceServer;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -17,6 +19,7 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use kafka::producer::{Producer, RequiredAcks};
 use tokio::sync::{mpsc, RwLock};
+use tonic::transport::Server;
 use tracing::error;
 use utils::custom_extract::path_extractor::PathExtractor;
 
@@ -54,7 +57,9 @@ impl WsServer {
         tokio::spawn(async move {
             cloned_hub.run(rx).await;
         });
-        let app_state = AppState { manager: hub };
+        let app_state = AppState {
+            manager: hub.clone(),
+        };
         // 直接启动axum server
         let router = Router::new()
             .route(
@@ -65,7 +70,24 @@ impl WsServer {
         let addr = "127.0.0.1:8000";
         let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
         tracing::debug!("listening on {}", listener.local_addr().unwrap());
-        axum::serve(listener, router).await.unwrap();
+        let mut ws = tokio::spawn(async move {
+            axum::serve(listener, router).await.unwrap();
+        });
+        let mut rpc = tokio::spawn(async move {
+            // start rpc server
+            let addr = "127.0.0.1:8001";
+            let service = MsgRpcService::new(hub);
+            let svc = MsgServiceServer::new(service);
+            Server::builder()
+                .add_service(svc)
+                .serve(addr.parse().unwrap())
+                .await
+                .unwrap();
+        });
+        tokio::select! {
+            _ = (&mut ws) => ws.abort(),
+            _ = (&mut rpc) => rpc.abort(),
+        }
     }
 
     pub async fn websocket_handler(
@@ -138,9 +160,8 @@ impl WsServer {
                             error!("反序列化错误: {:?}； source: {text}", result.err());
                             continue;
                         }
-                        let msg: Msg = result.unwrap();
 
-                        if cloned_hub.broadcast(msg).await.is_err() {
+                        if cloned_hub.broadcast(result.unwrap()).await.is_err() {
                             // 如果广播出错，那么服务端服务不可用
                             break;
                         }

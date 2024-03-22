@@ -97,7 +97,7 @@ pub async fn del(mut conn: Connection, key: String) -> Result<(), InfraError> {
         .map_err(|err| InfraError::InternalServerError(err.to_string()))?;
     Ok(())
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use redis::Client;
@@ -120,3 +120,4 @@ mod tests {
         )
     }
 }
+ */

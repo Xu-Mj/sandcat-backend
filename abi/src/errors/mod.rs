@@ -1,11 +1,13 @@
-mod conflict;
+// mod conflict;
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 
-pub use self::conflict::ConflictReservationInfo;
+use crate::msg::msg_wrapper::Msg;
+
+// pub use self::conflict::ConflictReservationInfo;
 
 type Message = String;
 type Location = String;
@@ -25,8 +27,11 @@ pub enum Error {
     #[error("config parse errors")]
     ConfigParseError,
 
-    #[error("reservation not found by given condition")]
+    #[error("not found")]
     NotFound,
+
+    #[error("broadcast errors")]
+    BroadCastError,
 
     // 500
     #[error("internal server errors")]
@@ -78,6 +83,7 @@ impl From<Error> for tonic::Status {
             Error::BodyParsing(_, _) => tonic::Status::invalid_argument(e.to_string()),
             Error::PathParsing(_, _) => tonic::Status::invalid_argument(e.to_string()),
             Error::UnAuthorized(_, _) => tonic::Status::unauthenticated(e.to_string()),
+            Error::BroadCastError => tonic::Status::internal("BROADCAST ERROR"),
         }
     }
 }
@@ -112,7 +118,17 @@ impl IntoResponse for Error {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "UNKNOWN ERROR".to_string(),
             ),
+            Error::BroadCastError => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "BROADCAST ERROR".to_string(),
+            ),
         };
         (status, Json(json!({"message":msg}))).into_response()
+    }
+}
+
+impl From<tokio::sync::mpsc::error::SendError<Msg>> for Error {
+    fn from(_value: tokio::sync::mpsc::error::SendError<Msg>) -> Self {
+        Self::BroadCastError
     }
 }

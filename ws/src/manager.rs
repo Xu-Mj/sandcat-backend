@@ -1,10 +1,10 @@
 use crate::client::Client;
-use abi::model::msg::Msg;
+use abi::errors::Error;
+use abi::msg::msg_wrapper::Msg;
 use dashmap::DashMap;
 use kafka::producer::Producer;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tokio::sync::mpsc::error::SendError;
 use tracing::error;
 
 type UserID = String;
@@ -79,7 +79,7 @@ impl Manager {
     }
 
     pub async fn run(&mut self, _receiver: mpsc::Receiver<Msg>) {}
-    pub async fn broadcast(&self, msg: Msg) -> Result<(), SendError<Msg>> {
-        self.tx.send(msg).await
+    pub async fn broadcast(&self, msg: Msg) -> Result<(), Error> {
+        self.tx.send(msg).await.map_err(|_| Error::BroadCastError)
     }
 }

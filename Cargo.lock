@@ -17,6 +17,7 @@ dependencies = [
  "serde_yaml",
  "sqlx",
  "thiserror",
+ "tokio",
  "tonic",
  "tonic-build",
 ]
@@ -2135,6 +2136,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rpc"
+version = "0.1.0"
+dependencies = [
+ "abi",
+ "anyhow",
+ "futures",
+ "tokio",
+ "tonic",
+]
+
+[[package]]
 name = "rsa"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3493,6 +3505,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tonic",
  "tracing",
  "utils",
 ]

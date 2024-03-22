@@ -24,6 +24,7 @@ serde = { version = "1.0.197", features = ["derive"] }
 serde_yaml = "0.9.32"
 axum = "0.7.4"
 serde_json = "1.0.114"
+tokio = "1.36.0"
 
 [build-dependencies]
 tonic-build = "0.11.0"

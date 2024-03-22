@@ -2,9 +2,28 @@ syntax = "proto3";
 package msg;
 
 
+enum ContentType {
+    Default = 0;
+    Text = 1;
+    Image = 2;
+    Video = 3;
+    File = 4;
+    Emoji = 5;
+    Audio = 6;
+    VideoCall = 7;
+    AudioCall = 8;
+}
+
+message MsgWrapper{
+  oneof msg{
+    Single single = 1;
+    GroupMsgWrapper group = 2;
+  }
+}
+
 /// use to send single message or group message;
 /// message ws is used to connect the client by websocket;
-/// and it receive message from clients, then send message to mq;
+/// and it receive message from clients; then send message to mq;
 /// so only provide the send message function for other rpc service;
 message Single {
   // unique id
@@ -12,7 +31,7 @@ message Single {
   // message content
   string content = 2;
   // message type
-  string content_type = 3;
+  ContentType content_type = 3;
   // from
   string send_id = 4;
   // to
@@ -21,22 +40,10 @@ message Single {
   int64 create_time = 6;
 }
 
-message SendSingleMessageRequest {
-  Single message = 1;
-}
 
-message SendMessageRequest {
-  Single message = 1;
-}
-
-message SendSingleMessageResponse {
-  Single message = 1;
-}
-
-message SendMessageResponse {
-  Single message = 1;
-}
- /*
+/// group message wrapper;
+/// because of the grpc proto syntax limited
+/// we need use oneof to wrap the message;
 message GroupMsgWrapper{
   oneof group_msg {
     Single message = 1;
@@ -48,16 +55,19 @@ message GroupMsgWrapper{
   }
 }
 
+/// user and group id
 message UserAndGroupID{
   string user_id = 1;
   string group_id = 2;
 }
 
+/// group invitation include group information and group member information
 message GroupInvitation{
   GroupInfo info = 1;
-  repeated GroupMemberInfo members = 2;
+  repeated GroupMember members = 2;
 }
 
+/// group information also related to database
 message GroupInfo {
   int64 id = 1;
   string owner = 2;
@@ -70,7 +80,8 @@ message GroupInfo {
   int64 update_time = 9;
 }
 
-message GroupMemberInfo {
+/// group member information also related to database table group_members
+message GroupMember {
   int64 id = 1;
   int32 age = 2;
   string group_id = 3;
@@ -81,10 +92,38 @@ message GroupMemberInfo {
   optional string region = 8;
   string gender = 9;
 }
- */
-service Messages {
+
+/// create group object
+message GroupCreate{
+  string id = 1;
+  string owner = 2;
+  string avatar = 3;
+  string group_name = 4;
+  repeated string members_id = 5;
+}
+
+message SendMsgRequest {
+  MsgWrapper message = 1;
+}
+
+message SendMsgResponse {}
+
+service MsgService {
   // send message through rpc
-  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
-  // send single message
-  rpc SendSingleMessage(SendSingleMessageRequest) returns (SendSingleMessageResponse);
+  rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+}
+
+
+message GroupCreateRequest {
+  GroupCreate group = 1;
+}
+
+
+message GroupCreateResponse {
+  GroupInvitation invitation = 1;
+}
+
+
+service GroupService {
+  rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
 }

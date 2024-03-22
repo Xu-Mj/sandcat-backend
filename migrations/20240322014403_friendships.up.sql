@@ -16,5 +16,3 @@ create table friendships
     FOREIGN KEY (friend_id) REFERENCES users (id),
     Unique (user_id, friend_id)
 )
--- Your SQL goes here
--- Your SQL goes here
