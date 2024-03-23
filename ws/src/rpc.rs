@@ -1,6 +1,6 @@
 use std::result::Result;
 
-use abi::msg::{msg_service_server::MsgService, SendMsgRequest, SendMsgResponse};
+use abi::message::{msg_service_server::MsgService, SendMsgRequest, SendMsgResponse};
 use tonic::async_trait;
 
 use crate::manager::Manager;
@@ -25,11 +25,11 @@ impl MsgService for MsgRpcService {
         if msg.is_none() {
             return Err(tonic::Status::invalid_argument("message is empty"));
         }
-        let msg = msg.unwrap().msg;
-        if msg.is_none() {
+        let msg = msg.unwrap();
+        if msg.data.is_none() {
             return Err(tonic::Status::invalid_argument("message is empty"));
         }
-        self.manager.broadcast(msg.unwrap()).await?;
+        self.manager.broadcast(msg).await?;
         let response = tonic::Response::new(SendMsgResponse {});
         Ok(response)
     }

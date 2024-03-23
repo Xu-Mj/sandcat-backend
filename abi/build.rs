@@ -51,10 +51,11 @@ fn main() {
     tonic_build::configure()
         .out_dir("src/pb")
         .with_serde(&[
-            "MsgWrapper",
-            "MsgWrapper.msg",
+            "Msg",
+            "Msg.data",
             "UserAndGroupID",
             "Single",
+            "MsgResponse",
             "GroupMsgWrapper",
             "GroupMsgWrapper.group_msg",
             "GroupInfo",

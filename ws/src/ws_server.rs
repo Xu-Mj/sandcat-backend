@@ -4,7 +4,8 @@ use std::time::Duration;
 use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
-use abi::msg::msg_service_server::MsgServiceServer;
+use abi::message::chat_service_client::ChatServiceClient;
+use abi::message::msg_service_server::MsgServiceServer;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -13,9 +14,9 @@ use axum::{
     Router,
 };
 use futures::{SinkExt, StreamExt};
-use kafka::producer::{Producer, RequiredAcks};
 use tokio::sync::{mpsc, RwLock};
-use tonic::transport::Server;
+use tokio::time;
+use tonic::transport::{Channel, Server};
 use tracing::error;
 use utils::custom_extract::path_extractor::PathExtractor;
 
@@ -36,19 +37,30 @@ pub struct WsServer {
     // manager: Manager,
 }
 
+async fn get_client(config: &Config) -> ChatServiceClient<Channel> {
+    // start server at first
+    let url = config.server.url(false);
+
+    println!("connect to {}", url);
+    // try to connect to server
+    let future = async move {
+        while ChatServiceClient::connect(url.clone()).await.is_err() {
+            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+        }
+        // return result
+        ChatServiceClient::connect(url).await.unwrap()
+    };
+    // set timeout
+    time::timeout(time::Duration::from_secs(5), future)
+        .await
+        .unwrap_or_else(|e| panic!("connect timeout{:?}", e))
+}
+
 impl WsServer {
     pub async fn start(config: Config) {
         let (tx, rx) = mpsc::channel(1024);
         let redis = redis::Client::open(config.redis.url()).expect("redis can't open");
-        let producer = Producer::from_hosts(config.kafka.hosts)
-            // ~ give the brokers one second time to ack the message
-            .with_ack_timeout(Duration::from_secs(1))
-            // ~ require only one broker to ack the message
-            .with_required_acks(RequiredAcks::One)
-            // ~ build the producer with the above settings
-            .create()
-            .expect("Producer creation error");
-        let hub = Manager::new(tx, redis, producer);
+        let hub = Manager::new(tx, redis, get_client(&config).await);
         let mut cloned_hub = hub.clone();
         tokio::spawn(async move {
             cloned_hub.run(rx).await;
@@ -119,13 +131,7 @@ impl WsServer {
             sender: shared_tx.clone(),
         };
         hub.register(user_id.clone(), client).await;
-        // todo mark user online
-        // if let Err(err) = update_online(&state.pg_pool, &user_id, true).await {
-        //     tracing::error!("mark user online error: {}", err);
-        // }
 
-        // drop(guard);
-        tracing::debug!("offline msg sync done");
         // 开启任务发送心跳,这里直接回发即可
         let cloned_tx = shared_tx.clone();
         let mut ping_task = tokio::spawn(async move {
@@ -136,15 +142,17 @@ impl WsServer {
                     .send(Message::Ping(Vec::new()))
                     .await
                 {
-                    // 这里其实是需要处理的，后面再看看有没有别的方式吧？
-                    tracing::error!("心跳发送失败：{:?}", e);
+                    error!("心跳发送失败：{:?}", e);
+                    // break this task, it will end this conn
                     break;
                 } else {
                     // tracing::debug!("心跳发送成功");
                 }
-                tokio::time::sleep(tokio::time::Duration::from_secs(HEART_BEAT_INTERVAL)).await;
+                tokio::time::sleep(Duration::from_secs(HEART_BEAT_INTERVAL)).await;
             }
         });
+
+        // spawn a new task to receive message
         let cloned_hub = hub.clone();
         let shared_tx = shared_tx.clone();
         // 读取收到的消息
@@ -188,7 +196,6 @@ impl WsServer {
                         // }
                         break;
                     }
-
                     Message::Binary(_) => {}
                 }
             }

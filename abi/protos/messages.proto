@@ -1,25 +1,30 @@
 syntax = "proto3";
-package msg;
+package message;
 
 /// message content type
 enum ContentType {
-    Default = 0;
-    Text = 1;
-    Image = 2;
-    Video = 3;
-    File = 4;
-    Emoji = 5;
-    Audio = 6;
-    VideoCall = 7;
-    AudioCall = 8;
+  Default = 0;
+  Text = 1;
+  Image = 2;
+  Video = 3;
+  File = 4;
+  Emoji = 5;
+  Audio = 6;
+  VideoCall = 7;
+  AudioCall = 8;
 }
 
 /// message wrapper
 /// because of the protobuf syntax limited
-message MsgWrapper{
-  oneof msg{
-    Single single = 1;
-    GroupMsgWrapper group = 2;
+message Msg{
+  string send_id = 1;
+  string receiver_id = 2;
+  string local_id = 3;
+  string server_id = 4;
+  oneof data {
+    Single single = 5;
+    GroupMsgWrapper group = 6;
+    MsgResponse response = 7;
   }
 }
 
@@ -34,12 +39,12 @@ message Single {
   string content = 2;
   // message type
   ContentType content_type = 3;
-  // from
-  string send_id = 4;
-  // to
-  string receiver_id = 5;
+  //  // from
+  //  string send_id = 4;
+  //  // to
+  //  string receiver_id = 5;
   // timestamp
-  int64 create_time = 6;
+  int64 create_time = 4;
 }
 
 
@@ -105,10 +110,15 @@ message GroupCreate{
 }
 
 message SendMsgRequest {
-  MsgWrapper message = 1;
+  Msg message = 1;
 }
 
 message SendMsgResponse {}
+message MsgResponse {
+  string local_id = 1;
+  string server_id = 2;
+  string err = 3;
+}
 
 service MsgService {
   // send message through rpc
@@ -128,4 +138,10 @@ message GroupCreateResponse {
 
 service GroupService {
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
+}
+
+/// chat service, receive message then generate message id and send message to mq;
+/// response operation result;
+service ChatService {
+  rpc SendMsg(SendMsgRequest) returns (MsgResponse);
 }

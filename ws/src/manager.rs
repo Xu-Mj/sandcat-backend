@@ -1,11 +1,13 @@
 use crate::client::Client;
 use abi::errors::Error;
-use abi::msg::msg_wrapper::Msg;
+use abi::message::chat_service_client::ChatServiceClient;
+use abi::message::msg::Data;
+use abi::message::{Msg, MsgResponse, SendMsgRequest};
 use dashmap::DashMap;
-use kafka::producer::Producer;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::error;
+use tonic::transport::Channel;
+use tracing::{debug, error, info};
 
 type UserID = String;
 type PlatformID = String;
@@ -18,17 +20,21 @@ pub struct Manager {
     tx: mpsc::Sender<Msg>,
     pub hub: Hub,
     pub redis: redis::Client,
-    pub kafka: Arc<Producer>,
+    pub msg_rpc: ChatServiceClient<Channel>,
 }
 
 #[allow(dead_code)]
 impl Manager {
-    pub fn new(tx: mpsc::Sender<Msg>, redis: redis::Client, kafka: Producer) -> Self {
+    pub fn new(
+        tx: mpsc::Sender<Msg>,
+        redis: redis::Client,
+        msg_rpc: ChatServiceClient<Channel>,
+    ) -> Self {
         Manager {
             tx,
             hub: Arc::new(DashMap::new()),
             redis,
-            kafka: Arc::new(kafka),
+            msg_rpc,
         }
     }
     pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {
@@ -55,6 +61,7 @@ impl Manager {
             }
         }
     }
+
     // 注册客户端
     // todo check platform id, if existed already, kick offline
     pub async fn register(&mut self, id: String, client: Client) {
@@ -66,9 +73,9 @@ impl Manager {
             self.hub.insert(id, hash_map);
         }
     }
+
     // 删除客户端
     pub async fn unregister(&mut self, id: String, printer_id: String) {
-        // self.hub.write().await.remove(&id);
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
                 self.hub.remove(&id);
@@ -79,10 +86,37 @@ impl Manager {
     }
 
     pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {
-        while let Some(msg) = receiver.recv().await {
-            tracing::debug!("receive msg: {:?}", msg);
+        info!("manager start");
+        // 循环读取消息
+        while let Some(mut message) = receiver.recv().await {
+            // request the message rpc to get server_msg_id
+            match self
+                .msg_rpc
+                .send_msg(SendMsgRequest {
+                    message: Some(message.clone()),
+                })
+                .await
+            {
+                Ok(res) => {
+                    // reply send success
+                    let response = res.into_inner();
+                    if response.err.is_empty() {
+                        debug!("send message success");
+                    } else {
+                        error!("send message error: {:?}", response.err);
+                    }
+                    message.data = Some(Data::Response(response));
+                }
+                Err(err) => {
+                    error!("send message error: {:?}", err);
+                    let response = MsgResponse::from(err);
+                    message.data = Some(Data::Response(response));
+                }
+            }
+            self.send_single_msg(&message.send_id, &message).await;
         }
     }
+
     pub async fn broadcast(&self, msg: Msg) -> Result<(), Error> {
         self.tx.send(msg).await.map_err(|_| Error::BroadCastError)
     }

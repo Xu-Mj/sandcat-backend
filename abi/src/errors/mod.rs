@@ -5,8 +5,6 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 
-use crate::msg::msg_wrapper::Msg;
-
 // pub use self::conflict::ConflictReservationInfo;
 
 type Message = String;
@@ -124,11 +122,5 @@ impl IntoResponse for Error {
             ),
         };
         (status, Json(json!({"message":msg}))).into_response()
-    }
-}
-
-impl From<tokio::sync::mpsc::error::SendError<Msg>> for Error {
-    fn from(_value: tokio::sync::mpsc::error::SendError<Msg>) -> Self {
-        Self::BroadCastError
     }
 }
