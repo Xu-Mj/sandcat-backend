@@ -6,6 +6,7 @@ use axum::async_trait;
 use kafka::producer::{Producer, Record};
 use nanoid::nanoid;
 use tokio::sync::Mutex;
+use tracing::error;
 
 pub struct ChatRpcService {
     pub kafka: Arc<Mutex<Producer>>,
@@ -21,6 +22,8 @@ impl ChatRpcService {
 
 #[async_trait]
 impl ChatService for ChatRpcService {
+    /// send message to mq
+    /// generate msg id and send time
     async fn send_msg(
         &self,
         request: tonic::Request<SendMsgRequest>,
@@ -29,20 +32,31 @@ impl ChatService for ChatRpcService {
         if inner.is_none() {
             return Err(tonic::Status::invalid_argument("message is empty"));
         }
+
         let mut msg = inner.unwrap();
 
         // generate msg id
         msg.server_id = nanoid!();
+        msg.send_time = chrono::Local::now()
+            .naive_local()
+            .and_utc()
+            .timestamp_millis();
+
         // send msg to kafka
         let record = Record::from_value("test", serde_json::to_string(&msg).unwrap());
 
         let err = match self.kafka.lock().await.send(&record) {
             Ok(_) => String::new(),
-            Err(err) => err.to_string(),
+            Err(err) => {
+                error!("send msg to kafka error: {:?}", err);
+                err.to_string()
+            }
         };
+
         return Ok(tonic::Response::new(MsgResponse {
             local_id: msg.send_id,
             server_id: msg.server_id,
+            send_time: msg.send_time,
             err,
         }));
     }

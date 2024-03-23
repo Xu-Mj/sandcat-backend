@@ -13,13 +13,49 @@ pub struct Config {
     pub server: ServerConfig,
     pub kafka: KafkaConfig,
     pub redis: RedisConfig,
-    // pub rpc_server: RpcServerConfig,
+    pub rpc: RpcServerConfig,
+    pub websocket: WsServerConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct RpcServerConfig {
+    pub ws: WsServerConfig,
+    pub chat: ChatRpcServerConfig,
+    pub db: DbRpcServerConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct WsServerConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DbRpcServerConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ChatRpcServerConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+impl ChatRpcServerConfig {
+    pub fn url(&self, https: bool) -> String {
+        if https {
+            format!("https://{}:{}", self.host, self.port)
+        } else {
+            format!("http://{}:{}", self.host, self.port)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RedisConfig {
-    host: String,
-    port: u16,
+    pub host: String,
+    pub port: u16,
 }
 
 impl RedisConfig {
@@ -99,7 +135,12 @@ mod tests {
 
     #[test]
     fn test_load() {
-        let config = Config::load("./fixtures/im.yml").unwrap();
+        let config = match Config::load("./fixtures/im.yml") {
+            Ok(config) => config,
+            Err(err) => {
+                panic!("load config error: {:?}", err);
+            }
+        };
         println!("{:?}", config);
         assert_eq!(config.db.host, "localhost");
         assert_eq!(config.db.port, 5432);

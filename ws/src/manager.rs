@@ -20,7 +20,7 @@ pub struct Manager {
     tx: mpsc::Sender<Msg>,
     pub hub: Hub,
     pub redis: redis::Client,
-    pub msg_rpc: ChatServiceClient<Channel>,
+    pub chat_rpc: ChatServiceClient<Channel>,
 }
 
 #[allow(dead_code)]
@@ -34,7 +34,27 @@ impl Manager {
             tx,
             hub: Arc::new(DashMap::new()),
             redis,
-            msg_rpc,
+            chat_rpc: msg_rpc,
+        }
+    }
+
+    pub async fn send_msg(&self, msg: Msg) {
+        if msg.data.is_none() {
+            return;
+        }
+        let data = msg.data.as_ref().unwrap();
+        match data {
+            Data::Single(_) => {
+                self.send_single_msg(&msg.receiver_id, &msg).await;
+            }
+            Data::Group(_) => {
+                // todo think about how to deal with group message,
+                // shall we need to query members id from database?
+                // or is there another better way?
+                self.send_group(&vec![msg.receiver_id.clone()], &msg).await;
+            }
+            // ignore server response type
+            Data::Response(_) => {}
         }
     }
     pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {
@@ -90,8 +110,9 @@ impl Manager {
         // 循环读取消息
         while let Some(mut message) = receiver.recv().await {
             // request the message rpc to get server_msg_id
+            debug!("receive message: {:?}", message);
             match self
-                .msg_rpc
+                .chat_rpc
                 .send_msg(SendMsgRequest {
                     message: Some(message.clone()),
                 })
@@ -105,6 +126,7 @@ impl Manager {
                     } else {
                         error!("send message error: {:?}", response.err);
                     }
+                    message.server_id = response.server_id.clone();
                     message.data = Some(Data::Response(response));
                 }
                 Err(err) => {
@@ -113,6 +135,9 @@ impl Manager {
                     message.data = Some(Data::Response(response));
                 }
             }
+
+            // reply result to sender
+            debug!("reply message:{:?}", message);
             self.send_single_msg(&message.send_id, &message).await;
         }
     }

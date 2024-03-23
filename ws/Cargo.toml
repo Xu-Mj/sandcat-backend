@@ -15,6 +15,8 @@ serde = "1.0.197"
 serde_json = "1.0.114"
 tokio = { version = "1.36.0", features = ["full"] }
 tracing = "0.1.40"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
 tonic = { version = "0.11.0", features = ["gzip"] }
 
 abi = { version = "0.1.0", path = "../abi" }

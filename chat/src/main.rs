@@ -7,11 +7,17 @@ mod routes;
 mod utils;
 
 use crate::routes::app_routes;
+use abi::config::Config;
+use abi::message::chat_service_server::ChatServiceServer;
+use chat::ChatRpcService;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
+use kafka::producer::{Producer, RequiredAcks};
 use redis::Client;
 use sqlx::PgPool;
+use std::time::Duration;
 use tokio::sync::mpsc;
+use tonic::transport::Server;
 use tracing::Level;
 
 #[derive(Clone)]
@@ -27,6 +33,25 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(Level::DEBUG)
         .init();
+    let config = Config::load("./abi/fixtures/im.yml").unwrap();
+    let producer = Producer::from_hosts(config.kafka.hosts)
+        // ~ give the brokers one second time to ack the message
+        .with_ack_timeout(Duration::from_secs(1))
+        // ~ require only one broker to ack the message
+        .with_required_acks(RequiredAcks::One)
+        // ~ build the producer with the above settings
+        .create()
+        .expect("Producer creation error");
+    let service = ChatRpcService::new(producer);
+    let service = ChatServiceServer::new(service);
+    let rpc_addr = format!("{}:{}", config.rpc.chat.host, config.rpc.chat.port);
+    tokio::spawn(async move {
+        Server::builder()
+            .add_service(service)
+            .serve(rpc_addr.parse().unwrap())
+            .await
+            .unwrap();
+    });
     let (tx, rx) = mpsc::channel(1024);
     // create pool
     let database_url = config::config().await.db_url();

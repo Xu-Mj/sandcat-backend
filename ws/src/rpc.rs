@@ -14,6 +14,7 @@ impl MsgRpcService {
         Self { manager }
     }
 }
+
 #[async_trait]
 impl MsgService for MsgRpcService {
     async fn send_message(
@@ -30,6 +31,25 @@ impl MsgService for MsgRpcService {
             return Err(tonic::Status::invalid_argument("message is empty"));
         }
         self.manager.broadcast(msg).await?;
+        let response = tonic::Response::new(SendMsgResponse {});
+        Ok(response)
+    }
+
+    /// Send message to user
+    /// pusher will procedure this to send message to user
+    async fn send_msg_to_user(
+        &self,
+        request: tonic::Request<SendMsgRequest>,
+    ) -> Result<tonic::Response<SendMsgResponse>, tonic::Status> {
+        let msg = request.into_inner().message;
+        if msg.is_none() {
+            return Err(tonic::Status::invalid_argument("message is empty"));
+        }
+        let msg = msg.unwrap();
+        if msg.data.is_none() {
+            return Err(tonic::Status::invalid_argument("message is empty"));
+        }
+        self.manager.send_msg(msg).await;
         let response = tonic::Response::new(SendMsgResponse {});
         Ok(response)
     }

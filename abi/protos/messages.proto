@@ -16,16 +16,29 @@ enum ContentType {
 
 /// message wrapper
 /// because of the protobuf syntax limited
-message Msg{
+message Msg {
   string send_id = 1;
   string receiver_id = 2;
   string local_id = 3;
   string server_id = 4;
+  // timestamp
+  int64 send_time = 5;
   oneof data {
-    Single single = 5;
-    GroupMsgWrapper group = 6;
-    MsgResponse response = 7;
+    Single single = 6;
+    GroupMsgWrapper group = 7;
+    MsgResponse response = 8;
   }
+}
+
+message MsgToDb {
+  string send_id = 1;
+  string receiver_id = 2;
+  string local_id = 3;
+  string server_id = 4;
+  // timestamp
+  int64 send_time = 5;
+  ContentType content_type = 6;
+  string content = 7;
 }
 
 /// use to send single message or group message;
@@ -43,8 +56,6 @@ message Single {
   //  string send_id = 4;
   //  // to
   //  string receiver_id = 5;
-  // timestamp
-  int64 create_time = 4;
 }
 
 
@@ -117,12 +128,14 @@ message SendMsgResponse {}
 message MsgResponse {
   string local_id = 1;
   string server_id = 2;
-  string err = 3;
+  int64  send_time = 3;
+  string err = 4;
 }
 
 service MsgService {
   // send message through rpc
   rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+  rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
 }
 
 
@@ -144,4 +157,14 @@ service GroupService {
 /// response operation result;
 service ChatService {
   rpc SendMsg(SendMsgRequest) returns (MsgResponse);
+}
+
+message SaveMessageRequest {
+  MsgToDb message = 1;
+}
+
+message SaveMessageResponse {}
+
+service DbService {
+  rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
 }

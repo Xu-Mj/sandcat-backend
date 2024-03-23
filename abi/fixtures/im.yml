@@ -9,6 +9,21 @@ server:
   host: 127.0.0.1
   port: 50001
 
+websocket:
+  host: 127.0.0.1
+  port: 50000
+
+rpc:
+  ws:
+    host: 127.0.0.1
+    port: 50002
+  chat:
+    host: 127.0.0.1
+    port: 50003
+  db:
+    host: 127.0.0.1
+    port: 50004
+
 redis:
   host: localhost
   port: 6379

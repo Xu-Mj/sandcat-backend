@@ -39,7 +39,7 @@ pub struct WsServer {
 
 async fn get_client(config: &Config) -> ChatServiceClient<Channel> {
     // start server at first
-    let url = config.server.url(false);
+    let url = config.rpc.chat.url(false);
 
     println!("connect to {}", url);
     // try to connect to server
@@ -75,14 +75,15 @@ impl WsServer {
                 get(Self::websocket_handler),
             )
             .with_state(app_state);
-        let addr = "127.0.0.1:8000";
-        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+        let addr = format!("{}:{}", config.websocket.host, config.websocket.port);
+
+        let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
         tracing::debug!("listening on {}", listener.local_addr().unwrap());
         let mut ws = tokio::spawn(async move {
             println!("start websocket server on {}", addr);
             axum::serve(listener, router).await.unwrap();
         });
-        let rpc_addr = format!("{}:{}", config.server.host, config.server.port);
+        let rpc_addr = format!("{}:{}", config.rpc.ws.host, config.rpc.ws.port);
         let mut rpc = tokio::spawn(async move {
             // start rpc server
             let service = MsgRpcService::new(hub);

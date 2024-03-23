@@ -1,0 +1,15 @@
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2021"
+# consume the kafka messages to postgres, mongodb, redis
+# and push the message to pusher which is push message to each client
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+abi = { version = "0.1.0", path = "../abi" }
+kafka = "0.10.0"
+serde = "1.0.197"
+tokio = "1.36.0"
+tracing-subscriber = "0.3.18"
+log = "0.4.20"

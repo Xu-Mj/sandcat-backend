@@ -6,6 +6,7 @@ impl From<Status> for MsgResponse {
         MsgResponse {
             local_id: String::new(),
             server_id: String::new(),
+            send_time: 0,
             err: status.message().to_string(),
         }
     }

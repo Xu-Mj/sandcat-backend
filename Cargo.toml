@@ -5,7 +5,7 @@
 #publish = false
 
 [workspace]
-members = ["abi", "chat", "rpc", "utils", "ws"]
+members = ["abi", "chat", "consumer", "db", "rpc", "utils", "ws"]
 resolver = "2"
 
 [profile.dev]
