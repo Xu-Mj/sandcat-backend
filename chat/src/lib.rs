@@ -43,7 +43,7 @@ impl ChatService for ChatRpcService {
             .timestamp_millis();
 
         // send msg to kafka
-        let record = Record::from_value("test", serde_json::to_string(&msg).unwrap());
+        let record = Record::from_value("xmj", serde_json::to_string(&msg).unwrap());
 
         let err = match self.kafka.lock().await.send(&record) {
             Ok(_) => String::new(),

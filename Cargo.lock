@@ -427,6 +427,7 @@ dependencies = [
  "log",
  "serde",
  "tokio",
+ "tracing",
  "tracing-subscriber",
 ]
 

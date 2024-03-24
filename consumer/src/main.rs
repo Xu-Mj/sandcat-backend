@@ -1,15 +1,17 @@
+use abi::config::Config;
 use kafka::consumer::{Consumer, FetchOffset, GroupOffsetStorage};
 use kafka::Error;
 
 fn main() {
     tracing_subscriber::fmt::init();
 
-    let broker = "localhost:9092".to_owned();
-    let topic = "test".to_owned();
+    let config = Config::load("./abi/fixtures/im.yml").unwrap();
+
+    let topic = "xmj".to_owned();
     // consumer group; only one consumer can receive the message in the same group
     let group = "my-group".to_owned();
 
-    if let Err(e) = consume_messages(group, topic, vec![broker]) {
+    if let Err(e) = consume_messages(group, topic, config.kafka.hosts) {
         println!("Failed consuming messages: {}", e);
     }
 }
@@ -18,7 +20,6 @@ fn consume_messages(group: String, topic: String, brokers: Vec<String>) -> Resul
     let mut con = Consumer::from_hosts(brokers)
         .with_topic(topic)
         .with_group(group)
-        .with_client_id("test-consumer".to_string())
         .with_fallback_offset(FetchOffset::Earliest)
         .with_offset_storage(Some(GroupOffsetStorage::Kafka))
         .create()?;
@@ -43,6 +44,8 @@ fn consume_messages(group: String, topic: String, brokers: Vec<String>) -> Resul
         }
 
         // Commit offsets of consumed messages
-        con.commit_consumed().expect("Failed to commit messages");
+        if let Err(e) = con.commit_consumed() {
+            println!("Error committing offsets: {:?}", e);
+        }
     }
 }
