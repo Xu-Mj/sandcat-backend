@@ -96,6 +96,7 @@ impl Manager {
 
     // 删除客户端
     pub async fn unregister(&mut self, id: String, printer_id: String) {
+        debug!("unregister client: {:?}", id);
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
                 self.hub.remove(&id);
@@ -103,6 +104,7 @@ impl Manager {
                 clients.remove(&printer_id);
             }
         }
+        debug!("unregister client success");
     }
 
     pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {

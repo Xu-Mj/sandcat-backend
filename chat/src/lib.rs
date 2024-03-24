@@ -1,12 +1,16 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use abi::message::chat_service_server::ChatService;
+use abi::config::Config;
+use abi::errors::Error;
+use abi::message::chat_service_server::{ChatService, ChatServiceServer};
 use abi::message::{MsgResponse, SendMsgRequest};
 use axum::async_trait;
 use nanoid::nanoid;
 use rdkafka::producer::{FutureProducer, FutureRecord};
+use rdkafka::ClientConfig;
 use tokio::sync::Mutex;
+use tonic::transport::Server;
 use tracing::error;
 
 pub struct ChatRpcService {
@@ -20,6 +24,22 @@ impl ChatRpcService {
             kafka: Arc::new(Mutex::new(kafka)),
             topic,
         }
+    }
+    pub async fn start(config: &Config) -> Result<(), Error> {
+        let producer: FutureProducer = ClientConfig::new()
+            .set("bootstrap.servers", config.kafka.hosts.join(","))
+            .set("message.timeout.ms", "5000")
+            .create()
+            .expect("Producer creation error");
+
+        let chat_rpc = Self::new(producer, config.kafka.topic.clone());
+        let service = ChatServiceServer::new(chat_rpc);
+        Server::builder()
+            .add_service(service)
+            .serve(config.rpc.chat.rpc_server_url().parse().unwrap())
+            .await
+            .unwrap();
+        Ok(())
     }
 }
 

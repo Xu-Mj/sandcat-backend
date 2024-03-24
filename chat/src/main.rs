@@ -8,16 +8,12 @@ mod utils;
 
 use crate::routes::app_routes;
 use abi::config::Config;
-use abi::message::chat_service_server::ChatServiceServer;
 use chat::ChatRpcService;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
-use rdkafka::producer::FutureProducer;
-use rdkafka::ClientConfig;
 use redis::Client;
 use sqlx::PgPool;
 use tokio::sync::mpsc;
-use tonic::transport::Server;
 use tracing::Level;
 
 #[derive(Clone)]
@@ -34,21 +30,7 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
     let config = Config::load("../abi/fixtures/im.yml").unwrap();
-    let producer: FutureProducer = ClientConfig::new()
-        .set("bootstrap.servers", config.kafka.hosts.join(","))
-        .set("message.timeout.ms", "5000")
-        .create()
-        .expect("Producer creation error");
-    let service = ChatRpcService::new(producer, config.kafka.topic);
-    let service = ChatServiceServer::new(service);
-    let rpc_addr = format!("{}:{}", config.rpc.chat.host, config.rpc.chat.port);
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(service)
-            .serve(rpc_addr.parse().unwrap())
-            .await
-            .unwrap();
-    });
+    ChatRpcService::start(&config).await.unwrap();
     let (tx, rx) = mpsc::channel(1024);
     // create pool
     let database_url = config::config().await.db_url();

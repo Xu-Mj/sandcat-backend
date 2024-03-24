@@ -9,3 +9,13 @@ async fn main() {
         .init();
     WsServer::start(Config::load("./abi/fixtures/im.yml").unwrap()).await
 }
+#[cfg(test)]
+mod tests {
+    use abi::message::{Msg, Single};
+    #[test]
+    fn test_load() {
+        let mut msg = Msg::default();
+        msg.data = Some(abi::message::msg::Data::Single(Single::default()));
+        println!("{}", serde_json::to_string(&msg).unwrap())
+    }
+}

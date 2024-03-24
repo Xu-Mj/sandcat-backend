@@ -22,6 +22,13 @@ pub struct RpcServerConfig {
     pub ws: WsServerConfig,
     pub chat: ChatRpcServerConfig,
     pub db: DbRpcServerConfig,
+    pub pusher: PusherRpcServerConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PusherRpcServerConfig {
+    pub host: String,
+    pub port: u16,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -30,6 +37,25 @@ pub struct WsServerConfig {
     pub port: u16,
 }
 
+impl WsServerConfig {
+    #[inline]
+    pub fn rpc_server_url(&self) -> String {
+        format!("{}:{}", self.host, self.port)
+    }
+
+    #[inline]
+    pub fn url(&self, https: bool) -> String {
+        url(https, &self.host, self.port)
+    }
+
+    pub fn ws_url(&self, https: bool) -> String {
+        if https {
+            format!("wss://{}:{}", self.host, self.port)
+        } else {
+            format!("ws://{}:{}", self.host, self.port)
+        }
+    }
+}
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DbRpcServerConfig {
     pub host: String,
@@ -42,13 +68,37 @@ pub struct ChatRpcServerConfig {
     pub port: u16,
 }
 
+impl PusherRpcServerConfig {
+    #[inline]
+    pub fn rpc_server_url(&self) -> String {
+        format!("{}:{}", self.host, self.port)
+    }
+
+    #[inline]
+    pub fn url(&self, https: bool) -> String {
+        url(https, &self.host, self.port)
+    }
+}
+
 impl DbRpcServerConfig {
+    #[inline]
+    pub fn rpc_server_url(&self) -> String {
+        format!("{}:{}", self.host, self.port)
+    }
+
+    #[inline]
     pub fn url(&self, https: bool) -> String {
         url(https, &self.host, self.port)
     }
 }
 
 impl ChatRpcServerConfig {
+    #[inline]
+    pub fn rpc_server_url(&self) -> String {
+        format!("{}:{}", self.host, self.port)
+    }
+
+    #[inline]
     pub fn url(&self, https: bool) -> String {
         url(https, &self.host, self.port)
     }
@@ -110,7 +160,7 @@ impl Config {
 }
 
 impl DbConfig {
-    pub fn server_url(&self) -> String {
+    pub fn rpc_server_url(&self) -> String {
         if self.password.is_empty() {
             return format!("postgres://{}@{}:{}", self.user, self.host, self.port);
         }
@@ -120,7 +170,7 @@ impl DbConfig {
         )
     }
     pub fn url(&self) -> String {
-        format!("{}/{}", self.server_url(), self.database)
+        format!("{}/{}", self.rpc_server_url(), self.database)
     }
 }
 

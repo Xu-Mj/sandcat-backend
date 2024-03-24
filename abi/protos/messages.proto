@@ -168,3 +168,7 @@ message SaveMessageResponse {}
 service DbService {
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
 }
+
+service PushService {
+  rpc PushMsg(SendMsgRequest) returns (SendMsgResponse);
+}

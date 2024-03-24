@@ -44,7 +44,12 @@ pub enum Error {
 
     #[error("parse error: {0}")]
     ParseError(Message),
+
+    #[error("rpc error: {0}")]
+    TonicError(Message),
 }
+
+// impl From<>
 
 // convert sqlx::Error to Error::ConfilictReservation
 impl From<sqlx::Error> for Error {
@@ -91,6 +96,7 @@ impl From<Error> for tonic::Status {
             Error::UnAuthorized(_, _) => tonic::Status::unauthenticated(e.to_string()),
             Error::BroadCastError => tonic::Status::internal("BROADCAST ERROR"),
             Error::ParseError(e) => tonic::Status::internal(format!("PARSE ERROR: {e}")),
+            Error::TonicError(e) => tonic::Status::internal(format!("PARSE ERROR: {e}")),
         }
     }
 }
@@ -122,6 +128,7 @@ impl IntoResponse for Error {
             | Error::ConfigReadError
             | Error::ConfigParseError
             | Error::ParseError(_)
+            | Error::TonicError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),

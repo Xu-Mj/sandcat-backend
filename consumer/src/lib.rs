@@ -1,9 +1,9 @@
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
-use abi::message::{Msg, MsgToDb, SaveMessageRequest};
+use abi::message::push_service_client::PushServiceClient;
+use abi::message::{Msg, MsgToDb, SaveMessageRequest, SendMsgRequest};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
-use rdkafka::util::get_rdkafka_version;
 use rdkafka::{ClientConfig, Message};
 use tonic::transport::Channel;
 use tracing::{debug, error};
@@ -12,21 +12,18 @@ pub struct ConsumerService {
     consumer: StreamConsumer,
     /// rpc client
     db_rpc: DbServiceClient<Channel>,
+    pusher: PushServiceClient<Channel>,
 }
 
 impl ConsumerService {
     pub async fn new(config: &Config) -> Self {
-        // 打印 rdkafka 版本信息
-        let (version_n, version_s) = get_rdkafka_version();
-        println!("rdkafka version: {}, {}", version_n, version_s);
-
         // init kafka consumer
-        // 创建 Kafka 配置
+        // todo 了解kafka相关配置
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", &config.kafka.group)
             .set("bootstrap.servers", config.kafka.hosts.join(","))
-            .set("enable.auto.commit", "true")
-            .set("auto.commit.interval.ms", "1000")
+            // .set("enable.auto.commit", "true")
+            // .set("auto.commit.interval.ms", "1000")
             .set("session.timeout.ms", "6000")
             .set("enable.partition.eof", "false")
             .create()
@@ -41,29 +38,57 @@ impl ConsumerService {
         let db_rpc = DbServiceClient::connect(config.rpc.db.url(false))
             .await
             .unwrap();
-        Self { consumer, db_rpc }
+
+        let pusher = PushServiceClient::connect(config.rpc.pusher.url(false))
+            .await
+            .unwrap();
+
+        Self {
+            consumer,
+            db_rpc,
+            pusher,
+        }
     }
 
     pub async fn consume(&mut self) -> Result<(), Error> {
-        let mut db_rpc = self.db_rpc.clone();
         // 开始消费消息
         loop {
             match self.consumer.recv().await {
                 Err(e) => error!("Kafka error: {}", e),
                 Ok(m) => {
-                    if let Some(payload) = m.payload() {
-                        debug!(
-                            "Received message: {:#?}",
-                            String::from_utf8(payload.to_vec())
-                        );
+                    if let Some(Ok(payload)) = m.payload_view::<str>() {
+                        debug!("Received message: {:#?}", payload);
 
-                        if let Err(e) = Self::send_to_db(&mut db_rpc, payload).await {
-                            error!("failed to consume message, error: {:?}", e);
-                            continue;
-                        }
+                        // send to db rpc server
+                        let mut db_rpc = self.db_rpc.clone();
+                        // todo is there any other way to solve the lifetime issue?
+                        let cloned_msg = String::from(payload);
+                        let to_db = tokio::spawn(async move {
+                            if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
+                                error!("failed to consume message, error: {:?}", e);
+                            }
+                        });
 
-                        if let Err(e) = self.consumer.commit_message(&m, CommitMode::Async) {
-                            error!("Failed to commit message: {:?}", e);
+                        // send to pusher
+                        let cloned_msg = String::from(payload);
+                        let mut pusher = self.pusher.clone();
+                        let to_pusher = tokio::spawn(async move {
+                            if let Err(e) = Self::send_to_pusher(&mut pusher, cloned_msg).await {
+                                error!("failed to consume message, error: {:?}", e);
+                            }
+                        });
+
+                        // todo try_join! or join!; we should think about it
+                        match tokio::try_join!(to_db, to_pusher) {
+                            Ok(_) => {
+                                if let Err(e) = self.consumer.commit_message(&m, CommitMode::Async)
+                                {
+                                    error!("Failed to commit message: {:?}", e);
+                                }
+                            }
+                            Err(err) => {
+                                error!("failed to consume message, error: {:?}", err);
+                            }
                         }
                     }
                 }
@@ -73,13 +98,26 @@ impl ConsumerService {
 
     pub async fn send_to_db(
         db_rpc: &mut DbServiceClient<Channel>,
-        msg: &[u8],
+        msg: String,
     ) -> Result<(), Error> {
-        let msg: Msg = serde_json::from_slice(msg)?;
+        let msg: Msg = serde_json::from_str(&msg)?;
         db_rpc
             .save_message(SaveMessageRequest {
                 message: Some(MsgToDb::from(msg)),
             })
+            .await
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        Ok(())
+    }
+    pub async fn send_to_pusher(
+        pusher: &mut PushServiceClient<Channel>,
+        msg: String,
+    ) -> Result<(), Error> {
+        // let msg: Msg = serde_json::from_slice(msg)?;
+        let msg: Msg = serde_json::from_str(&msg)?;
+
+        pusher
+            .push_msg(SendMsgRequest { message: Some(msg) })
             .await
             .map_err(|e| Error::InternalServer(e.to_string()))?;
         Ok(())

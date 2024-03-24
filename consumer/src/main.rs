@@ -16,7 +16,7 @@ async fn main() {
         "connect to kafka server: {:?}; topic: {}, group: {}",
         config.kafka.hosts, config.kafka.topic, config.kafka.group
     );
-    info!("connect to rpc server: {}", config.rpc.db.url(false));
+    info!("connect to rpc server: {}", config.rpc.db.rpc_server_url());
     if let Err(e) = consumer.consume().await {
         panic!("failed to consume message, error: {}", e);
     }

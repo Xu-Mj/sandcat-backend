@@ -1,11 +1,5 @@
-#[package]
-#name = "im-backend"
-#version = "0.1.0"
-#edition = "2021"
-#publish = false
-
 [workspace]
-members = ["abi", "chat", "consumer", "db", "rpc", "utils", "ws"]
+members = ["abi", "chat", "cmd", "consumer", "db", "pusher", "rpc", "utils", "ws"]
 resolver = "2"
 
 [profile.dev]

@@ -206,6 +206,7 @@ impl WsServer {
             _ = (&mut ping_task) => rec_task.abort(),
             _ = (&mut rec_task) => ping_task.abort(),
         }
+        tracing::debug!("client thread exit");
         hub.unregister(user_id, pointer_id).await;
         tracing::debug!("client thread exit {}", hub.hub.iter().count());
     }
