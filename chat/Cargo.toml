@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-kafka = "0.10.0"
+#kafka = "0.10.0"
 tonic = { version = "0.11.0", features = ["gzip"] }
 axum = { version = "0.7", features = ["ws", "multipart"] }
 #axum-macros = "0.3"
@@ -41,3 +41,4 @@ sqlx = { version = "0.7", features = [
 thiserror = "1.0.57"
 abi = { version = "0.1.0", path = "../abi" }
 uuid = { version = "1.7.0", features = ["v4"] }
+rdkafka = { version = "0.36.2", features = ["dynamic-linking"] }

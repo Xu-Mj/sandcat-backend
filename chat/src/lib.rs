@@ -1,21 +1,24 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use abi::message::chat_service_server::ChatService;
 use abi::message::{MsgResponse, SendMsgRequest};
 use axum::async_trait;
-use kafka::producer::{Producer, Record};
 use nanoid::nanoid;
+use rdkafka::producer::{FutureProducer, FutureRecord};
 use tokio::sync::Mutex;
 use tracing::error;
 
 pub struct ChatRpcService {
-    pub kafka: Arc<Mutex<Producer>>,
+    pub kafka: Arc<Mutex<FutureProducer>>,
+    pub topic: String,
 }
 
 impl ChatRpcService {
-    pub fn new(kafka: Producer) -> Self {
+    pub fn new(kafka: FutureProducer, topic: String) -> Self {
         Self {
             kafka: Arc::new(Mutex::new(kafka)),
+            topic,
         }
     }
 }
@@ -43,12 +46,22 @@ impl ChatService for ChatRpcService {
             .timestamp_millis();
 
         // send msg to kafka
-        let record = Record::from_value("xmj", serde_json::to_string(&msg).unwrap());
-
-        let err = match self.kafka.lock().await.send(&record) {
+        let payload = serde_json::to_string(&msg).unwrap();
+        // let kafka generate key, then we need set FutureRecord<String, type>
+        let record: FutureRecord<String, String> = FutureRecord::to(&self.topic).payload(&payload);
+        let err = match self
+            .kafka
+            .lock()
+            .await
+            .send(record, Duration::from_secs(0))
+            .await
+        {
             Ok(_) => String::new(),
-            Err(err) => {
-                error!("send msg to kafka error: {:?}", err);
+            Err((err, msg)) => {
+                error!(
+                    "send msg to kafka error: {:?}; owned message: {:?}",
+                    err, msg
+                );
                 err.to_string()
             }
         };

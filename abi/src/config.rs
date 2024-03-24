@@ -42,13 +42,23 @@ pub struct ChatRpcServerConfig {
     pub port: u16,
 }
 
+impl DbRpcServerConfig {
+    pub fn url(&self, https: bool) -> String {
+        url(https, &self.host, self.port)
+    }
+}
+
 impl ChatRpcServerConfig {
     pub fn url(&self, https: bool) -> String {
-        if https {
-            format!("https://{}:{}", self.host, self.port)
-        } else {
-            format!("http://{}:{}", self.host, self.port)
-        }
+        url(https, &self.host, self.port)
+    }
+}
+
+fn url(https: bool, host: &str, port: u16) -> String {
+    if https {
+        format!("https://{}:{}", host, port)
+    } else {
+        format!("http://{}:{}", host, port)
     }
 }
 
@@ -67,6 +77,8 @@ impl RedisConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct KafkaConfig {
     pub hosts: Vec<String>,
+    pub topic: String,
+    pub group: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -114,11 +126,7 @@ impl DbConfig {
 
 impl ServerConfig {
     pub fn url(&self, https: bool) -> String {
-        if https {
-            format!("https://{}:{}", self.host, self.port)
-        } else {
-            format!("http://{}:{}", self.host, self.port)
-        }
+        url(https, &self.host, self.port)
     }
 
     pub fn with_port(&self, port: u16) -> ServerConfig {

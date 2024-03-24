@@ -31,3 +31,5 @@ redis:
 kafka:
   hosts:
     - localhost:9092
+  topic: xmj
+  group: chat

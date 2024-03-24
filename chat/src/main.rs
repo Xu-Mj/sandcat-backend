@@ -12,10 +12,10 @@ use abi::message::chat_service_server::ChatServiceServer;
 use chat::ChatRpcService;
 use deadpool_diesel::postgres::{Manager, Pool};
 use domain::model::manager;
-use kafka::producer::{Producer, RequiredAcks};
+use rdkafka::producer::FutureProducer;
+use rdkafka::ClientConfig;
 use redis::Client;
 use sqlx::PgPool;
-use std::time::Duration;
 use tokio::sync::mpsc;
 use tonic::transport::Server;
 use tracing::Level;
@@ -33,16 +33,13 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(Level::DEBUG)
         .init();
-    let config = Config::load("./abi/fixtures/im.yml").unwrap();
-    let producer = Producer::from_hosts(config.kafka.hosts)
-        // ~ give the brokers one second time to ack the message
-        .with_ack_timeout(Duration::from_secs(1))
-        // ~ require only one broker to ack the message
-        .with_required_acks(RequiredAcks::One)
-        // ~ build the producer with the above settings
+    let config = Config::load("../abi/fixtures/im.yml").unwrap();
+    let producer: FutureProducer = ClientConfig::new()
+        .set("bootstrap.servers", config.kafka.hosts.join(","))
+        .set("message.timeout.ms", "5000")
         .create()
         .expect("Producer creation error");
-    let service = ChatRpcService::new(producer);
+    let service = ChatRpcService::new(producer, config.kafka.topic);
     let service = ChatServiceServer::new(service);
     let rpc_addr = format!("{}:{}", config.rpc.chat.host, config.rpc.chat.port);
     tokio::spawn(async move {

@@ -41,6 +41,9 @@ pub enum Error {
     PathParsing(Message, Option<Location>),
     #[error("unauthorized request{0}, path: {1}")]
     UnAuthorized(Message, Path),
+
+    #[error("parse error: {0}")]
+    ParseError(Message),
 }
 
 // convert sqlx::Error to Error::ConfilictReservation
@@ -54,6 +57,11 @@ impl From<sqlx::Error> for Error {
     }
 }
 
+impl From<serde_json::Error> for Error {
+    fn from(value: serde_json::Error) -> Self {
+        Self::ParseError(value.to_string())
+    }
+}
 // impl PartialEq for Error {
 //     fn eq(&self, other: &Self) -> bool {
 //         match (self, other) {
@@ -82,6 +90,7 @@ impl From<Error> for tonic::Status {
             Error::PathParsing(_, _) => tonic::Status::invalid_argument(e.to_string()),
             Error::UnAuthorized(_, _) => tonic::Status::unauthenticated(e.to_string()),
             Error::BroadCastError => tonic::Status::internal("BROADCAST ERROR"),
+            Error::ParseError(e) => tonic::Status::internal(format!("PARSE ERROR: {e}")),
         }
     }
 }
@@ -112,9 +121,10 @@ impl IntoResponse for Error {
             Error::DbError(_)
             | Error::ConfigReadError
             | Error::ConfigParseError
+            | Error::ParseError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "UNKNOWN ERROR".to_string(),
+                "INTERNAL SERVER ERROR ".to_string(),
             ),
             Error::BroadCastError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
