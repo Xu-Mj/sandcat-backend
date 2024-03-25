@@ -69,3 +69,150 @@ impl MsgRecBoxRepo for MsgBox {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ops::Deref;
+    use utils::mongodb_tester::MongoDbTester;
+    struct TestConfig {
+        box_: MsgBox,
+        _tdb: MongoDbTester,
+    }
+
+    impl Deref for TestConfig {
+        type Target = MsgBox;
+        fn deref(&self) -> &Self::Target {
+            &self.box_
+        }
+    }
+
+    impl TestConfig {
+        pub async fn new() -> Self {
+            let config = Config::load("../abi/fixtures/im.yml").unwrap();
+            let tdb = MongoDbTester::new(
+                &config.db.mongodb.host,
+                config.db.mongodb.port,
+                &config.db.mongodb.user,
+                &config.db.mongodb.password,
+            )
+            .await;
+            let msg_box = MsgBox::new(tdb.database().await).await;
+            Self {
+                box_: msg_box,
+                _tdb: tdb,
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn mongodb_insert_and_get_works() {
+        let msg_box = TestConfig::new().await;
+        let msg_id = "123";
+        let msg = MsgToDb {
+            local_id: "123".to_string(),
+            server_id: msg_id.to_string(),
+            send_time: chrono::Local::now().timestamp(),
+            content_type: 0,
+            content: "test".to_string(),
+            send_id: "123".to_string(),
+            receiver_id: "111".to_string(),
+        };
+        let collection = "test".to_string();
+        // save it into mongodb
+        msg_box.save_message(msg, collection.clone()).await.unwrap();
+        let msg = msg_box
+            .get_message(msg_id.to_string(), collection)
+            .await
+            .unwrap();
+        assert!(msg.is_some());
+        assert_eq!(msg.unwrap().server_id, msg_id);
+    }
+
+    #[tokio::test]
+    async fn mongodb_insert_and_delete_and_get_works() {
+        let msg_box = TestConfig::new().await;
+        let msg_id = "123";
+        let msg = MsgToDb {
+            local_id: "123".to_string(),
+            server_id: msg_id.to_string(),
+            send_time: chrono::Local::now().timestamp(),
+            content_type: 0,
+            content: "test".to_string(),
+            send_id: "123".to_string(),
+            receiver_id: "111".to_string(),
+        };
+        let collection = "test".to_string();
+        // save it into mongodb
+        msg_box.save_message(msg, collection.clone()).await.unwrap();
+
+        // delete it
+        msg_box
+            .delete_message(msg_id.to_string(), collection.clone())
+            .await
+            .unwrap();
+
+        let msg = msg_box
+            .get_message(msg_id.to_string(), collection)
+            .await
+            .unwrap();
+        assert!(msg.is_none());
+    }
+
+    #[tokio::test]
+    async fn mongodb_insert_and_batch_delete_and_get_should_works() {
+        let msg_box = TestConfig::new().await;
+        let msg_id = vec!["123".to_string(), "124".to_string(), "125".to_string()];
+        let mut msg = MsgToDb {
+            local_id: "123".to_string(),
+            server_id: msg_id[0].clone(),
+            send_time: chrono::Local::now().timestamp(),
+            content_type: 0,
+            content: "test".to_string(),
+            send_id: "123".to_string(),
+            receiver_id: "111".to_string(),
+        };
+        let collection = "test".to_string();
+        // save it into mongodb
+        msg_box
+            .save_message(msg.clone(), collection.clone())
+            .await
+            .unwrap();
+
+        msg.server_id = msg_id[1].clone();
+        msg_box
+            .save_message(msg.clone(), collection.clone())
+            .await
+            .unwrap();
+
+        msg.server_id = msg_id[2].clone();
+        msg_box
+            .save_message(msg.clone(), collection.clone())
+            .await
+            .unwrap();
+
+        // delete it
+        msg_box
+            .delete_messages(msg_id.clone(), collection.clone())
+            .await
+            .unwrap();
+
+        let msg = msg_box
+            .get_message(msg_id[0].to_owned(), collection.clone())
+            .await
+            .unwrap();
+        assert!(msg.is_none());
+
+        let msg = msg_box
+            .get_message(msg_id[1].to_owned(), collection.clone())
+            .await
+            .unwrap();
+        assert!(msg.is_none());
+
+        let msg = msg_box
+            .get_message(msg_id[2].to_owned(), collection)
+            .await
+            .unwrap();
+        assert!(msg.is_none());
+    }
+}
