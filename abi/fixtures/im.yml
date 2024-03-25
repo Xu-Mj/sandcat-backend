@@ -1,9 +1,16 @@
 db:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: root
-  database: im
+  postgres:
+    host: localhost
+    port: 5432
+    user: postgres
+    password: root
+    database: im
+  mongodb:
+    host: localhost
+    port: 27017
+    user:
+    password:
+    database: im
 
 server:
   host: 127.0.0.1

@@ -88,23 +88,26 @@ impl Manager {
         if let Some(cli) = self.hub.get_mut(&id) {
             cli.insert(client.platform_id.clone(), client);
         } else {
-            let hash_map = DashMap::new();
-            hash_map.insert(client.user_id.clone(), client);
-            self.hub.insert(id, hash_map);
+            let dash_map = DashMap::new();
+            dash_map.insert(client.user_id.clone(), client);
+            self.hub.insert(id, dash_map);
         }
     }
 
     // 删除客户端
     pub async fn unregister(&mut self, id: String, printer_id: String) {
-        debug!("unregister client: {:?}", id);
+        let mut flag = false;
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
-                self.hub.remove(&id);
+                flag = true;
             } else {
                 clients.remove(&printer_id);
             }
+        };
+        if flag {
+            self.hub.remove(&id);
         }
-        debug!("unregister client success");
+        debug!("unregister client: {:?}", id);
     }
 
     pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {

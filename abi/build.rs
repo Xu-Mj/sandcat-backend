@@ -52,6 +52,7 @@ fn main() {
         .out_dir("src/pb")
         .with_serde(&[
             "Msg",
+            "MsgToDb",
             "Msg.data",
             "UserAndGroupID",
             "Single",

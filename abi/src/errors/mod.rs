@@ -3,6 +3,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use mongodb::bson::document::ValueAccessError;
 use serde_json::json;
 
 // pub use self::conflict::ConflictReservationInfo;
@@ -47,9 +48,34 @@ pub enum Error {
 
     #[error("rpc error: {0}")]
     TonicError(Message),
+
+    #[error("mongodb value access error: {0}")]
+    MongoDbValueAccessError(ValueAccessError),
+
+    #[error("mongodb value access error: {0}")]
+    MongoDbBsonSerError(mongodb::bson::ser::Error),
+
+    #[error("mongodb value access error: {0}")]
+    MongoDbOperateError(mongodb::error::Error),
 }
 
-// impl From<>
+impl From<ValueAccessError> for Error {
+    fn from(value: ValueAccessError) -> Self {
+        Self::MongoDbValueAccessError(value)
+    }
+}
+
+impl From<mongodb::bson::ser::Error> for Error {
+    fn from(value: mongodb::bson::ser::Error) -> Self {
+        Self::MongoDbBsonSerError(value)
+    }
+}
+
+impl From<mongodb::error::Error> for Error {
+    fn from(value: mongodb::error::Error) -> Self {
+        Self::MongoDbOperateError(value)
+    }
+}
 
 // convert sqlx::Error to Error::ConfilictReservation
 impl From<sqlx::Error> for Error {
@@ -96,7 +122,16 @@ impl From<Error> for tonic::Status {
             Error::UnAuthorized(_, _) => tonic::Status::unauthenticated(e.to_string()),
             Error::BroadCastError => tonic::Status::internal("BROADCAST ERROR"),
             Error::ParseError(e) => tonic::Status::internal(format!("PARSE ERROR: {e}")),
-            Error::TonicError(e) => tonic::Status::internal(format!("PARSE ERROR: {e}")),
+            Error::TonicError(e) => tonic::Status::internal(format!("TONIC ERROR: {e}")),
+            Error::MongoDbValueAccessError(e) => {
+                tonic::Status::internal(format!("MONGODB VALUE ACCESS ERROR: {e}"))
+            }
+            Error::MongoDbOperateError(e) => {
+                tonic::Status::internal(format!("MONGODB OPERATE ERROR: {e}"))
+            }
+            Error::MongoDbBsonSerError(e) => {
+                tonic::Status::internal(format!("MONGODB BSON SER ERROR: {e}"))
+            }
         }
     }
 }
@@ -129,6 +164,9 @@ impl IntoResponse for Error {
             | Error::ConfigParseError
             | Error::ParseError(_)
             | Error::TonicError(_)
+            | Error::MongoDbValueAccessError(_)
+            | Error::MongoDbOperateError(_)
+            | Error::MongoDbBsonSerError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),

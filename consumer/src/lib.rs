@@ -1,6 +1,7 @@
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
+use abi::message::msg::Data;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{Msg, MsgToDb, SaveMessageRequest, SendMsgRequest};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
@@ -101,6 +102,15 @@ impl ConsumerService {
         msg: String,
     ) -> Result<(), Error> {
         let msg: Msg = serde_json::from_str(&msg)?;
+        // don't send it if data type is call xxx
+        if msg.data.is_some() {
+            // todo add call type to msg
+            match msg.data.as_ref().unwrap() {
+                Data::Single(_) => {}
+                Data::Group(_) => {}
+                Data::Response(_) => {}
+            }
+        }
         db_rpc
             .save_message(SaveMessageRequest {
                 message: Some(MsgToDb::from(msg)),

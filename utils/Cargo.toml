@@ -10,3 +10,7 @@ abi = { version = "0.1.0", path = "../abi" }
 axum = "0.7.4"
 serde = "1.0.197"
 tracing = "0.1.40"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres"] }
+tokio = { version = "1.36.0", features = ["macros", "rt", "rt-multi-thread"] }
+uuid = { version = "1.7.0", features = ["v4"] }
+mongodb = "2.8.2"

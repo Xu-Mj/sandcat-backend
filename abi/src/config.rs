@@ -18,6 +18,13 @@ pub struct Config {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DbConfig {
+    // db config
+    pub postgres: PostgresConfig,
+    pub mongodb: MongoDbConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RpcServerConfig {
     pub ws: WsServerConfig,
     pub chat: ChatRpcServerConfig,
@@ -132,7 +139,7 @@ pub struct KafkaConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DbConfig {
+pub struct PostgresConfig {
     pub host: String,
     pub port: u16,
     pub user: String,
@@ -140,6 +147,14 @@ pub struct DbConfig {
     pub database: String,
     #[serde(default = "default_conn")]
     pub max_connections: u32,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct MongoDbConfig {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+    pub database: String,
 }
 
 fn default_conn() -> u32 {
@@ -159,8 +174,8 @@ impl Config {
     }
 }
 
-impl DbConfig {
-    pub fn rpc_server_url(&self) -> String {
+impl PostgresConfig {
+    pub fn server_url(&self) -> String {
         if self.password.is_empty() {
             return format!("postgres://{}@{}:{}", self.user, self.host, self.port);
         }
@@ -170,7 +185,28 @@ impl DbConfig {
         )
     }
     pub fn url(&self) -> String {
-        format!("{}/{}", self.rpc_server_url(), self.database)
+        format!("{}/{}", self.server_url(), self.database)
+    }
+}
+impl MongoDbConfig {
+    pub fn server_url(&self) -> String {
+        match (self.user.is_empty(), self.password.is_empty()) {
+            (true, _) => {
+                format!("mongodb://{}:{}", self.host, self.port)
+            }
+            (false, true) => {
+                format!("mongodb://{}@{}:{}", self.user, self.host, self.port)
+            }
+            (false, false) => {
+                format!(
+                    "mongodb://{}:{}@{}:{}",
+                    self.user, self.password, self.host, self.port
+                )
+            }
+        }
+    }
+    pub fn url(&self) -> String {
+        format!("{}/{}", self.server_url(), self.database)
     }
 }
 
@@ -200,9 +236,9 @@ mod tests {
             }
         };
         println!("{:?}", config);
-        assert_eq!(config.db.host, "localhost");
-        assert_eq!(config.db.port, 5432);
-        assert_eq!(config.db.user, "postgres");
-        assert_eq!(config.db.password, "root");
+        assert_eq!(config.db.postgres.host, "localhost");
+        assert_eq!(config.db.postgres.port, 5432);
+        assert_eq!(config.db.postgres.user, "postgres");
+        assert_eq!(config.db.postgres.password, "root");
     }
 }

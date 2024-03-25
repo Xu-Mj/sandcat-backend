@@ -1,3 +1,5 @@
+use crate::errors::Error;
+use mongodb::bson::Document;
 use tonic::Status;
 
 use crate::message::group_msg_wrapper::GroupMsg;
@@ -53,5 +55,21 @@ impl Data {
             }
             Data::Response(_) => String::new(),
         }
+    }
+}
+
+impl TryFrom<Document> for MsgToDb {
+    type Error = Error;
+
+    fn try_from(value: Document) -> Result<Self, Self::Error> {
+        Ok(Self {
+            local_id: value.get_str("local_id")?.to_string(),
+            server_id: value.get_str("server_id")?.to_string(),
+            send_time: value.get_i64("send_time")?,
+            content_type: value.get_i32("content_type")?,
+            content: value.get_str("content")?.to_string(),
+            send_id: value.get_str("send_id")?.to_string(),
+            receiver_id: value.get_str("receiver_id")?.to_string(),
+        })
     }
 }
