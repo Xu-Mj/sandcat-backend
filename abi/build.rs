@@ -63,6 +63,14 @@ fn main() {
             "GroupMember",
             "GroupCreate",
             "GroupInvitation",
+            "SingleCallInvite",
+            "SingleCallInviteAnswer",
+            "SingleCallInviteNotAnswer",
+            "SingleCallInviteCancel",
+            "SingleCallOffer",
+            "Hangup",
+            "AgreeSingleCall",
+            "Candidate",
         ])
         .compile(&["protos/messages.proto"], &["protos"])
         .unwrap();

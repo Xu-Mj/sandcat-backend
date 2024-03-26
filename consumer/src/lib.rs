@@ -62,8 +62,8 @@ impl ConsumerService {
 
                         // send to db rpc server
                         let mut db_rpc = self.db_rpc.clone();
-                        // todo is there any other way to solve the lifetime issue?
-                        let cloned_msg = String::from(payload);
+                        let msg: Msg = serde_json::from_str(payload)?;
+                        let cloned_msg = msg.clone();
                         let to_db = tokio::spawn(async move {
                             if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
                                 error!("failed to consume message, error: {:?}", e);
@@ -71,10 +71,9 @@ impl ConsumerService {
                         });
 
                         // send to pusher
-                        let cloned_msg = String::from(payload);
                         let mut pusher = self.pusher.clone();
                         let to_pusher = tokio::spawn(async move {
-                            if let Err(e) = Self::send_to_pusher(&mut pusher, cloned_msg).await {
+                            if let Err(e) = Self::send_to_pusher(&mut pusher, msg).await {
                                 error!("failed to consume message, error: {:?}", e);
                             }
                         });
@@ -97,35 +96,37 @@ impl ConsumerService {
         }
     }
 
-    pub async fn send_to_db(
-        db_rpc: &mut DbServiceClient<Channel>,
-        msg: String,
-    ) -> Result<(), Error> {
-        let msg: Msg = serde_json::from_str(&msg)?;
+    pub async fn send_to_db(db_rpc: &mut DbServiceClient<Channel>, msg: Msg) -> Result<(), Error> {
         // don't send it if data type is call xxx
+        let mut send_flag = true;
         if msg.data.is_some() {
-            // todo add call type to msg
+            // we only skip the single call protocol data for db
             match msg.data.as_ref().unwrap() {
-                Data::Single(_) => {}
-                Data::Group(_) => {}
-                Data::Response(_) => {}
+                Data::AgreeSingleCall(_)
+                | Data::Candidate(_)
+                | Data::SingleCallOffer(_)
+                | Data::SingleCallInvite(_)
+                | Data::SingleCallInviteAnswer(_) => {
+                    send_flag = false;
+                }
+                _ => {}
             }
         }
-        db_rpc
-            .save_message(SaveMessageRequest {
-                message: Some(MsgToDb::from(msg)),
-            })
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        if send_flag {
+            db_rpc
+                .save_message(SaveMessageRequest {
+                    message: Some(MsgToDb::from(msg)),
+                })
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
+        }
+
         Ok(())
     }
     pub async fn send_to_pusher(
         pusher: &mut PushServiceClient<Channel>,
-        msg: String,
+        msg: Msg,
     ) -> Result<(), Error> {
-        // let msg: Msg = serde_json::from_slice(msg)?;
-        let msg: Msg = serde_json::from_str(&msg)?;
-
         pusher
             .push_msg(SendMsgRequest { message: Some(msg) })
             .await

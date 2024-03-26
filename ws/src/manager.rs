@@ -47,14 +47,14 @@ impl Manager {
             Data::Single(_) => {
                 self.send_single_msg(&msg.receiver_id, &msg).await;
             }
-            Data::Group(_) => {
+            Data::GroupMsg(_) => {
                 // todo think about how to deal with group message,
                 // shall we need to query members id from database?
                 // or is there another better way?
                 self.send_group(&vec![msg.receiver_id.clone()], &msg).await;
             }
             // ignore server response type
-            Data::Response(_) => {}
+            _ => {}
         }
     }
     pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {

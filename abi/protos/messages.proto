@@ -24,10 +24,72 @@ message Msg {
   // timestamp
   int64 send_time = 5;
   oneof data {
+    // single message
     Single single = 6;
-    GroupMsgWrapper group = 7;
-    MsgResponse response = 8;
+
+    // group message related
+    MsgResponse response = 7;
+    Single group_msg = 8;
+    GroupInvitation group_invitation = 9;
+    UserAndGroupID group_member_exit = 10;
+    string group_dismiss = 11;
+    UserAndGroupID group_dismiss_or_exit_received = 12;
+    UserAndGroupID group_invitation_received = 13;
+
+    /// single call related
+    SingleCallInvite single_call_invite = 14;
+    SingleCallInviteAnswer single_call_invite_answer = 15;
+    SingleCallInviteNotAnswer single_call_invite_not_answer = 16;
+    SingleCallInviteCancel single_call_invite_cancel = 17;
+    SingleCallOffer single_call_offer = 18;
+    Hangup hangup = 19;
+    AgreeSingleCall agree_single_call = 20;
+    Candidate candidate = 21;
+
+    // message read
+
   }
+}
+
+message Candidate{
+  string candidate = 1;
+  optional string sdp_mid = 2;
+  optional int32 sdp_m_index = 3;
+}
+
+enum SingleCallInviteType {
+  SingleAudio = 0;
+  SingleVideo = 1;
+}
+
+message AgreeSingleCall{
+  string sdp = 1;
+}
+
+message SingleCallInvite {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteAnswer {
+  bool agree = 1;
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallInviteNotAnswer {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteCancel {
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallOffer {
+  string sdp = 1;
+}
+
+message Hangup {
+  SingleCallInviteType invite_type = 1;
+  int64 sustain = 2;
 }
 
 message MsgToDb {
@@ -46,32 +108,26 @@ message MsgToDb {
 /// and it receive message from clients; then send message to mq;
 /// so only provide the send message function for other rpc service;
 message Single {
-  // unique id
-  string msg_id = 1;
   // message content
   string content = 2;
   // message type
   ContentType content_type = 3;
-  //  // from
-  //  string send_id = 4;
-  //  // to
-  //  string receiver_id = 5;
 }
 
 
 /// group message wrapper;
 /// because of the grpc proto syntax limited
 /// we need use oneof to wrap the message;
-message GroupMsgWrapper{
-  oneof group_msg {
-    Single message = 1;
-    GroupInvitation invitation = 2;
-    UserAndGroupID member_exit = 3;
-    string dismiss = 4;
-    UserAndGroupID dismiss_or_exit_received = 5;
-    UserAndGroupID invitation_received = 6;
-  }
-}
+//message GroupMsgWrapper{
+//  oneof group_msg {
+//    Single message = 1;
+//    GroupInvitation invitation = 2;
+//    UserAndGroupID member_exit = 3;
+//    string dismiss = 4;
+//    UserAndGroupID dismiss_or_exit_received = 5;
+//    UserAndGroupID invitation_received = 6;
+//  }
+//}
 
 /// user and group id
 message UserAndGroupID{
@@ -125,6 +181,7 @@ message SendMsgRequest {
 }
 
 message SendMsgResponse {}
+
 message MsgResponse {
   string local_id = 1;
   string server_id = 2;

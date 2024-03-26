@@ -1,10 +1,10 @@
-use crate::errors::Error;
 use mongodb::bson::Document;
 use tonic::Status;
 
-use crate::message::group_msg_wrapper::GroupMsg;
+use crate::errors::Error;
 use crate::message::msg::Data;
 use crate::message::{Msg, MsgResponse, MsgToDb};
+use crate::utils;
 
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
@@ -37,23 +37,28 @@ impl From<Msg> for MsgToDb {
 }
 
 impl Data {
+    /// this is for database content
     pub fn content(&self) -> String {
         match self {
-            Data::Single(msg) => msg.content.clone(),
-            Data::Group(msg) => {
-                if msg.group_msg.is_none() {
-                    String::new()
-                } else {
-                    match msg.group_msg.as_ref().unwrap() {
-                        GroupMsg::Invitation(_) => String::from("Group Invitation"),
-                        GroupMsg::Message(msg) => msg.content.clone(),
-                        GroupMsg::MemberExit(_) => String::from("Group Member Exit"),
-                        GroupMsg::Dismiss(_) => String::from("Group Dismiss"),
-                        _ => String::new(),
-                    }
-                }
-            }
-            Data::Response(_) => String::new(),
+            Data::Single(msg) | Data::GroupMsg(msg) => msg.content.clone(),
+            Data::SingleCallInviteCancel(_) => String::from("Canceled"),
+            Data::SingleCallInviteNotAnswer(_) => String::from("Not Answer"),
+            Data::Hangup(msg) => utils::format_milliseconds(msg.sustain),
+
+            // all those can be ignored
+
+            // Data::GroupInvitation(_) => {}
+            // Data::GroupMemberExit(_) => {}
+            // Data::GroupDismiss(_) => {}
+            // Data::GroupDismissOrExitReceived(_) => {}
+            // Data::GroupInvitationReceived(_) => {}
+            // Data::SingleCallInvite(_) => {}
+            // Data::SingleCallInviteAnswer(_) => {}
+            // Data::SingleCallOffer(_) => {}
+            // Data::AgreeSingleCall(_) => {}
+            // Data::Candidate(_) => {}
+            // Data::Response(_) => String::new(),
+            _ => String::new(),
         }
     }
 }

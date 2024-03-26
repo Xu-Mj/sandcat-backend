@@ -15,7 +15,10 @@ pub struct Msg {
     /// timestamp
     #[prost(int64, tag = "5")]
     pub send_time: i64,
-    #[prost(oneof = "msg::Data", tags = "6, 7, 8")]
+    #[prost(
+        oneof = "msg::Data",
+        tags = "6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
+    )]
     pub data: ::core::option::Option<msg::Data>,
 }
 /// Nested message and enum types in `Msg`.
@@ -24,13 +27,106 @@ pub mod msg {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
+        /// single message
         #[prost(message, tag = "6")]
         Single(super::Single),
+        /// group message related
         #[prost(message, tag = "7")]
-        Group(super::GroupMsgWrapper),
-        #[prost(message, tag = "8")]
         Response(super::MsgResponse),
+        #[prost(message, tag = "8")]
+        GroupMsg(super::Single),
+        #[prost(message, tag = "9")]
+        GroupInvitation(super::GroupInvitation),
+        #[prost(message, tag = "10")]
+        GroupMemberExit(super::UserAndGroupId),
+        #[prost(string, tag = "11")]
+        GroupDismiss(::prost::alloc::string::String),
+        #[prost(message, tag = "12")]
+        GroupDismissOrExitReceived(super::UserAndGroupId),
+        #[prost(message, tag = "13")]
+        GroupInvitationReceived(super::UserAndGroupId),
+        /// / single call related
+        #[prost(message, tag = "14")]
+        SingleCallInvite(super::SingleCallInvite),
+        #[prost(message, tag = "15")]
+        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
+        #[prost(message, tag = "16")]
+        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
+        #[prost(message, tag = "17")]
+        SingleCallInviteCancel(super::SingleCallInviteCancel),
+        #[prost(message, tag = "18")]
+        SingleCallOffer(super::SingleCallOffer),
+        #[prost(message, tag = "19")]
+        Hangup(super::Hangup),
+        #[prost(message, tag = "20")]
+        AgreeSingleCall(super::AgreeSingleCall),
+        #[prost(message, tag = "21")]
+        Candidate(super::Candidate),
     }
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Candidate {
+    #[prost(string, tag = "1")]
+    pub candidate: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "2")]
+    pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag = "3")]
+    pub sdp_m_index: ::core::option::Option<i32>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AgreeSingleCall {
+    #[prost(string, tag = "1")]
+    pub sdp: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleCallInvite {
+    #[prost(enumeration = "SingleCallInviteType", tag = "1")]
+    pub invite_type: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleCallInviteAnswer {
+    #[prost(bool, tag = "1")]
+    pub agree: bool,
+    #[prost(enumeration = "SingleCallInviteType", tag = "2")]
+    pub invite_type: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleCallInviteNotAnswer {
+    #[prost(enumeration = "SingleCallInviteType", tag = "1")]
+    pub invite_type: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleCallInviteCancel {
+    #[prost(enumeration = "SingleCallInviteType", tag = "2")]
+    pub invite_type: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleCallOffer {
+    #[prost(string, tag = "1")]
+    pub sdp: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Hangup {
+    #[prost(enumeration = "SingleCallInviteType", tag = "1")]
+    pub invite_type: i32,
+    #[prost(int64, tag = "2")]
+    pub sustain: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -60,50 +156,12 @@ pub struct MsgToDb {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Single {
-    /// unique id
-    #[prost(string, tag = "1")]
-    pub msg_id: ::prost::alloc::string::String,
     /// message content
     #[prost(string, tag = "2")]
     pub content: ::prost::alloc::string::String,
     /// message type
-    ///
-    ///   // from
-    ///   string send_id = 4;
-    ///   // to
-    ///   string receiver_id = 5;
     #[prost(enumeration = "ContentType", tag = "3")]
     pub content_type: i32,
-}
-/// / group message wrapper;
-/// / because of the grpc proto syntax limited
-/// / we need use oneof to wrap the message;
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMsgWrapper {
-    #[prost(oneof = "group_msg_wrapper::GroupMsg", tags = "1, 2, 3, 4, 5, 6")]
-    pub group_msg: ::core::option::Option<group_msg_wrapper::GroupMsg>,
-}
-/// Nested message and enum types in `GroupMsgWrapper`.
-pub mod group_msg_wrapper {
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum GroupMsg {
-        #[prost(message, tag = "1")]
-        Message(super::Single),
-        #[prost(message, tag = "2")]
-        Invitation(super::GroupInvitation),
-        #[prost(message, tag = "3")]
-        MemberExit(super::UserAndGroupId),
-        #[prost(string, tag = "4")]
-        Dismiss(::prost::alloc::string::String),
-        #[prost(message, tag = "5")]
-        DismissOrExitReceived(super::UserAndGroupId),
-        #[prost(message, tag = "6")]
-        InvitationReceived(super::UserAndGroupId),
-    }
 }
 /// / user and group id
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -276,6 +334,32 @@ impl ContentType {
             "Audio" => Some(Self::Audio),
             "VideoCall" => Some(Self::VideoCall),
             "AudioCall" => Some(Self::AudioCall),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SingleCallInviteType {
+    SingleAudio = 0,
+    SingleVideo = 1,
+}
+impl SingleCallInviteType {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            SingleCallInviteType::SingleAudio => "SingleAudio",
+            SingleCallInviteType::SingleVideo => "SingleVideo",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SingleAudio" => Some(Self::SingleAudio),
+            "SingleVideo" => Some(Self::SingleVideo),
             _ => None,
         }
     }

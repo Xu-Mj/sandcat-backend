@@ -106,15 +106,15 @@ impl From<GroupRequest> for GroupInvitation {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
-pub struct GroupInfo {
-    pub id: String,
-    pub owner: String,
-    pub avatar: String,
-    pub group_name: String,
-    pub create_time: i64,
-    pub announcement: String,
-}
+// #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+// pub struct GroupInfo {
+//     pub id: String,
+//     pub owner: String,
+//     pub avatar: String,
+//     pub group_name: String,
+//     pub create_time: i64,
+//     pub announcement: String,
+// }
 
 pub type MessageID = String;
 pub type GroupID = String;
