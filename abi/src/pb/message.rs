@@ -15,9 +15,11 @@ pub struct Msg {
     /// timestamp
     #[prost(int64, tag = "5")]
     pub send_time: i64,
+    #[prost(int64, tag = "6")]
+    pub seq: i64,
     #[prost(
         oneof = "msg::Data",
-        tags = "6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
+        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
     )]
     pub data: ::core::option::Option<msg::Data>,
 }
@@ -28,39 +30,39 @@ pub mod msg {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
         /// single message
-        #[prost(message, tag = "6")]
+        #[prost(message, tag = "7")]
         Single(super::Single),
         /// group message related
-        #[prost(message, tag = "7")]
-        Response(super::MsgResponse),
         #[prost(message, tag = "8")]
-        GroupMsg(super::Single),
+        Response(super::MsgResponse),
         #[prost(message, tag = "9")]
-        GroupInvitation(super::GroupInvitation),
+        GroupMsg(super::Single),
         #[prost(message, tag = "10")]
+        GroupInvitation(super::GroupInvitation),
+        #[prost(message, tag = "11")]
         GroupMemberExit(super::UserAndGroupId),
-        #[prost(string, tag = "11")]
+        #[prost(string, tag = "12")]
         GroupDismiss(::prost::alloc::string::String),
-        #[prost(message, tag = "12")]
-        GroupDismissOrExitReceived(super::UserAndGroupId),
         #[prost(message, tag = "13")]
+        GroupDismissOrExitReceived(super::UserAndGroupId),
+        #[prost(message, tag = "14")]
         GroupInvitationReceived(super::UserAndGroupId),
         /// / single call related
-        #[prost(message, tag = "14")]
-        SingleCallInvite(super::SingleCallInvite),
         #[prost(message, tag = "15")]
-        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
+        SingleCallInvite(super::SingleCallInvite),
         #[prost(message, tag = "16")]
-        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
+        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
         #[prost(message, tag = "17")]
-        SingleCallInviteCancel(super::SingleCallInviteCancel),
+        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
         #[prost(message, tag = "18")]
-        SingleCallOffer(super::SingleCallOffer),
+        SingleCallInviteCancel(super::SingleCallInviteCancel),
         #[prost(message, tag = "19")]
-        Hangup(super::Hangup),
+        SingleCallOffer(super::SingleCallOffer),
         #[prost(message, tag = "20")]
-        AgreeSingleCall(super::AgreeSingleCall),
+        Hangup(super::Hangup),
         #[prost(message, tag = "21")]
+        AgreeSingleCall(super::AgreeSingleCall),
+        #[prost(message, tag = "22")]
         Candidate(super::Candidate),
     }
 }
@@ -147,6 +149,8 @@ pub struct MsgToDb {
     pub content_type: i32,
     #[prost(string, tag = "7")]
     pub content: ::prost::alloc::string::String,
+    #[prost(int64, tag = "8")]
+    pub seq: i64,
 }
 /// / use to send single message or group message;
 /// / message ws is used to connect the client by websocket;

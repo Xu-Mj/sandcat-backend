@@ -23,28 +23,29 @@ message Msg {
   string server_id = 4;
   // timestamp
   int64 send_time = 5;
+  int64 seq = 6;
   oneof data {
     // single message
-    Single single = 6;
+    Single single = 7;
 
     // group message related
-    MsgResponse response = 7;
-    Single group_msg = 8;
-    GroupInvitation group_invitation = 9;
-    UserAndGroupID group_member_exit = 10;
-    string group_dismiss = 11;
-    UserAndGroupID group_dismiss_or_exit_received = 12;
-    UserAndGroupID group_invitation_received = 13;
+    MsgResponse response = 8;
+    Single group_msg = 9;
+    GroupInvitation group_invitation = 10;
+    UserAndGroupID group_member_exit = 11;
+    string group_dismiss = 12;
+    UserAndGroupID group_dismiss_or_exit_received = 13;
+    UserAndGroupID group_invitation_received = 14;
 
     /// single call related
-    SingleCallInvite single_call_invite = 14;
-    SingleCallInviteAnswer single_call_invite_answer = 15;
-    SingleCallInviteNotAnswer single_call_invite_not_answer = 16;
-    SingleCallInviteCancel single_call_invite_cancel = 17;
-    SingleCallOffer single_call_offer = 18;
-    Hangup hangup = 19;
-    AgreeSingleCall agree_single_call = 20;
-    Candidate candidate = 21;
+    SingleCallInvite single_call_invite = 15;
+    SingleCallInviteAnswer single_call_invite_answer = 16;
+    SingleCallInviteNotAnswer single_call_invite_not_answer = 17;
+    SingleCallInviteCancel single_call_invite_cancel = 18;
+    SingleCallOffer single_call_offer = 19;
+    Hangup hangup = 20;
+    AgreeSingleCall agree_single_call = 21;
+    Candidate candidate = 22;
 
     // message read
 
@@ -101,6 +102,7 @@ message MsgToDb {
   int64 send_time = 5;
   ContentType content_type = 6;
   string content = 7;
+  int64 seq = 8;
 }
 
 /// use to send single message or group message;

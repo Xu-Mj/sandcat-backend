@@ -24,3 +24,4 @@ async-trait = "0.1.79"
 mongodb = "2.8.2"
 bson = { version = "2.9.0", features = ["chrono-0_4"] }
 utils = { version = "0.1.0", path = "../utils" }
+cache = { version = "0.1.0", path = "../cache" }

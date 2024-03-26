@@ -57,6 +57,15 @@ pub enum Error {
 
     #[error("mongodb value access error: {0}")]
     MongoDbOperateError(mongodb::error::Error),
+
+    #[error("redis error: {0}")]
+    RedisError(redis::RedisError),
+}
+
+impl From<redis::RedisError> for Error {
+    fn from(value: redis::RedisError) -> Self {
+        Self::RedisError(value)
+    }
 }
 
 impl From<ValueAccessError> for Error {
@@ -132,6 +141,7 @@ impl From<Error> for tonic::Status {
             Error::MongoDbBsonSerError(e) => {
                 tonic::Status::internal(format!("MONGODB BSON SER ERROR: {e}"))
             }
+            Error::RedisError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
         }
     }
 }
@@ -167,6 +177,7 @@ impl IntoResponse for Error {
             | Error::MongoDbValueAccessError(_)
             | Error::MongoDbOperateError(_)
             | Error::MongoDbBsonSerError(_)
+            | Error::RedisError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),

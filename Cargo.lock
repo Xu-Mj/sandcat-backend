@@ -12,6 +12,7 @@ dependencies = [
  "mongodb",
  "prost",
  "prost-types",
+ "redis 0.25.2",
  "regex",
  "serde",
  "serde_json",
@@ -359,6 +360,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
 
 [[package]]
+name = "cache"
+version = "0.1.0"
+dependencies = [
+ "abi",
+ "async-trait",
+ "redis 0.25.2",
+ "tokio",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -480,6 +494,7 @@ name = "consumer"
 version = "0.1.0"
 dependencies = [
  "abi",
+ "cache",
  "kafka",
  "log",
  "rdkafka",
@@ -667,6 +682,7 @@ dependencies = [
  "abi",
  "async-trait",
  "bson",
+ "cache",
  "chrono",
  "mongodb",
  "serde",
@@ -2427,12 +2443,18 @@ version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d64e978fd98a0e6b105d066ba4889a7301fca65aeac850a877d8797343feeb"
 dependencies = [
+ "async-trait",
+ "bytes",
  "combine",
+ "futures-util",
  "itoa",
  "percent-encoding",
+ "pin-project-lite",
  "ryu",
  "sha1_smol",
  "socket2 0.5.5",
+ "tokio",
+ "tokio-util",
  "url",
 ]
 

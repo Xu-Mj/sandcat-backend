@@ -25,6 +25,7 @@ impl From<Msg> for MsgToDb {
             value.data.unwrap().content()
         };
         Self {
+            seq: value.seq,
             send_id: value.send_id,
             receiver_id: value.receiver_id,
             local_id: value.local_id,
@@ -75,6 +76,7 @@ impl TryFrom<Document> for MsgToDb {
             content: value.get_str("content")?.to_string(),
             send_id: value.get_str("send_id")?.to_string(),
             receiver_id: value.get_str("receiver_id")?.to_string(),
+            seq: value.get_i64("seq")?,
         })
     }
 }

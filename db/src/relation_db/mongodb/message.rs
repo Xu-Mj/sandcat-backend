@@ -117,6 +117,7 @@ mod tests {
             content: "test".to_string(),
             send_id: "123".to_string(),
             receiver_id: "111".to_string(),
+            seq: 0,
         };
         let collection = "test".to_string();
         // save it into mongodb
@@ -141,6 +142,7 @@ mod tests {
             content: "test".to_string(),
             send_id: "123".to_string(),
             receiver_id: "111".to_string(),
+            seq: 0,
         };
         let collection = "test".to_string();
         // save it into mongodb
@@ -171,6 +173,7 @@ mod tests {
             content: "test".to_string(),
             send_id: "123".to_string(),
             receiver_id: "111".to_string(),
+            seq: 0,
         };
         let collection = "test".to_string();
         // save it into mongodb

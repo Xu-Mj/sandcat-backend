@@ -4,8 +4,10 @@ use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg::Data;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{Msg, MsgToDb, SaveMessageRequest, SendMsgRequest};
+use cache::Cache;
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::{ClientConfig, Message};
+use std::sync::Arc;
 use tonic::transport::Channel;
 use tracing::{debug, error};
 
@@ -14,6 +16,7 @@ pub struct ConsumerService {
     /// rpc client
     db_rpc: DbServiceClient<Channel>,
     pusher: PushServiceClient<Channel>,
+    cache: Arc<Box<dyn Cache>>,
 }
 
 impl ConsumerService {
@@ -44,10 +47,13 @@ impl ConsumerService {
             .await
             .unwrap();
 
+        let cache = cache::cache(config);
+
         Self {
             consumer,
             db_rpc,
             pusher,
+            cache: Arc::new(cache),
         }
     }
 
@@ -58,42 +64,55 @@ impl ConsumerService {
                 Err(e) => error!("Kafka error: {}", e),
                 Ok(m) => {
                     if let Some(Ok(payload)) = m.payload_view::<str>() {
-                        debug!("Received message: {:#?}", payload);
-
-                        // send to db rpc server
-                        let mut db_rpc = self.db_rpc.clone();
-                        let msg: Msg = serde_json::from_str(payload)?;
-                        let cloned_msg = msg.clone();
-                        let to_db = tokio::spawn(async move {
-                            if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
-                                error!("failed to consume message, error: {:?}", e);
-                            }
-                        });
-
-                        // send to pusher
-                        let mut pusher = self.pusher.clone();
-                        let to_pusher = tokio::spawn(async move {
-                            if let Err(e) = Self::send_to_pusher(&mut pusher, msg).await {
-                                error!("failed to consume message, error: {:?}", e);
-                            }
-                        });
-
-                        // todo try_join! or join!; we should think about it
-                        match tokio::try_join!(to_db, to_pusher) {
-                            Ok(_) => {
-                                if let Err(e) = self.consumer.commit_message(&m, CommitMode::Async)
-                                {
-                                    error!("Failed to commit message: {:?}", e);
-                                }
-                            }
-                            Err(err) => {
-                                error!("failed to consume message, error: {:?}", err);
-                            }
+                        self.handle_msg(payload).await?;
+                        if let Err(e) = self.consumer.commit_message(&m, CommitMode::Async) {
+                            error!("Failed to commit message: {:?}", e);
                         }
                     }
                 }
             }
         }
+    }
+
+    /// todo we need to handle the errors, like: should we use something like transaction?
+    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
+        debug!("Received message: {:#?}", payload);
+
+        // send to db rpc server
+        let mut db_rpc = self.db_rpc.clone();
+        let mut msg: Msg = serde_json::from_str(payload)?;
+
+        // increase seq
+        match self.cache.get_seq(msg.receiver_id.clone()).await {
+            Ok(seq) => {
+                msg.seq = seq;
+            }
+            Err(err) => {
+                error!("failed to consume message, error: {:?}", err);
+            }
+        }
+
+        // send to db
+        let cloned_msg = msg.clone();
+        let to_db = tokio::spawn(async move {
+            if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
+                error!("failed to consume message, error: {:?}", e);
+            }
+        });
+
+        // send to pusher
+        let mut pusher = self.pusher.clone();
+        let to_pusher = tokio::spawn(async move {
+            if let Err(e) = Self::send_to_pusher(&mut pusher, msg).await {
+                error!("failed to consume message, error: {:?}", e);
+            }
+        });
+
+        // todo try_join! or join!; we should think about it
+        if let Err(err) = tokio::try_join!(to_db, to_pusher) {
+            error!("failed to consume message, error: {:?}", err);
+        }
+        Ok(())
     }
 
     pub async fn send_to_db(db_rpc: &mut DbServiceClient<Channel>, msg: Msg) -> Result<(), Error> {
