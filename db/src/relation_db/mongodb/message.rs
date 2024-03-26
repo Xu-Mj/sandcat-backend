@@ -5,6 +5,8 @@ use abi::message::MsgToDb;
 use async_trait::async_trait;
 use bson::{doc, to_document, Document};
 use mongodb::{Client, Collection, Database};
+use tokio::sync::mpsc;
+use tonic::codegen::tokio_stream::StreamExt;
 
 /// user receive box,
 /// need to category message
@@ -67,6 +69,39 @@ impl MsgRecBoxRepo for MsgBox {
             None => Ok(None),
             Some(doc) => Ok(Some(MsgToDb::try_from(doc)?)),
         }
+    }
+
+    async fn get_messages(
+        &self,
+        start: i64,
+        end: i64,
+        collection: String,
+    ) -> Result<mpsc::Receiver<Result<MsgToDb, Error>>, Error> {
+        let coll: Collection<Document> = self.db.collection(&collection);
+        let query = doc! {
+            "seq": {
+                "$gte": start,
+                "$lte": end
+            }
+        };
+        let mut doc = coll.find(query, None).await?;
+        // let mut result = Vec::with_capacity((end-start) as usize);
+        let (tx, rx) = mpsc::channel(100);
+        while let Some(doc) = doc.next().await {
+            match doc {
+                Ok(doc) => {
+                    if tx.send(Ok(MsgToDb::try_from(doc)?)).await.is_err() {
+                        break;
+                    }
+                }
+                Err(e) => {
+                    if tx.send(Err(e.into())).await.is_err() {
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(rx)
     }
 }
 

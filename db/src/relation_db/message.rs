@@ -1,6 +1,7 @@
 use abi::errors::Error;
 use abi::message::MsgToDb;
 use async_trait::async_trait;
+use tokio::sync::mpsc;
 
 /// face to postgres db
 #[async_trait]
@@ -32,4 +33,11 @@ pub trait MsgRecBoxRepo: Sync + Send {
         message_id: String,
         collection: String,
     ) -> Result<Option<MsgToDb>, Error>;
+
+    async fn get_messages(
+        &self,
+        start: i64,
+        end: i64,
+        collection: String,
+    ) -> Result<mpsc::Receiver<Result<MsgToDb, Error>>, Error>;
 }
