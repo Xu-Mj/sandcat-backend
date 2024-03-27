@@ -16,6 +16,12 @@ server:
   host: 127.0.0.1
   port: 50001
 
+service_center:
+  host: 127.0.0.1
+  port: 8500
+  timeout: 5000
+  protocol: http
+
 websocket:
   host: 127.0.0.1
   port: 50000

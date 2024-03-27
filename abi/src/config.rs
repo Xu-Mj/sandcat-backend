@@ -15,6 +15,15 @@ pub struct Config {
     pub redis: RedisConfig,
     pub rpc: RpcServerConfig,
     pub websocket: WsServerConfig,
+    pub service_center: ServiceCenterConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ServiceCenterConfig {
+    pub host: String,
+    pub port: u16,
+    pub protocol: String,
+    pub timeout: u64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

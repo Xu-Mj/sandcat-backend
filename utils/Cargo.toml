@@ -15,3 +15,4 @@ tokio = { version = "1.36.0", features = ["macros", "rt", "rt-multi-thread"] }
 uuid = { version = "1.7.0", features = ["v4"] }
 mongodb = "2.8.2"
 chrono = "0.4.35"
+reqwest = { version = "0.12.2", features = ["json"] }

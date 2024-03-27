@@ -56,10 +56,8 @@ Please also take into consideration that rust sometimes intentionally diverges f
 
 ## Unresolved questions
 
-- What parts of the design do you expect to resolve through the RFC process before this gets merged?
-- What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
-- What related issues do you consider out of scope for this RFC that could be addressed in the future independently of the solution that comes out of this RFC?
-
+- save the message sequence to redis: we don't know if the seq is correct, we just increase it now
+-
 ## Future possibilities
 
 Think about what the natural extension and evolution of your proposal would

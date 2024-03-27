@@ -60,11 +60,20 @@ pub enum Error {
 
     #[error("redis error: {0}")]
     RedisError(redis::RedisError),
+
+    #[error("reqwest error: {0}")]
+    ReqwestError(reqwest::Error),
 }
 
 impl From<redis::RedisError> for Error {
     fn from(value: redis::RedisError) -> Self {
         Self::RedisError(value)
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(value: reqwest::Error) -> Self {
+        Self::ReqwestError(value)
     }
 }
 
@@ -142,6 +151,7 @@ impl From<Error> for tonic::Status {
                 tonic::Status::internal(format!("MONGODB BSON SER ERROR: {e}"))
             }
             Error::RedisError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
+            Error::ReqwestError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
         }
     }
 }
@@ -178,6 +188,7 @@ impl IntoResponse for Error {
             | Error::MongoDbOperateError(_)
             | Error::MongoDbBsonSerError(_)
             | Error::RedisError(_)
+            | Error::ReqwestError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),
