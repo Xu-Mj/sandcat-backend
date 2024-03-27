@@ -224,8 +224,17 @@ message SaveMessageRequest {
 
 message SaveMessageResponse {}
 
+message GetDbMsgRequest{
+  int64 start = 1;
+  int64 end = 2;
+}
+
+/// db interface
 service DbService {
+  /// save message to postgres and mongodb
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
+  /// query message from mongodb by start seq to end seq
+  rpc GetMessages(GetDbMsgRequest) returns (stream MsgToDb);
 }
 
 service PushService {

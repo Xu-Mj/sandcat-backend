@@ -4,8 +4,12 @@ use crate::relation_db::{MsgRecBoxRepo, MsgStoreRepo};
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_server::{DbService, DbServiceServer};
-use abi::message::{MsgToDb, SaveMessageRequest, SaveMessageResponse};
+use abi::message::{GetDbMsgRequest, MsgToDb, SaveMessageRequest, SaveMessageResponse};
+use futures::Stream;
+use std::pin::Pin;
 use std::sync::Arc;
+use std::task::{Context, Poll};
+use tokio::sync::mpsc::Receiver;
 use tonic::transport::Server;
 use tonic::{async_trait, Request, Response, Status};
 use tracing::debug;
@@ -28,6 +32,20 @@ impl DbService for DbRpcService {
         }
         debug!("save message: {:?}", message.unwrap());
         return Ok(Response::new(SaveMessageResponse {}));
+    }
+
+    type GetMessagesStream = Pin<Box<dyn Stream<Item = Result<MsgToDb, Status>> + Send>>;
+
+    async fn get_messages(
+        &self,
+        request: Request<GetDbMsgRequest>,
+    ) -> Result<Response<Self::GetMessagesStream>, Status> {
+        let req = request.into_inner();
+        let result = self
+            .mongodb
+            .get_messages(req.start, req.end, "".to_string())
+            .await?;
+        Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
 }
 
@@ -57,5 +75,29 @@ impl DbRpcService {
         self.mongodb.save_message(message, "".to_string()).await?;
 
         Ok(())
+    }
+}
+
+/// implement the Stream for tokio::sync::mpsc::Receiver
+pub struct TonicReceiverStream<T> {
+    inner: Receiver<Result<T, Error>>,
+}
+
+impl<T> TonicReceiverStream<T> {
+    pub fn new(inner: Receiver<Result<T, Error>>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<T> Stream for TonicReceiverStream<T> {
+    type Item = Result<T, Status>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        match self.inner.poll_recv(cx) {
+            Poll::Ready(Some(Ok(item))) => Poll::Ready(Some(Ok(item))),
+            Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(e.into()))),
+            Poll::Ready(None) => Poll::Ready(None),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }

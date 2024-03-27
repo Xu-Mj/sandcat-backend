@@ -294,6 +294,14 @@ pub struct SaveMessageRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMessageResponse {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDbMsgRequest {
+    #[prost(int64, tag = "1")]
+    pub start: i64,
+    #[prost(int64, tag = "2")]
+    pub end: i64,
+}
 /// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -703,6 +711,7 @@ pub mod db_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    /// / db interface
     #[derive(Debug, Clone)]
     pub struct DbServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -782,6 +791,7 @@ pub mod db_service_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
+        /// / save message to postgres and mongodb
         pub async fn save_message(
             &mut self,
             request: impl tonic::IntoRequest<super::SaveMessageRequest>,
@@ -799,6 +809,27 @@ pub mod db_service_client {
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "SaveMessage"));
             self.inner.unary(req, path, codec).await
+        }
+        /// / query message from mongodb by start seq to end seq
+        pub async fn get_messages(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDbMsgRequest>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::MsgToDb>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetMessages");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetMessages"));
+            self.inner.server_streaming(req, path, codec).await
         }
     }
 }
@@ -1453,11 +1484,23 @@ pub mod db_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with DbServiceServer.
     #[async_trait]
     pub trait DbService: Send + Sync + 'static {
+        /// / save message to postgres and mongodb
         async fn save_message(
             &self,
             request: tonic::Request<super::SaveMessageRequest>,
         ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
+        /// Server streaming response type for the GetMessages method.
+        type GetMessagesStream: tonic::codegen::tokio_stream::Stream<
+                Item = std::result::Result<super::MsgToDb, tonic::Status>,
+            > + Send
+            + 'static;
+        /// / query message from mongodb by start seq to end seq
+        async fn get_messages(
+            &self,
+            request: tonic::Request<super::GetDbMsgRequest>,
+        ) -> std::result::Result<tonic::Response<Self::GetMessagesStream>, tonic::Status>;
     }
+    /// / db interface
     #[derive(Debug)]
     pub struct DbServiceServer<T: DbService> {
         inner: _Inner<T>,
@@ -1570,6 +1613,50 @@ pub mod db_service_server {
                                 max_encoding_message_size,
                             );
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetMessages" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetMessagesSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::ServerStreamingService<super::GetDbMsgRequest>
+                        for GetMessagesSvc<T>
+                    {
+                        type Response = super::MsgToDb;
+                        type ResponseStream = T::GetMessagesStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetDbMsgRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_messages(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetMessagesSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)
