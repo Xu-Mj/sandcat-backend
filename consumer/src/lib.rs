@@ -8,7 +8,7 @@ use cache::Cache;
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::{ClientConfig, Message};
 use std::sync::Arc;
-use tonic::transport::Channel;
+use tonic::transport::{Channel, Endpoint};
 use tracing::{debug, error};
 
 pub struct ConsumerService {
@@ -39,13 +39,9 @@ impl ConsumerService {
             .expect("Can't subscribe to specified topic");
 
         // init rpc client
-        let db_rpc = DbServiceClient::connect(config.rpc.db.url(false))
-            .await
-            .unwrap();
+        let db_rpc = Self::get_db_rpc_client(config).await.unwrap();
 
-        let pusher = PushServiceClient::connect(config.rpc.pusher.url(false))
-            .await
-            .unwrap();
+        let pusher = Self::get_pusher_rpc_client(config).await.unwrap();
 
         let cache = cache::cache(config);
 
@@ -55,6 +51,40 @@ impl ConsumerService {
             pusher,
             cache: Arc::new(cache),
         }
+    }
+
+    async fn get_db_rpc_client(config: &Config) -> Result<DbServiceClient<Channel>, Error> {
+        // use service register center to get ws rpc url
+        let protocol = config.rpc.db.protocol.clone();
+        let ws_list = utils::service_register_center(config)
+            .filter_by_name(&config.rpc.db.name)
+            .await?;
+        let endpoints = ws_list.values().map(|v| {
+            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
+            Endpoint::from_shared(url).unwrap()
+        });
+        debug!("db rpc endpoints: {:?}", endpoints);
+
+        let channel = Channel::balance_list(endpoints);
+        let db_rpc = DbServiceClient::new(channel);
+        Ok(db_rpc)
+    }
+
+    async fn get_pusher_rpc_client(config: &Config) -> Result<PushServiceClient<Channel>, Error> {
+        // use service register center to get ws rpc url
+        let protocol = config.rpc.pusher.protocol.clone();
+        let ws_list = utils::service_register_center(config)
+            .filter_by_name(&config.rpc.pusher.name)
+            .await?;
+        let endpoints = ws_list.values().map(|v| {
+            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
+            Endpoint::from_shared(url).unwrap()
+        });
+        debug!("pusher rpc endpoints: {:?}", endpoints);
+
+        let channel = Channel::balance_list(endpoints);
+        let push_rpc = PushServiceClient::new(channel);
+        Ok(push_rpc)
     }
 
     pub async fn consume(&mut self) -> Result<(), Error> {
@@ -115,7 +145,7 @@ impl ConsumerService {
         Ok(())
     }
 
-    pub async fn send_to_db(db_rpc: &mut DbServiceClient<Channel>, msg: Msg) -> Result<(), Error> {
+    async fn send_to_db(db_rpc: &mut DbServiceClient<Channel>, msg: Msg) -> Result<(), Error> {
         // don't send it if data type is call xxx
         let mut send_flag = true;
         if msg.data.is_some() {
@@ -142,7 +172,7 @@ impl ConsumerService {
 
         Ok(())
     }
-    pub async fn send_to_pusher(
+    async fn send_to_pusher(
         pusher: &mut PushServiceClient<Channel>,
         msg: Msg,
     ) -> Result<(), Error> {

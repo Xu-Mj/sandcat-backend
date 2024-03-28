@@ -4,7 +4,6 @@ use std::time::Duration;
 use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
-use abi::message::chat_service_client::ChatServiceClient;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -14,8 +13,6 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
-use tokio::time;
-use tonic::transport::Channel;
 use tracing::error;
 use utils::custom_extract::path_extractor::PathExtractor;
 
@@ -36,30 +33,10 @@ pub struct WsServer {
     // manager: Manager,
 }
 
-async fn get_client(config: &Config) -> ChatServiceClient<Channel> {
-    // start server at first
-    let url = config.rpc.chat.url(false);
-
-    println!("connect to {}", url);
-    // try to connect to server
-    let future = async move {
-        while ChatServiceClient::connect(url.clone()).await.is_err() {
-            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-        }
-        // return result
-        ChatServiceClient::connect(url).await.unwrap()
-    };
-    // set timeout
-    time::timeout(time::Duration::from_secs(5), future)
-        .await
-        .unwrap_or_else(|e| panic!("connect timeout{:?}", e))
-}
-
 impl WsServer {
     pub async fn start(config: Config) {
         let (tx, rx) = mpsc::channel(1024);
-        let redis = redis::Client::open(config.redis.url()).expect("redis can't open");
-        let hub = Manager::new(tx, redis, get_client(&config).await);
+        let hub = Manager::new(tx, &config).await;
         let mut cloned_hub = hub.clone();
         tokio::spawn(async move {
             cloned_hub.run(rx).await;

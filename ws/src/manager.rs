@@ -1,4 +1,5 @@
 use crate::client::Client;
+use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::msg::Data;
@@ -6,7 +7,7 @@ use abi::message::{Msg, MsgResponse, SendMsgRequest};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tonic::transport::Channel;
+use tonic::transport::{Channel, Endpoint};
 use tracing::{debug, error, info};
 
 type UserID = String;
@@ -25,17 +26,35 @@ pub struct Manager {
 
 #[allow(dead_code)]
 impl Manager {
-    pub fn new(
-        tx: mpsc::Sender<Msg>,
-        redis: redis::Client,
-        msg_rpc: ChatServiceClient<Channel>,
-    ) -> Self {
+    pub async fn new(tx: mpsc::Sender<Msg>, config: &Config) -> Self {
+        let redis = redis::Client::open(config.redis.url()).expect("redis can't open");
+        let chat_rpc = Self::get_chat_rpc_client(config)
+            .await
+            .expect("chat rpc can't open");
         Manager {
             tx,
             hub: Arc::new(DashMap::new()),
             redis,
-            chat_rpc: msg_rpc,
+            chat_rpc,
         }
+    }
+
+    async fn get_chat_rpc_client(config: &Config) -> Result<ChatServiceClient<Channel>, Error> {
+        // use service register center to get ws rpc url
+        let protocol = config.rpc.chat.protocol.clone();
+        let ws_list = utils::service_register_center(config)
+            .filter_by_name(&config.rpc.chat.name)
+            .await?;
+
+        let endpoints = ws_list.values().map(|v| {
+            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
+            Endpoint::from_shared(url).unwrap()
+        });
+        debug!("chat rpc endpoints: {:?}", endpoints);
+
+        let channel = Channel::balance_list(endpoints);
+        let chat_rpc = ChatServiceClient::new(channel);
+        Ok(chat_rpc)
     }
 
     pub async fn send_msg(&self, msg: Msg) {

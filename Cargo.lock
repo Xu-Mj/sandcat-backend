@@ -507,6 +507,7 @@ dependencies = [
  "tonic",
  "tracing",
  "tracing-subscriber",
+ "utils",
 ]
 
 [[package]]
