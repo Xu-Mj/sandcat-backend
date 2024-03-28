@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+
 use axum::async_trait;
+use tracing::debug;
+use url::form_urlencoded;
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -37,6 +41,7 @@ impl Consul {
         let options = ConsulOptions::from_config(config);
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_millis(options.timeout))
+            .no_proxy()
             .build()
             .unwrap();
         Self { options, client }
@@ -44,11 +49,6 @@ impl Consul {
 
     pub fn api_url(&self, name: &str) -> String {
         self.url("agent", name)
-    }
-
-    /// used by filter services by service name
-    pub fn catalog_url(&self, name: &str) -> String {
-        self.url("catalog", name)
     }
 
     fn url(&self, type_: &str, name: &str) -> String {
@@ -63,7 +63,8 @@ impl Consul {
 impl ServiceRegister for Consul {
     async fn register(&self, registration: Registration) -> Result<(), Error> {
         let url = self.api_url("service/register");
-        self.client.put(url).json(&registration).send().await?;
+        self.client.put(&url).json(&registration).send().await?;
+        debug!("register service: {:?} to consul{url}", registration);
         Ok(())
     }
 
@@ -86,14 +87,88 @@ impl ServiceRegister for Consul {
     }
 
     async fn filter_by_name(&self, name: &str) -> Result<Services, Error> {
-        let url = self.catalog_url(&format!("service/{}", name));
+        let url = self.api_url("services");
+        let mut map = HashMap::new();
+        map.insert(
+            "filter",
+            form_urlencoded::byte_serialize(format!("Service == \"{}\"", name).as_bytes())
+                .collect::<String>(),
+        );
+
         let services = self
             .client
             .get(url)
+            .form(&map)
             .send()
             .await?
             .json::<Services>()
             .await?;
         Ok(services)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn register_deregister_should_work() {
+        let config = Config::load("../abi/fixtures/im.yml").unwrap();
+
+        let consul = Consul::from_config(&config);
+        let registration = Registration {
+            id: "test".to_string(),
+            name: "test".to_string(),
+            address: "127.0.0.1".to_string(),
+            port: 8080,
+            tags: vec!["test".to_string()],
+            check: None,
+        };
+        let result = consul.register(registration).await;
+        assert!(result.is_ok());
+        // delete it
+        let result = consul.deregister("test").await;
+        assert!(result.is_ok());
+    }
+
+    // #[tokio::test]
+    // async fn discovery_should_work() {
+    //     let config = Config::load("../abi/fixtures/im.yml").unwrap();
+    //
+    //     let consul = Consul::from_config(&config);
+    //     let registration = Registration {
+    //         id: "test".to_string(),
+    //         name: "test".to_string(),
+    //         address: "127.0.0.1".to_string(),
+    //         port: 8080,
+    //         tags: vec!["test".to_string()],
+    //         check: None,
+    //     };
+    //     let result = consul.register(registration).await;
+    //     assert!(result.is_ok());
+    //     // get it
+    //     let result = consul.discovery().await;
+    //     assert!(result.is_ok());
+    //     assert!(result.unwrap().contains_key("test"));
+    //
+    //     let registration = Registration {
+    //         id: "example".to_string(),
+    //         name: "example".to_string(),
+    //         address: "127.0.0.1".to_string(),
+    //         port: 8081,
+    //         tags: vec!["example".to_string()],
+    //         check: None,
+    //     };
+    //     let result = consul.register(registration).await;
+    //     assert!(result.is_ok());
+    //     let result = consul.filter_by_name("example").await;
+    //     println!("{:?}", result);
+    //     assert!(result.is_ok());
+    //     let result = result.unwrap();
+    //     assert_eq!(result.len(), 1);
+    //     assert!(result.contains_key("example"));
+    //     // delete it
+    //     // let result = consul.deregister("test").await;
+    //     // assert!(result.is_ok());
+    // }
 }

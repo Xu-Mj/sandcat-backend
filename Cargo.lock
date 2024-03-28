@@ -687,11 +687,13 @@ dependencies = [
  "chrono",
  "futures",
  "mongodb",
+ "nanoid",
  "serde",
  "serde_json",
  "sqlx",
  "tokio",
  "tonic",
+ "tonic-health",
  "tracing",
  "tracing-subscriber",
  "utils",
@@ -3613,6 +3615,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tonic-health"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cef6e24bc96871001a7e48e820ab240b3de2201e59b517cf52835df2f1d2350"
+dependencies = [
+ "async-stream",
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+]
+
+[[package]]
 name = "tower"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3901,6 +3916,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
+ "url",
  "uuid",
 ]
 

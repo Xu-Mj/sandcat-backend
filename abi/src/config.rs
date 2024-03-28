@@ -76,6 +76,15 @@ impl WsServerConfig {
 pub struct DbRpcServerConfig {
     pub host: String,
     pub port: u16,
+    pub name: String,
+    pub tags: Vec<String>,
+    pub grpc_health_check: GrpcHealthCheck,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GrpcHealthCheck {
+    pub grpc_use_tls: bool,
+    pub interval: u16,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -179,7 +188,7 @@ pub struct ServerConfig {
 impl Config {
     pub fn load(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let content = fs::read_to_string(filename).map_err(|_| Error::ConfigReadError)?;
-        serde_yaml::from_str(&content).map_err(|_| Error::ConfigParseError)
+        serde_yaml::from_str(&content).map_err(Error::ConfigParseError)
     }
 }
 

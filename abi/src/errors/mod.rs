@@ -24,7 +24,7 @@ pub enum Error {
     ConfigReadError,
 
     #[error("config parse errors")]
-    ConfigParseError,
+    ConfigParseError(serde_yaml::Error),
 
     #[error("not found")]
     NotFound,
@@ -68,6 +68,12 @@ pub enum Error {
 impl From<redis::RedisError> for Error {
     fn from(value: redis::RedisError) -> Self {
         Self::RedisError(value)
+    }
+}
+
+impl From<serde_yaml::Error> for Error {
+    fn from(value: serde_yaml::Error) -> Self {
+        Self::ConfigParseError(value)
     }
 }
 
@@ -128,7 +134,7 @@ impl From<Error> for tonic::Status {
 
             Error::UnknownError => tonic::Status::unknown("Unknown errors"),
 
-            Error::ConfigReadError | Error::ConfigParseError => {
+            Error::ConfigReadError | Error::ConfigParseError(_) => {
                 tonic::Status::internal(e.to_string())
             }
             Error::NotFound => {
@@ -181,7 +187,7 @@ impl IntoResponse for Error {
             Error::NotFound => (StatusCode::NOT_FOUND, "NOT FOUND".to_string()),
             Error::DbError(_)
             | Error::ConfigReadError
-            | Error::ConfigParseError
+            | Error::ConfigParseError(_)
             | Error::ParseError(_)
             | Error::TonicError(_)
             | Error::MongoDbValueAccessError(_)

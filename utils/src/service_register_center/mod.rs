@@ -5,12 +5,12 @@ use axum::async_trait;
 use std::collections::HashMap;
 
 mod consul;
-mod typos;
+pub mod typos;
 
 type Services = HashMap<String, Service>;
 /// the service register discovery center
 #[async_trait]
-pub trait ServiceRegister {
+pub trait ServiceRegister: Send + Sync {
     /// service register
     async fn register(&self, registration: Registration) -> Result<(), Error>;
 
@@ -24,7 +24,6 @@ pub trait ServiceRegister {
     async fn filter_by_name(&self, name: &str) -> Result<Services, Error>;
 }
 
-#[allow(dead_code)]
 pub fn service_register_center(config: &Config) -> Box<dyn ServiceRegister> {
     Box::new(consul::Consul::from_config(config))
 }

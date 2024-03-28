@@ -1,18 +1,24 @@
 mod relation_db;
 
-use crate::relation_db::{MsgRecBoxRepo, MsgStoreRepo};
+use std::pin::Pin;
+use std::sync::Arc;
+use std::task::{Context, Poll};
+
+use futures::Stream;
+use nanoid::nanoid;
+use tokio::sync::mpsc::Receiver;
+use tonic::server::NamedService;
+use tonic::transport::Server;
+use tonic::{async_trait, Request, Response, Status};
+use tracing::debug;
+
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_server::{DbService, DbServiceServer};
 use abi::message::{GetDbMsgRequest, MsgToDb, SaveMessageRequest, SaveMessageResponse};
-use futures::Stream;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::task::{Context, Poll};
-use tokio::sync::mpsc::Receiver;
-use tonic::transport::Server;
-use tonic::{async_trait, Request, Response, Status};
-use tracing::debug;
+use utils::typos::{GrpcHealthCheck, Registration};
+
+use crate::relation_db::{MsgRecBoxRepo, MsgStoreRepo};
 
 /// DbRpcService contains the postgres trait, mongodb trait and redis trait
 pub struct DbRpcService {
@@ -58,8 +64,19 @@ impl DbRpcService {
     }
 
     pub async fn start(config: &Config) -> Result<(), Error> {
-        let service = DbServiceServer::new(Self::new(config).await);
+        let db_rpc = DbRpcService::new(config).await;
+
+        // open health check
+        let (mut reporter, health_service) = tonic_health::server::health_reporter();
+        reporter
+            .set_serving::<DbServiceServer<DbRpcService>>()
+            .await;
+        db_rpc.register_service(config).await?;
+
+        let service = DbServiceServer::new(db_rpc);
+
         Server::builder()
+            .add_service(health_service)
             .add_service(service)
             .serve(config.rpc.db.rpc_server_url().parse().unwrap())
             .await
@@ -67,6 +84,32 @@ impl DbRpcService {
         Ok(())
     }
 
+    pub async fn register_service(&self, config: &Config) -> Result<(), Error> {
+        // register service to service register center
+        let center = utils::service_register_center(config);
+        let id = nanoid!();
+        let grpc = format!(
+            "{}/{}",
+            config.rpc.db.rpc_server_url(),
+            <DbServiceServer<DbRpcService> as NamedService>::NAME
+        );
+        let check = GrpcHealthCheck {
+            name: config.rpc.db.name.clone(),
+            grpc,
+            grpc_use_tls: config.rpc.db.grpc_health_check.grpc_use_tls,
+            interval: format!("{}s", config.rpc.db.grpc_health_check.interval),
+        };
+        let registration = Registration {
+            id,
+            name: config.rpc.db.name.clone(),
+            address: config.rpc.db.host.clone(),
+            port: config.rpc.db.port,
+            tags: config.rpc.db.tags.clone(),
+            check: Some(check),
+        };
+        center.register(registration).await?;
+        Ok(())
+    }
     pub async fn handle_message(&self, message: MsgToDb) -> Result<(), Error> {
         // task 1 save message to postgres
         self.db.save_message(message.clone()).await?;
@@ -99,5 +142,18 @@ impl<T> Stream for TonicReceiverStream<T> {
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_db_rpc_service() {
+        println!(
+            "test_db_rpc_service:{}",
+            <DbServiceServer<DbRpcService> as NamedService>::NAME
+        )
     }
 }

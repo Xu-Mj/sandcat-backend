@@ -36,6 +36,13 @@ rpc:
   db:
     host: 127.0.0.1
     port: 50004
+    name: db
+    tags:
+      - db
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30 # second
   pusher:
     host: 127.0.0.1
     port: 50005

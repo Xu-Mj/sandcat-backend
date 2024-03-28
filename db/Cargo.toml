@@ -26,3 +26,5 @@ bson = { version = "2.9.0", features = ["chrono-0_4"] }
 utils = { version = "0.1.0", path = "../utils" }
 cache = { version = "0.1.0", path = "../cache" }
 futures = "0.3.30"
+tonic-health = "0.11.0"
+nanoid = "0.4.0"
