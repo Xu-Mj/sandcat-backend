@@ -107,7 +107,7 @@ impl DbRpcService {
             interval: format!("{}s", config.rpc.db.grpc_health_check.interval),
         };
         let registration = Registration {
-            id: "xmj-db".to_owned(),
+            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.db.name),
             name: config.rpc.db.name.clone(),
             address: config.rpc.db.host.clone(),
             port: config.rpc.db.port,

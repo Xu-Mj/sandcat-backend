@@ -77,7 +77,7 @@ impl ChatRpcService {
             interval: format!("{}s", config.rpc.chat.grpc_health_check.interval),
         };
         let registration = Registration {
-            id: "xmj-chat".to_string(),
+            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.chat.name),
             name: config.rpc.chat.name.clone(),
             address: config.rpc.chat.host.clone(),
             port: config.rpc.chat.port,

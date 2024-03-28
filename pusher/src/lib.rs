@@ -81,7 +81,7 @@ impl PusherRpcService {
             interval: format!("{}s", config.rpc.pusher.grpc_health_check.interval),
         };
         let registration = Registration {
-            id: "xmj-pusher".to_owned(),
+            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.pusher.name),
             name: config.rpc.pusher.name.clone(),
             address: config.rpc.pusher.host.clone(),
             port: config.rpc.pusher.port,

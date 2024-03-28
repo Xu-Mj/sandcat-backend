@@ -68,7 +68,7 @@ impl MsgRpcService {
             interval: format!("{}s", config.rpc.ws.grpc_health_check.interval),
         };
         let registration = Registration {
-            id: "xmj-ws".to_string(),
+            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.ws.name),
             name: config.rpc.ws.name.clone(),
             address: config.rpc.ws.host.clone(),
             port: config.rpc.ws.port,

@@ -35,11 +35,14 @@ pub enum Error {
     // 500
     #[error("internal server errors")]
     InternalServer(Message),
+
     // 400
     #[error("body parsing errors")]
     BodyParsing(Message, Path),
+
     #[error("path parsing errors{0}")]
     PathParsing(Message, Option<Location>),
+
     #[error("unauthorized request{0}, path: {1}")]
     UnAuthorized(Message, Path),
 
@@ -62,7 +65,16 @@ pub enum Error {
     RedisError(redis::RedisError),
 
     #[error("reqwest error: {0}")]
+    IOError(std::io::Error),
+
+    #[error("reqwest error: {0}")]
     ReqwestError(reqwest::Error),
+}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Self::IOError(value)
+    }
 }
 
 impl From<redis::RedisError> for Error {
@@ -158,6 +170,7 @@ impl From<Error> for tonic::Status {
             }
             Error::RedisError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
             Error::ReqwestError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
+            Error::IOError(_) => tonic::Status::internal(format!("IO ERROR: {e}")),
         }
     }
 }
@@ -195,6 +208,7 @@ impl IntoResponse for Error {
             | Error::MongoDbBsonSerError(_)
             | Error::RedisError(_)
             | Error::ReqwestError(_)
+            | Error::IOError(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),
