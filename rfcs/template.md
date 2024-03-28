@@ -1,4 +1,5 @@
 # Feature
+
 - Feature Name: im-backend
 - Start Date: 2024-03-21
 
@@ -27,6 +28,7 @@ first property: study rust.
 - db
   database layer, consumer the mq data to postgres, mongodb and reds.
   ![core flow](images/时序图.awebp)
+
 ## Drawbacks
 
 Why should we *not* do this?
@@ -36,20 +38,25 @@ Why should we *not* do this?
 - Why is this design the best in the space of possible designs?
 - What other designs have been considered and what is the rationale for not choosing them?
 - What is the impact of not doing this?
-- If this is a language proposal, could this be done in a library or macro instead? Does the proposed change make Rust code easier or harder to read, understand, and maintain?
+- If this is a language proposal, could this be done in a library or macro instead? Does the proposed change make Rust
+  code easier or harder to read, understand, and maintain?
 
 ## Prior art
 
 Discuss prior art, both the good and the bad, in relation to this proposal.
 A few examples of what this can include are:
 
-- For language, library, cargo, tools, and compiler proposals: Does this feature exist in other programming languages and what experience have their community had?
+- For language, library, cargo, tools, and compiler proposals: Does this feature exist in other programming languages
+  and what experience have their community had?
 - For community proposals: Is this done by some other community and what were their experiences with it?
 - For other teams: What lessons can we learn from what other communities have done here?
-- Papers: Are there any published papers or great posts that discuss this? If you have some relevant papers to refer to, this can serve as a more detailed theoretical background.
+- Papers: Are there any published papers or great posts that discuss this? If you have some relevant papers to refer to,
+  this can serve as a more detailed theoretical background.
 
-This section is intended to encourage you as an author to think about the lessons from other languages, provide readers of your RFC with a fuller picture.
-If there is no prior art, that is fine - your ideas are interesting to us whether they are brand new or if it is an adaptation from other languages.
+This section is intended to encourage you as an author to think about the lessons from other languages, provide readers
+of your RFC with a fuller picture.
+If there is no prior art, that is fine - your ideas are interesting to us whether they are brand new or if it is an
+adaptation from other languages.
 
 Note that while precedent set by other languages is some motivation, it does not on its own motivate an RFC.
 Please also take into consideration that rust sometimes intentionally diverges from common language features.
@@ -57,7 +64,9 @@ Please also take into consideration that rust sometimes intentionally diverges f
 ## Unresolved questions
 
 - save the message sequence to redis: we don't know if the seq is correct, we just increase it now
--
+- tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
+  list in the interval time.
+
 ## Future possibilities
 
 Think about what the natural extension and evolution of your proposal would

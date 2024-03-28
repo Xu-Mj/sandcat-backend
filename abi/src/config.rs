@@ -13,7 +13,7 @@ pub struct Config {
     pub server: ServerConfig,
     pub kafka: KafkaConfig,
     pub redis: RedisConfig,
-    pub rpc: RpcServerConfig,
+    pub rpc: RpcConfig,
     pub websocket: WsServerConfig,
     pub service_center: ServiceCenterConfig,
 }
@@ -34,11 +34,11 @@ pub struct DbConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct RpcServerConfig {
-    pub ws: WsServerConfig,
-    pub chat: ChatRpcServerConfig,
-    pub db: DbRpcServerConfig,
-    pub pusher: PusherRpcServerConfig,
+pub struct RpcConfig {
+    pub ws: RpcServerConfig,
+    pub chat: RpcServerConfig,
+    pub db: RpcServerConfig,
+    pub pusher: RpcServerConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -73,7 +73,8 @@ impl WsServerConfig {
     }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DbRpcServerConfig {
+pub struct RpcServerConfig {
+    pub protocol: String,
     pub host: String,
     pub port: u16,
     pub name: String,
@@ -105,7 +106,7 @@ impl PusherRpcServerConfig {
     }
 }
 
-impl DbRpcServerConfig {
+impl RpcServerConfig {
     #[inline]
     pub fn rpc_server_url(&self) -> String {
         format!("{}:{}", self.host, self.port)

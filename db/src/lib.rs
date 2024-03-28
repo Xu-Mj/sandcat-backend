@@ -5,12 +5,11 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use futures::Stream;
-use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
 use tonic::server::NamedService;
 use tonic::transport::Server;
 use tonic::{async_trait, Request, Response, Status};
-use tracing::debug;
+use tracing::{debug, info};
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -71,9 +70,17 @@ impl DbRpcService {
         reporter
             .set_serving::<DbServiceServer<DbRpcService>>()
             .await;
+        info!("<db> rpc service register to service register center");
+
+        // register service
         db_rpc.register_service(config).await?;
+        info!("<db> rpc service health check started");
 
         let service = DbServiceServer::new(db_rpc);
+        info!(
+            "<db> rpc service started at {}",
+            config.rpc.db.rpc_server_url()
+        );
 
         Server::builder()
             .add_service(health_service)
@@ -84,10 +91,10 @@ impl DbRpcService {
         Ok(())
     }
 
-    pub async fn register_service(&self, config: &Config) -> Result<(), Error> {
+    // todo get host name, set it to service id
+    async fn register_service(&self, config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);
-        let id = nanoid!();
         let grpc = format!(
             "{}/{}",
             config.rpc.db.rpc_server_url(),
@@ -100,7 +107,7 @@ impl DbRpcService {
             interval: format!("{}s", config.rpc.db.grpc_health_check.interval),
         };
         let registration = Registration {
-            id,
+            id: "xmj-db".to_owned(),
             name: config.rpc.db.name.clone(),
             address: config.rpc.db.host.clone(),
             port: config.rpc.db.port,
@@ -110,6 +117,7 @@ impl DbRpcService {
         center.register(registration).await?;
         Ok(())
     }
+
     pub async fn handle_message(&self, message: MsgToDb) -> Result<(), Error> {
         // task 1 save message to postgres
         self.db.save_message(message.clone()).await?;

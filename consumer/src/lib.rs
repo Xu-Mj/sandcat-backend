@@ -88,7 +88,7 @@ impl ConsumerService {
                 msg.seq = seq;
             }
             Err(err) => {
-                error!("failed to consume message, error: {:?}", err);
+                error!("failed to get seq, error: {:?}", err);
             }
         }
 
@@ -96,7 +96,7 @@ impl ConsumerService {
         let cloned_msg = msg.clone();
         let to_db = tokio::spawn(async move {
             if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
-                error!("failed to consume message, error: {:?}", e);
+                error!("failed to send message to db, error: {:?}", e);
             }
         });
 
@@ -104,7 +104,7 @@ impl ConsumerService {
         let mut pusher = self.pusher.clone();
         let to_pusher = tokio::spawn(async move {
             if let Err(e) = Self::send_to_pusher(&mut pusher, msg).await {
-                error!("failed to consume message, error: {:?}", e);
+                error!("failed to send message to pusher, error: {:?}", e);
             }
         });
 

@@ -42,3 +42,5 @@ thiserror = "1.0.57"
 abi = { version = "0.1.0", path = "../abi" }
 uuid = { version = "1.7.0", features = ["v4"] }
 rdkafka = { version = "0.36.2", features = ["dynamic-linking"] }
+utils = { version = "0.1.0", path = "../utils" }
+tonic-health = "0.11.0"

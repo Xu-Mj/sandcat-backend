@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use axum::async_trait;
 use tracing::debug;
-use url::form_urlencoded;
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -63,8 +62,13 @@ impl Consul {
 impl ServiceRegister for Consul {
     async fn register(&self, registration: Registration) -> Result<(), Error> {
         let url = self.api_url("service/register");
-        self.client.put(&url).json(&registration).send().await?;
+        let response = self.client.put(&url).json(&registration).send().await?;
         debug!("register service: {:?} to consul{url}", registration);
+        if !response.status().is_success() {
+            return Err(Error::InternalServer(
+                response.text().await.unwrap_or_default(),
+            ));
+        }
         Ok(())
     }
 
@@ -82,23 +86,24 @@ impl ServiceRegister for Consul {
 
     async fn deregister(&self, service_id: &str) -> Result<(), Error> {
         let url = self.api_url(&format!("service/deregister/{}", service_id));
-        self.client.put(url).send().await?;
+        let response = self.client.put(url).send().await?;
+        if !response.status().is_success() {
+            return Err(Error::InternalServer(
+                response.text().await.unwrap_or_default(),
+            ));
+        }
         Ok(())
     }
 
     async fn filter_by_name(&self, name: &str) -> Result<Services, Error> {
         let url = self.api_url("services");
         let mut map = HashMap::new();
-        map.insert(
-            "filter",
-            form_urlencoded::byte_serialize(format!("Service == \"{}\"", name).as_bytes())
-                .collect::<String>(),
-        );
+        map.insert("filter", format!("Service == {}", name));
 
         let services = self
             .client
             .get(url)
-            .form(&map)
+            .query(&map)
             .send()
             .await?
             .json::<Services>()
@@ -120,7 +125,7 @@ mod tests {
             id: "test".to_string(),
             name: "test".to_string(),
             address: "127.0.0.1".to_string(),
-            port: 8080,
+            port: 8081,
             tags: vec!["test".to_string()],
             check: None,
         };

@@ -10,8 +10,10 @@ use nanoid::nanoid;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
 use tokio::sync::Mutex;
+use tonic::server::NamedService;
 use tonic::transport::Server;
-use tracing::error;
+use tracing::{error, info};
+use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct ChatRpcService {
     pub kafka: Arc<Mutex<FutureProducer>>,
@@ -33,12 +35,56 @@ impl ChatRpcService {
             .expect("Producer creation error");
 
         let chat_rpc = Self::new(producer, config.kafka.topic.clone());
+
+        // register service
+        chat_rpc.register_service(config).await?;
+        info!("<chat> rpc service register to service register center");
+
+        // health check
+        let (mut reporter, health_service) = tonic_health::server::health_reporter();
+        reporter
+            .set_serving::<ChatServiceServer<ChatRpcService>>()
+            .await;
+        info!("<chat> rpc service health check started");
+
         let service = ChatServiceServer::new(chat_rpc);
+        info!(
+            "<chat> rpc service started at {}",
+            config.rpc.chat.rpc_server_url()
+        );
+
         Server::builder()
+            .add_service(health_service)
             .add_service(service)
             .serve(config.rpc.chat.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
+        Ok(())
+    }
+
+    async fn register_service(&self, config: &Config) -> Result<(), Error> {
+        // register service to service register center
+        let center = utils::service_register_center(config);
+        let grpc = format!(
+            "{}/{}",
+            config.rpc.chat.rpc_server_url(),
+            <ChatServiceServer<ChatRpcService> as NamedService>::NAME
+        );
+        let check = GrpcHealthCheck {
+            name: config.rpc.chat.name.clone(),
+            grpc,
+            grpc_use_tls: config.rpc.chat.grpc_health_check.grpc_use_tls,
+            interval: format!("{}s", config.rpc.chat.grpc_health_check.interval),
+        };
+        let registration = Registration {
+            id: "xmj-chat".to_string(),
+            name: config.rpc.chat.name.clone(),
+            address: config.rpc.chat.host.clone(),
+            port: config.rpc.chat.port,
+            tags: config.rpc.chat.tags.clone(),
+            check: Some(check),
+        };
+        center.register(registration).await?;
         Ok(())
     }
 }

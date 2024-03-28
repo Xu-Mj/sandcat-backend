@@ -28,12 +28,29 @@ websocket:
 
 rpc:
   ws:
+    protocol: http
     host: 127.0.0.1
     port: 50002
+    name: ws
+    tags:
+      - ws
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
   chat:
+    protocol: http
     host: 127.0.0.1
     port: 50003
+    name: chat
+    tags:
+      - chat
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
   db:
+    protocol: http
     host: 127.0.0.1
     port: 50004
     name: db
@@ -42,10 +59,18 @@ rpc:
       - grpc
     grpc_health_check:
       grpc_use_tls: false
-      interval: 30 # second
+      interval: 30000 # second
   pusher:
+    protocol: http
     host: 127.0.0.1
     port: 50005
+    name: pusher
+    tags:
+      - pusher
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
 
 redis:
   host: localhost

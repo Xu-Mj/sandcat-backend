@@ -5,7 +5,6 @@ use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::msg_service_server::MsgServiceServer;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -16,7 +15,7 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
 use tokio::time;
-use tonic::transport::{Channel, Server};
+use tonic::transport::Channel;
 use tracing::error;
 use utils::custom_extract::path_extractor::PathExtractor;
 
@@ -83,17 +82,10 @@ impl WsServer {
             println!("start websocket server on {}", addr);
             axum::serve(listener, router).await.unwrap();
         });
-        let rpc_addr = format!("{}:{}", config.rpc.ws.host, config.rpc.ws.port);
+        let config = config.clone();
         let mut rpc = tokio::spawn(async move {
             // start rpc server
-            let service = MsgRpcService::new(hub);
-            let svc = MsgServiceServer::new(service);
-            println!("start rpc server on {}", rpc_addr);
-            Server::builder()
-                .add_service(svc)
-                .serve(rpc_addr.parse().unwrap())
-                .await
-                .unwrap();
+            MsgRpcService::start(hub, &config).await.unwrap();
         });
         tokio::select! {
             _ = (&mut ws) => ws.abort(),

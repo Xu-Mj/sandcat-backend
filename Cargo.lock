@@ -422,10 +422,12 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
+ "tonic-health",
  "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "utils",
  "uuid",
 ]
 
@@ -2350,8 +2352,10 @@ dependencies = [
  "abi",
  "tokio",
  "tonic",
+ "tonic-health",
  "tracing",
  "tracing-subscriber",
+ "utils",
 ]
 
 [[package]]
@@ -3916,7 +3920,6 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "url",
  "uuid",
 ]
 
@@ -4271,11 +4274,13 @@ dependencies = [
  "dashmap",
  "futures",
  "log",
+ "nanoid",
  "redis 0.25.2",
  "serde",
  "serde_json",
  "tokio",
  "tonic",
+ "tonic-health",
  "tracing",
  "tracing-subscriber",
  "utils",
