@@ -1,5 +1,5 @@
 use tonic::server::NamedService;
-use tonic::transport::{Channel, Endpoint, Server};
+use tonic::transport::{Channel, Server};
 use tonic::{async_trait, Request, Response, Status};
 use tracing::{debug, info};
 
@@ -50,15 +50,9 @@ impl PusherRpcService {
 
     async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
-        let protocol = config.rpc.ws.protocol.clone();
-        let ws_list = utils::get_service_list_by_name(config, &config.rpc.ws.name).await?;
-        let endpoints = ws_list.values().map(|v| {
-            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
-            Endpoint::from_shared(url).unwrap()
-        });
-        debug!("ws rpc endpoints: {:?}", endpoints);
-
-        let channel = Channel::balance_list(endpoints);
+        let channel =
+            utils::get_rpc_channel_by_name(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
+                .await?;
         let ws_rpc = MsgServiceClient::new(channel);
         Ok(ws_rpc)
     }

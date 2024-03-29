@@ -66,8 +66,7 @@ Please also take into consideration that rust sometimes intentionally diverges f
 - save the message sequence to redis: we don't know if the seq is correct, we just increase it now
 - tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
   list in the interval time.
-- we can't get service configuration form service register center, we need to wait all service to register over -- add
-  timeout for it .
+-
 
 ## Future possibilities
 

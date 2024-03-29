@@ -91,7 +91,7 @@ where
     }
 }
 
-pub(crate) struct PathWithAuthExtractor<T>(pub T);
+pub struct PathWithAuthExtractor<T>(pub T);
 
 #[async_trait]
 impl<S, T> FromRequestParts<S> for PathWithAuthExtractor<T>

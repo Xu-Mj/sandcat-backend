@@ -182,6 +182,11 @@ message SendMsgRequest {
   Msg message = 1;
 }
 
+message SendGroupMsgRequest {
+  Msg message = 1;
+  repeated string members_id = 2;
+}
+
 message SendMsgResponse {}
 
 message MsgResponse {
@@ -194,22 +199,10 @@ message MsgResponse {
 service MsgService {
   // send message through rpc
   rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+  // send single message to user by websocket
   rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
-}
-
-
-message GroupCreateRequest {
-  GroupCreate group = 1;
-}
-
-
-message GroupCreateResponse {
-  GroupInvitation invitation = 1;
-}
-
-
-service GroupService {
-  rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
+  // send group message to user by websocket
+  rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
 }
 
 /// chat service, receive message then generate message id and send message to mq;
@@ -229,12 +222,67 @@ message GetDbMsgRequest{
   int64 end = 2;
 }
 
-/// db interface
+message GroupCreateRequest {
+  GroupCreate group = 1;
+}
+
+message GroupCreateResponse {
+  GroupInvitation invitation = 1;
+}
+
+message GroupUpdate{
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string description = 4;
+  string announcement = 5;
+  int64 update_time = 6;
+}
+
+message GroupUpdateRequest {
+  GroupUpdate group = 1;
+}
+
+message GroupUpdateResponse {
+  GroupUpdate group = 1;
+}
+message GroupDeleteRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message GroupDeleteResponse {
+  repeated string members_id = 1;
+}
+
+message GroupMemberExitResponse {
+  repeated string members_id = 1;
+}
+
+message GroupMembersIdRequest {
+  string group_id = 1;
+}
+
+message GroupMembersIdResponse {
+  repeated string members_id = 1;
+}
+
+/// db interface think about if it is necessary to put api interface together.
 service DbService {
   /// save message to postgres and mongodb
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// query message from mongodb by start seq to end seq
   rpc GetMessages(GetDbMsgRequest) returns (stream MsgToDb);
+  /// create group
+  rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
+  /// update group
+  rpc GroupUpdate(GroupUpdateRequest) returns (GroupUpdateResponse);
+  /// delete group
+  rpc GroupDelete(GroupDeleteRequest) returns (GroupDeleteResponse);
+  /// member exit
+  rpc GroupMemberExit(UserAndGroupID) returns (GroupMemberExitResponse);
+  /// query group members id
+  rpc GroupMembersId(GroupMembersIdRequest) returns (GroupMembersIdResponse);
 }
 
 service PushService {

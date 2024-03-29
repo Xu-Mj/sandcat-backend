@@ -7,7 +7,7 @@ use abi::message::{Msg, MsgResponse, SendMsgRequest};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::Channel;
 use tracing::{debug, error, info};
 
 type UserID = String;
@@ -41,15 +41,12 @@ impl Manager {
 
     async fn get_chat_rpc_client(config: &Config) -> Result<ChatServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
-        let protocol = config.rpc.chat.protocol.clone();
-        let ws_list = utils::get_service_list_by_name(config, &config.rpc.chat.name).await?;
-        let endpoints = ws_list.values().map(|v| {
-            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
-            Endpoint::from_shared(url).unwrap()
-        });
-        debug!("chat rpc endpoints: {:?}", endpoints);
-
-        let channel = Channel::balance_list(endpoints);
+        let channel = utils::get_rpc_channel_by_name(
+            config,
+            &config.rpc.chat.name,
+            &config.rpc.chat.protocol,
+        )
+        .await?;
         let chat_rpc = ChatServiceClient::new(channel);
         Ok(chat_rpc)
     }

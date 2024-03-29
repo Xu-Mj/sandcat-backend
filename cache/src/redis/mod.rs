@@ -4,6 +4,8 @@ use abi::errors::Error;
 use async_trait::async_trait;
 use redis::AsyncCommands;
 
+const GROUP_MEMBERS_ID_PREFIX: &str = "group_members_id";
+#[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
 }
@@ -21,7 +23,7 @@ impl RedisCache {
 
 #[async_trait]
 impl Cache for RedisCache {
-    async fn get_seq(&self, user_id: String) -> Result<i64, Error> {
+    async fn get_seq(&self, user_id: &str) -> Result<i64, Error> {
         // generate key
         let key = format!("seq:{}", user_id);
 
@@ -35,6 +37,24 @@ impl Cache for RedisCache {
         // increase seq
         let seq: i64 = conn.incr(&key, 1).await?;
         Ok(seq)
+    }
+
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Option<Vec<String>>, Error> {
+        // generate key
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        // query value from redis
+        let mut conn = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .unwrap();
+
+        let result: Vec<String> = conn.smembers(&key).await?;
+        // return None if result is empty, this means that this need to query from db
+        if result.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(result))
     }
 }
 
@@ -74,7 +94,7 @@ mod tests {
         }
     }
     impl TestRedis {
-        fn new(config: &Config, user_id: String) -> Self {
+        fn new(config: &Config, user_id: &str) -> Self {
             let client = redis::Client::open(config.redis.url()).unwrap();
             let key = format!("seq:{}", user_id);
             let cache = RedisCache::new(client.clone());
@@ -84,8 +104,8 @@ mod tests {
     #[tokio::test]
     async fn test_get_seq() {
         let config = Config::load("../abi/fixtures/im.yml").unwrap();
-        let user_id = "test".to_string();
-        let cache = TestRedis::new(&config, user_id.clone());
+        let user_id = "test";
+        let cache = TestRedis::new(&config, user_id);
         let seq = cache.get_seq(user_id).await.unwrap();
         assert_eq!(seq, 1);
     }

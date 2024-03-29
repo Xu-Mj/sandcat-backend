@@ -8,7 +8,7 @@ use cache::Cache;
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::{ClientConfig, Message};
 use std::sync::Arc;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::Channel;
 use tracing::{debug, error};
 
 pub struct ConsumerService {
@@ -55,32 +55,20 @@ impl ConsumerService {
 
     async fn get_db_rpc_client(config: &Config) -> Result<DbServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
-        let protocol = config.rpc.db.protocol.clone();
-        let ws_list = utils::get_service_list_by_name(config, &config.rpc.db.name).await?;
-
-        let endpoints = ws_list.values().map(|v| {
-            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
-            Endpoint::from_shared(url).unwrap()
-        });
-        debug!("db rpc endpoints: {:?}", endpoints);
-
-        let channel = Channel::balance_list(endpoints);
+        let channel =
+            utils::get_rpc_channel_by_name(config, &config.rpc.db.name, &config.rpc.db.protocol)
+                .await?;
         let db_rpc = DbServiceClient::new(channel);
         Ok(db_rpc)
     }
 
     async fn get_pusher_rpc_client(config: &Config) -> Result<PushServiceClient<Channel>, Error> {
-        // use service register center to get ws rpc url
-        let protocol = config.rpc.pusher.protocol.clone();
-        let ws_list = utils::get_service_list_by_name(config, &config.rpc.pusher.name).await?;
-
-        let endpoints = ws_list.values().map(|v| {
-            let url = format!("{}://{}:{}", &protocol, v.address, v.port);
-            Endpoint::from_shared(url).unwrap()
-        });
-        debug!("pusher rpc endpoints: {:?}", endpoints);
-
-        let channel = Channel::balance_list(endpoints);
+        let channel = utils::get_rpc_channel_by_name(
+            config,
+            &config.rpc.pusher.name,
+            &config.rpc.pusher.protocol,
+        )
+        .await?;
         let push_rpc = PushServiceClient::new(channel);
         Ok(push_rpc)
     }
@@ -111,7 +99,7 @@ impl ConsumerService {
         let mut msg: Msg = serde_json::from_str(payload)?;
 
         // increase seq
-        match self.cache.get_seq(msg.receiver_id.clone()).await {
+        match self.cache.get_seq(&msg.receiver_id).await {
             Ok(seq) => {
                 msg.seq = seq;
             }

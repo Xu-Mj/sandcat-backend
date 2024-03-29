@@ -3,7 +3,9 @@ use tonic::Status;
 
 use crate::errors::Error;
 use crate::message::msg::Data;
-use crate::message::{Msg, MsgResponse, MsgToDb};
+use crate::message::{
+    GroupInvitation, Msg, MsgResponse, MsgToDb, SendGroupMsgRequest, UserAndGroupId,
+};
 use crate::utils;
 
 impl From<Status> for MsgResponse {
@@ -78,5 +80,38 @@ impl TryFrom<Document> for MsgToDb {
             receiver_id: value.get_str("receiver_id")?.to_string(),
             seq: value.get_i64("seq")?,
         })
+    }
+}
+
+impl UserAndGroupId {
+    pub fn new(user_id: String, group_id: String) -> Self {
+        Self { user_id, group_id }
+    }
+}
+impl SendGroupMsgRequest {
+    pub fn new(msg: Msg, members_id: Vec<String>) -> Self {
+        Self {
+            message: Some(msg),
+            members_id,
+        }
+    }
+
+    pub fn new_with_group_invitation(msg: GroupInvitation, members_id: Vec<String>) -> Self {
+        Self {
+            message: Some(Msg {
+                data: Some(Data::GroupInvitation(msg)),
+                ..Default::default()
+            }),
+            members_id,
+        }
+    }
+    pub fn new_with_group_msg(msg: Data, members_id: Vec<String>) -> Self {
+        Self {
+            message: Some(Msg {
+                data: Some(msg),
+                ..Default::default()
+            }),
+            members_id,
+        }
     }
 }

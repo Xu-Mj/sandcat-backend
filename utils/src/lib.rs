@@ -1,5 +1,7 @@
 use abi::config::Config;
 use abi::errors::Error;
+use tonic::transport::{Channel, Endpoint};
+
 pub use service_register_center::*;
 
 pub mod custom_extract;
@@ -18,7 +20,11 @@ pub fn get_host_name() -> Result<String, Error> {
     Ok(hostname)
 }
 
-pub async fn get_service_list_by_name(config: &Config, name: &str) -> Result<Services, Error> {
+pub async fn get_rpc_channel_by_name(
+    config: &Config,
+    name: &str,
+    protocol: &str,
+) -> Result<Channel, Error> {
     let mut ws_list = crate::service_register_center(config)
         .filter_by_name(name)
         .await?;
@@ -38,5 +44,10 @@ pub async fn get_service_list_by_name(config: &Config, name: &str) -> Result<Ser
             }
         }
     }
-    Ok(ws_list)
+    let endpoints = ws_list.values().map(|v| {
+        let url = format!("{}://{}:{}", protocol, v.address, v.port);
+        Endpoint::from_shared(url).unwrap()
+    });
+    let channel = Channel::balance_list(endpoints);
+    Ok(channel)
 }

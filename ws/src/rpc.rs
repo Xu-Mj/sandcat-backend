@@ -3,10 +3,12 @@ use std::result::Result;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::msg_service_server::MsgServiceServer;
-use abi::message::{msg_service_server::MsgService, SendMsgRequest, SendMsgResponse};
-use tonic::async_trait;
+use abi::message::{
+    msg_service_server::MsgService, SendGroupMsgRequest, SendMsgRequest, SendMsgResponse,
+};
 use tonic::server::NamedService;
 use tonic::transport::Server;
+use tonic::{async_trait, Request, Response, Status};
 use tracing::{debug, info};
 use utils::typos::{GrpcHealthCheck, Registration};
 
@@ -80,19 +82,19 @@ impl MsgRpcService {
 impl MsgService for MsgRpcService {
     async fn send_message(
         &self,
-        request: tonic::Request<SendMsgRequest>,
-    ) -> Result<tonic::Response<SendMsgResponse>, tonic::Status> {
+        request: Request<SendMsgRequest>,
+    ) -> Result<Response<SendMsgResponse>, Status> {
         println!("Got a request: {:?}", request);
         let msg = request.into_inner().message;
         if msg.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
+            return Err(Status::invalid_argument("message is empty"));
         }
         let msg = msg.unwrap();
         if msg.data.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
+            return Err(Status::invalid_argument("message is empty"));
         }
         self.manager.broadcast(msg).await?;
-        let response = tonic::Response::new(SendMsgResponse {});
+        let response = Response::new(SendMsgResponse {});
         Ok(response)
     }
 
@@ -100,19 +102,35 @@ impl MsgService for MsgRpcService {
     /// pusher will procedure this to send message to user
     async fn send_msg_to_user(
         &self,
-        request: tonic::Request<SendMsgRequest>,
-    ) -> Result<tonic::Response<SendMsgResponse>, tonic::Status> {
+        request: Request<SendMsgRequest>,
+    ) -> Result<Response<SendMsgResponse>, Status> {
         let msg = request.into_inner().message;
         if msg.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
+            return Err(Status::invalid_argument("message is empty"));
         }
         let msg = msg.unwrap();
         if msg.data.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
+            return Err(Status::invalid_argument("message is empty"));
         }
         debug!("send message to user: {:?}", msg);
         self.manager.send_msg(msg).await;
-        let response = tonic::Response::new(SendMsgResponse {});
+        let response = Response::new(SendMsgResponse {});
+        Ok(response)
+    }
+
+    async fn send_group_msg_to_user(
+        &self,
+        request: Request<SendGroupMsgRequest>,
+    ) -> Result<Response<SendMsgResponse>, Status> {
+        let req = request.into_inner();
+        let msg = req.message;
+        if msg.is_none() {
+            return Err(Status::invalid_argument("message is empty"));
+        }
+        let msg = msg.unwrap();
+        let members_id = req.members_id;
+        self.manager.send_group(&members_id, &msg).await;
+        let response = Response::new(SendMsgResponse {});
         Ok(response)
     }
 }

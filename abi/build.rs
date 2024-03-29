@@ -62,6 +62,7 @@ fn main() {
             "GroupInfo",
             "GroupMember",
             "GroupCreate",
+            "GroupUpdate",
             "GroupInvitation",
             "SingleCallInvite",
             "SingleCallInviteAnswer",

@@ -1,12 +1,16 @@
+use std::fmt::Debug;
+
+use async_trait::async_trait;
+
 use abi::config::Config;
 use abi::errors::Error;
-use async_trait::async_trait;
 
 mod redis;
 
 #[async_trait]
-pub trait Cache: Sync + Send {
-    async fn get_seq(&self, user_id: String) -> Result<i64, Error>;
+pub trait Cache: Sync + Send + Debug {
+    async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Option<Vec<String>>, Error>;
 }
 
 pub fn cache(config: &Config) -> Box<dyn Cache> {

@@ -14,7 +14,12 @@ use tracing::{debug, info};
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_server::{DbService, DbServiceServer};
-use abi::message::{GetDbMsgRequest, MsgToDb, SaveMessageRequest, SaveMessageResponse};
+use abi::message::{
+    GetDbMsgRequest, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
+    GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
+    GroupUpdateRequest, GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse,
+    UserAndGroupId,
+};
 use utils::typos::{GrpcHealthCheck, Registration};
 
 use crate::relation_db::{MsgRecBoxRepo, MsgStoreRepo};
@@ -51,6 +56,41 @@ impl DbService for DbRpcService {
             .get_messages(req.start, req.end, "".to_string())
             .await?;
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
+    }
+
+    async fn group_create(
+        &self,
+        _request: Request<GroupCreateRequest>,
+    ) -> Result<Response<GroupCreateResponse>, Status> {
+        todo!()
+    }
+
+    async fn group_update(
+        &self,
+        _request: Request<GroupUpdateRequest>,
+    ) -> Result<Response<GroupUpdateResponse>, Status> {
+        todo!()
+    }
+
+    async fn group_delete(
+        &self,
+        _request: Request<GroupDeleteRequest>,
+    ) -> Result<Response<GroupDeleteResponse>, Status> {
+        todo!()
+    }
+
+    async fn group_member_exit(
+        &self,
+        _request: Request<UserAndGroupId>,
+    ) -> Result<Response<GroupMemberExitResponse>, Status> {
+        todo!()
+    }
+
+    async fn group_members_id(
+        &self,
+        _request: Request<GroupMembersIdRequest>,
+    ) -> Result<Response<GroupMembersIdResponse>, Status> {
+        todo!()
     }
 }
 
