@@ -63,7 +63,9 @@ impl DbRpcService {
     }
 
     pub async fn start(config: &Config) -> Result<(), Error> {
-        let db_rpc = DbRpcService::new(config).await;
+        // register service
+        Self::register_service(config).await?;
+        info!("<db> rpc service health check started");
 
         // open health check
         let (mut reporter, health_service) = tonic_health::server::health_reporter();
@@ -72,10 +74,7 @@ impl DbRpcService {
             .await;
         info!("<db> rpc service register to service register center");
 
-        // register service
-        db_rpc.register_service(config).await?;
-        info!("<db> rpc service health check started");
-
+        let db_rpc = DbRpcService::new(config).await;
         let service = DbServiceServer::new(db_rpc);
         info!(
             "<db> rpc service started at {}",
@@ -91,8 +90,7 @@ impl DbRpcService {
         Ok(())
     }
 
-    // todo get host name, set it to service id
-    async fn register_service(&self, config: &Config) -> Result<(), Error> {
+    async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);
         let grpc = format!(

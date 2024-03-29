@@ -22,13 +22,8 @@ impl MsgRpcService {
     }
 
     pub async fn start(manager: Manager, config: &Config) -> Result<(), Error> {
-        let service = Self::new(manager);
-
         // register service to service register center
-        service.register_service(config).await?;
-
-        // register the service
-        service.register_service(config).await.unwrap();
+        Self::register_service(config).await?;
         info!("<ws> rpc service register to service register center");
 
         // open health check
@@ -38,6 +33,7 @@ impl MsgRpcService {
             .await;
         info!("<ws> rpc service health check started");
 
+        let service = Self::new(manager);
         let svc = MsgServiceServer::new(service);
         info!(
             "<ws> rpc service started at {}",
@@ -53,7 +49,7 @@ impl MsgRpcService {
         Ok(())
     }
 
-    async fn register_service(&self, config: &Config) -> Result<(), Error> {
+    async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);
         let grpc = format!(

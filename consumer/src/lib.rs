@@ -56,9 +56,8 @@ impl ConsumerService {
     async fn get_db_rpc_client(config: &Config) -> Result<DbServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
         let protocol = config.rpc.db.protocol.clone();
-        let ws_list = utils::service_register_center(config)
-            .filter_by_name(&config.rpc.db.name)
-            .await?;
+        let ws_list = utils::get_service_list_by_name(config, &config.rpc.db.name).await?;
+
         let endpoints = ws_list.values().map(|v| {
             let url = format!("{}://{}:{}", &protocol, v.address, v.port);
             Endpoint::from_shared(url).unwrap()
@@ -73,9 +72,8 @@ impl ConsumerService {
     async fn get_pusher_rpc_client(config: &Config) -> Result<PushServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
         let protocol = config.rpc.pusher.protocol.clone();
-        let ws_list = utils::service_register_center(config)
-            .filter_by_name(&config.rpc.pusher.name)
-            .await?;
+        let ws_list = utils::get_service_list_by_name(config, &config.rpc.pusher.name).await?;
+
         let endpoints = ws_list.values().map(|v| {
             let url = format!("{}://{}:{}", &protocol, v.address, v.port);
             Endpoint::from_shared(url).unwrap()

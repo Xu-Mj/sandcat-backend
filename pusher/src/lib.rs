@@ -21,10 +21,8 @@ impl PusherRpcService {
     }
 
     pub async fn start(config: &Config) -> Result<(), Error> {
-        let pusher_rpc = Self::new(config).await;
-
         // register service
-        pusher_rpc.register_service(config).await?;
+        Self::register_service(config).await?;
         info!("<pusher> rpc service register to service register center");
 
         // for health check
@@ -34,6 +32,7 @@ impl PusherRpcService {
             .await;
         info!("<pusher> rpc service health check started");
 
+        let pusher_rpc = Self::new(config).await;
         let service = PushServiceServer::new(pusher_rpc);
         info!(
             "<pusher> rpc service started at {}",
@@ -52,9 +51,7 @@ impl PusherRpcService {
     async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
         let protocol = config.rpc.ws.protocol.clone();
-        let ws_list = utils::service_register_center(config)
-            .filter_by_name(&config.rpc.ws.name)
-            .await?;
+        let ws_list = utils::get_service_list_by_name(config, &config.rpc.ws.name).await?;
         let endpoints = ws_list.values().map(|v| {
             let url = format!("{}://{}:{}", &protocol, v.address, v.port);
             Endpoint::from_shared(url).unwrap()
@@ -66,7 +63,7 @@ impl PusherRpcService {
         Ok(ws_rpc)
     }
 
-    async fn register_service(&self, config: &Config) -> Result<(), Error> {
+    async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);
         let grpc = format!(

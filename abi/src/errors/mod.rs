@@ -69,6 +69,9 @@ pub enum Error {
 
     #[error("reqwest error: {0}")]
     ReqwestError(reqwest::Error),
+
+    #[error("SERVICE NOT FOUND: {0}")]
+    ServiceNotFound(String),
 }
 
 impl From<std::io::Error> for Error {
@@ -171,6 +174,7 @@ impl From<Error> for tonic::Status {
             Error::RedisError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
             Error::ReqwestError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
             Error::IOError(_) => tonic::Status::internal(format!("IO ERROR: {e}")),
+            Error::ServiceNotFound(_) => tonic::Status::internal(format!("SERVICE NOT FOUND: {e}")),
         }
     }
 }
@@ -209,6 +213,7 @@ impl IntoResponse for Error {
             | Error::RedisError(_)
             | Error::ReqwestError(_)
             | Error::IOError(_)
+            | Error::ServiceNotFound(_)
             | Error::InternalServer(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),

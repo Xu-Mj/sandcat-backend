@@ -42,10 +42,7 @@ impl Manager {
     async fn get_chat_rpc_client(config: &Config) -> Result<ChatServiceClient<Channel>, Error> {
         // use service register center to get ws rpc url
         let protocol = config.rpc.chat.protocol.clone();
-        let ws_list = utils::service_register_center(config)
-            .filter_by_name(&config.rpc.chat.name)
-            .await?;
-
+        let ws_list = utils::get_service_list_by_name(config, &config.rpc.chat.name).await?;
         let endpoints = ws_list.values().map(|v| {
             let url = format!("{}://{}:{}", &protocol, v.address, v.port);
             Endpoint::from_shared(url).unwrap()

@@ -34,10 +34,8 @@ impl ChatRpcService {
             .create()
             .expect("Producer creation error");
 
-        let chat_rpc = Self::new(producer, config.kafka.topic.clone());
-
         // register service
-        chat_rpc.register_service(config).await?;
+        Self::register_service(config).await?;
         info!("<chat> rpc service register to service register center");
 
         // health check
@@ -47,6 +45,7 @@ impl ChatRpcService {
             .await;
         info!("<chat> rpc service health check started");
 
+        let chat_rpc = Self::new(producer, config.kafka.topic.clone());
         let service = ChatServiceServer::new(chat_rpc);
         info!(
             "<chat> rpc service started at {}",
@@ -62,7 +61,7 @@ impl ChatRpcService {
         Ok(())
     }
 
-    async fn register_service(&self, config: &Config) -> Result<(), Error> {
+    async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);
         let grpc = format!(

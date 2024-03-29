@@ -7,7 +7,7 @@ use std::collections::HashMap;
 mod consul;
 pub mod typos;
 
-type Services = HashMap<String, Service>;
+pub type Services = HashMap<String, Service>;
 /// the service register discovery center
 #[async_trait]
 pub trait ServiceRegister: Send + Sync {
