@@ -1,7 +1,7 @@
 use tracing::Level;
 
 use abi::config::Config;
-use db::DbRpcService;
+use db::rpc::DbRpcService;
 
 #[tokio::main]
 async fn main() {

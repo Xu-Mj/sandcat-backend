@@ -10,7 +10,11 @@ pub struct PostgresMessage {
 }
 
 impl PostgresMessage {
-    pub async fn new(config: &Config) -> Self {
+    #[allow(dead_code)]
+    pub async fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+    pub async fn from_config(config: &Config) -> Self {
         let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
 
         Self { pool }

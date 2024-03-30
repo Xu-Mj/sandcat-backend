@@ -1,7 +1,7 @@
 use abi::config::Config;
 use chat::ChatRpcService;
 use consumer::ConsumerService;
-use db::DbRpcService;
+use db::rpc::DbRpcService;
 use pusher::PusherRpcService;
 use tracing::{info, Level};
 use ws::ws_server::WsServer;
