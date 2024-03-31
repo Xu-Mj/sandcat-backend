@@ -145,7 +145,7 @@ message GroupInvitation{
 
 /// group information also related to database
 message GroupInfo {
-  int64 id = 1;
+  string id = 1;
   string owner = 2;
   string name = 3;
   string avatar = 4;
@@ -243,8 +243,9 @@ message GroupUpdateRequest {
 }
 
 message GroupUpdateResponse {
-  GroupUpdate group = 1;
+  GroupInfo group = 1;
 }
+
 message GroupDeleteRequest {
   string group_id = 1;
   string user_id = 2;

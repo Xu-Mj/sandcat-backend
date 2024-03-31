@@ -40,7 +40,7 @@ pub enum RegisterErrState {
 }
 
 // 将用户错误转为axum响应
-impl IntoResponse for UserError {
+rpc IntoResponse for UserError {
     fn into_response(self) -> Response {
         let (status, err_msg) = match self {
             UserError::InternalServerError(err_msg) => (

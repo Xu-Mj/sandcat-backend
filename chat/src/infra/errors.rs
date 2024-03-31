@@ -36,7 +36,7 @@ pub trait Error {
 }
 
 // 实现Display特征，设置InfraError打印格式
-/*impl Display for InfraError {
+/*rpc Display for InfraError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             InfraError::InternalServerError(err_msg) => {

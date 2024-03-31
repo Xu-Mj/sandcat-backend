@@ -132,7 +132,7 @@ impl From<serde_json::Error> for Error {
         Self::ParseError(value.to_string())
     }
 }
-// impl PartialEq for Error {
+// rpc PartialEq for Error {
 //     fn eq(&self, other: &Self) -> bool {
 //         match (self, other) {
 //             (Self::DbError(_), Self::DbError(_)) => true,

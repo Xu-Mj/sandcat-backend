@@ -7,7 +7,7 @@ use tracing::log::debug;
 use abi::errors::Error;
 use abi::message::msg::Data;
 use abi::message::{
-    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInvitation, GroupUpdate,
+    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation, GroupUpdate,
     GroupUpdateRequest, SendGroupMsgRequest, UserAndGroupId,
 };
 use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -63,7 +63,7 @@ pub async fn update_group_handler(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(_user_id): PathWithAuthExtractor<String>,
     JsonWithAuthExtractor(group_info): JsonWithAuthExtractor<GroupUpdate>,
-) -> Result<Json<GroupUpdate>, Error> {
+) -> Result<Json<GroupInfo>, Error> {
     // send rpc request to update group
     let mut db_rpc = app_state.db_rpc.clone();
     let request = GroupUpdateRequest::new(group_info);
@@ -79,6 +79,7 @@ pub async fn update_group_handler(
             "group update failed, rpc response is none".to_string(),
         ));
     }
+    // notify the group members, except owner
     Ok(Json(inner.unwrap()))
 }
 
@@ -94,7 +95,7 @@ pub async fn delete_group_handler(
     JsonWithAuthExtractor(group): JsonWithAuthExtractor<DeleteGroupRequest>,
 ) -> Result<Json<()>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
-    let (msg, members) = if group.is_dismiss {
+    let (msg, mut members) = if group.is_dismiss {
         let req = GroupDeleteRequest::new(group.group_id.clone(), group.user_id.clone());
         let response = db_rpc.group_delete(req).await.map_err(|e| {
             Error::InternalServer(format!(
@@ -118,15 +119,19 @@ pub async fn delete_group_handler(
         // todo delete from cache
         (Data::GroupMemberExit(req), members)
     };
-    // notify members
-    debug!("delete group success; send group message");
-    let ws_req = SendGroupMsgRequest::new_with_group_msg(msg, members);
     let mut ws_rpc = app_state.ws_rpc.clone();
-    ws_rpc.send_group_msg_to_user(ws_req).await.map_err(|e| {
-        Error::InternalServer(format!(
-            "procedure ws rpc service error: send_group_msg_to_user {:?}",
-            e
-        ))
-    })?;
+    // notify members, except self
+    tokio::spawn(async move {
+        members.retain(|x| *x != group.user_id);
+        debug!("delete group success; send group message");
+        let ws_req = SendGroupMsgRequest::new_with_group_msg(msg, members);
+        if let Err(e) = ws_rpc.send_group_msg_to_user(ws_req).await {
+            error!(
+                "procedure ws rpc service error: send_group_msg_to_user {:?}",
+                e
+            )
+        }
+    });
+
     Ok(Json(()))
 }

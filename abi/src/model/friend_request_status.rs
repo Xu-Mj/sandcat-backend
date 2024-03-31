@@ -13,7 +13,7 @@ pub enum FriendStatus {
     Cancelled,
 }
 
-/*impl FromSql<FriendRequestStatus, Pg> for FriendStatus {
+/*rpc FromSql<FriendRequestStatus, Pg> for FriendStatus {
     fn from_sql(bytes: <Pg as Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
         let status = <String as FromSql<diesel::sql_types::Text, Pg>>::from_sql(bytes)?;
         match status.as_str() {
@@ -27,7 +27,7 @@ pub enum FriendStatus {
     }
 }*/
 
-/*impl ToSql<FriendRequestStatus, Pg> for FriendStatus {
+/*rpc ToSql<FriendRequestStatus, Pg> for FriendStatus {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
         match self {
             FriendStatus::Pending => out.write_all(b"Pending")?,
@@ -40,7 +40,7 @@ pub enum FriendStatus {
     }
 }
 */
-/*impl Queryable<FriendRequestStatus, Pg> for FriendStatus {
+/*rpc Queryable<FriendRequestStatus, Pg> for FriendStatus {
     type Row = Self;
 
     fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {

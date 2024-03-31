@@ -3,7 +3,7 @@ use sqlx::PgPool;
 
 use abi::config::Config;
 use abi::errors::Error;
-use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember};
+use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember, GroupUpdate};
 
 use crate::relation_db::group::GroupStoreRepo;
 
@@ -105,7 +105,7 @@ impl GroupStoreRepo for PostgresGroup {
         let result = result.into_iter().map(|(user_id,)| user_id).collect();
         Ok(result)
     }
-    async fn update_group(&self, group: &GroupInfo) -> Result<GroupInfo, Error> {
+    async fn update_group(&self, group: &GroupUpdate) -> Result<GroupInfo, Error> {
         let now = chrono::Local::now().naive_local();
         let group = sqlx::query_as(
             "UPDATE groups SET
@@ -114,14 +114,14 @@ impl GroupStoreRepo for PostgresGroup {
          description = COALESCE(NULLIF($3, ''), description),
          announcement = COALESCE(NULLIF($4, ''), announcement),
          update_time = $5)
-         WHERE id = $6",
+         WHERE id = $6 RETURNING *",
         )
         .bind(&group.name)
         .bind(&group.avatar)
         .bind(&group.description)
         .bind(&group.announcement)
         .bind(now)
-        .bind(group.id)
+        .bind(&group.id)
         .fetch_one(&self.pool)
         .await?;
         Ok(group)

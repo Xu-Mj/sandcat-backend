@@ -65,7 +65,7 @@ pub enum MessageType {
     DeliveredNotice,
 }
 
-impl Display for MessageType {
+rpc Display for MessageType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             MessageType::Default => write!(f, "Default"),
@@ -77,7 +77,7 @@ impl Display for MessageType {
     }
 }
  */
-/*impl Msg {
+/*rpc Msg {
     pub fn single_from_db(msg: MsgDb) -> Self {
         let single = Single {
             msg_id: msg.msg_id,
@@ -108,7 +108,7 @@ pub struct GroupInvitation {
     pub members: Vec<GroupMemberWithUser>,
 }
 /*
-impl From<GroupRequest> for GroupInvitation {
+rpc From<GroupRequest> for GroupInvitation {
     fn from(value: GroupRequest) -> Self {
         Self {
             info: GroupDb::from(value),

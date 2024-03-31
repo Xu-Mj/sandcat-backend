@@ -12,7 +12,7 @@ pub(crate) struct PathExtractor<T>(pub T);
 #[async_trait]
 impl<S, T> FromRequestParts<S> for PathExtractor<T>
 where
-    // these trait bounds are copied from `impl FromRequest for axum::extract::path::Path`
+    // these trait bounds are copied from `rpc FromRequest for axum::extract::path::Path`
     T: DeserializeOwned + Send,
     S: Send + Sync,
 {

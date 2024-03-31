@@ -1,4 +1,5 @@
 -- groups table creation sql
+-- do not use foreign key constraint
 CREATE TABLE groups
 (
     id           VARCHAR PRIMARY KEY,

@@ -13,7 +13,7 @@ pub enum FriendError {
 }
 
 // 将用户错误转为axum响应
-impl IntoResponse for FriendError {
+rpc IntoResponse for FriendError {
     fn into_response(self) -> Response {
         let (status, err_msg) = match self {
             FriendError::InternalServerError(err_msg) => (

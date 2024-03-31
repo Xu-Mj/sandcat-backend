@@ -39,7 +39,8 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn query_group_members_id(&self, group_id: &str) -> Result<Option<Vec<String>>, Error> {
+    /// the group members id in redis is a set, with group_members_id:group_id as key
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
         // generate key
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         // query value from redis
@@ -50,11 +51,60 @@ impl Cache for RedisCache {
             .unwrap();
 
         let result: Vec<String> = conn.smembers(&key).await?;
-        // return None if result is empty, this means that this need to query from db
-        if result.is_empty() {
-            return Ok(None);
+        Ok(result)
+    }
+
+    async fn save_group_members_id(
+        &self,
+        group_id: &str,
+        members_id: Vec<String>,
+    ) -> Result<(), Error> {
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        let mut conn = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .unwrap();
+        // Add each member to the set for the group by redis pipe
+        let mut pipe = redis::pipe();
+        for member in members_id {
+            pipe.sadd(&key, &member);
         }
-        Ok(Some(result))
+        pipe.query_async(&mut conn).await?;
+        Ok(())
+    }
+
+    async fn add_group_member_id(&self, member_id: &str, group_id: &str) -> Result<(), Error> {
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        let mut conn = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .unwrap();
+        conn.sadd(&key, member_id).await?;
+        Ok(())
+    }
+
+    async fn remove_group_member_id(&self, group_id: &str, member_id: &str) -> Result<(), Error> {
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        let mut conn = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .unwrap();
+        conn.srem(&key, member_id).await?;
+        Ok(())
+    }
+
+    async fn del_group_members(&self, group_id: &str) -> Result<(), Error> {
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        let mut conn = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .unwrap();
+        conn.del(&key).await?;
+        Ok(())
     }
 }
 
@@ -68,7 +118,6 @@ mod tests {
 
     struct TestRedis {
         client: redis::Client,
-        key: String,
         cache: RedisCache,
     }
 
@@ -82,11 +131,11 @@ mod tests {
     impl Drop for TestRedis {
         fn drop(&mut self) {
             let client = self.client.clone();
-            let key = self.key.clone();
             thread::spawn(move || {
                 Runtime::new().unwrap().block_on(async {
                     let mut conn = client.get_multiplexed_async_connection().await.unwrap();
-                    let _: i64 = conn.del(&key).await.unwrap();
+                    // let _: () to tell the compiler that the query_async method's return type is ()
+                    let _: () = redis::cmd("FLUSHDB").query_async(&mut conn).await.unwrap();
                 })
             })
             .join()
@@ -94,19 +143,83 @@ mod tests {
         }
     }
     impl TestRedis {
-        fn new(config: &Config, user_id: &str) -> Self {
-            let client = redis::Client::open(config.redis.url()).unwrap();
-            let key = format!("seq:{}", user_id);
+        fn new() -> Self {
+            // use the 9 database for test
+            let database = 9;
+            Self::from_db(database)
+        }
+
+        // because of the tests are running in parallel,
+        // we need to use different database,
+        // in case of the flush db command will cause conflict in drop method
+        fn from_db(db: u8) -> Self {
+            let config = Config::load("../abi/fixtures/im.yml").unwrap();
+            let url = format!("{}/{}", config.redis.url(), db);
+            let client = redis::Client::open(url).unwrap();
             let cache = RedisCache::new(client.clone());
-            TestRedis { client, key, cache }
+            TestRedis { client, cache }
         }
     }
     #[tokio::test]
     async fn test_get_seq() {
-        let config = Config::load("../abi/fixtures/im.yml").unwrap();
         let user_id = "test";
-        let cache = TestRedis::new(&config, user_id);
+        let cache = TestRedis::new();
         let seq = cache.get_seq(user_id).await.unwrap();
         assert_eq!(seq, 1);
+    }
+
+    #[tokio::test]
+    async fn test_save_group_members_id() {
+        let group_id = "test";
+        let members_id = vec!["1".to_string(), "2".to_string()];
+        let cache = TestRedis::new();
+        let result = cache.save_group_members_id(group_id, members_id).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_query_group_members_id() {
+        let group_id = "test";
+        let members_id = vec!["1".to_string(), "2".to_string()];
+        let db = 8;
+        let cache = TestRedis::from_db(db);
+        let result = cache.save_group_members_id(group_id, members_id).await;
+        assert!(result.is_ok());
+        let result = cache.query_group_members_id(group_id).await.unwrap();
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&"1".to_string()));
+        assert!(result.contains(&"2".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_add_group_member_id() {
+        let group_id = "test";
+        let member_id = "1";
+        let cache = TestRedis::new();
+        let result = cache.add_group_member_id(member_id, group_id).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_remove_group_member_id() {
+        let group_id = "test";
+        let member_id = "1";
+        let cache = TestRedis::new();
+        let result = cache.add_group_member_id(member_id, group_id).await;
+        assert!(result.is_ok());
+        let result = cache.remove_group_member_id(group_id, member_id).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_del_group_members() {
+        let group_id = "test";
+        let members_id = vec!["1".to_string(), "2".to_string()];
+        let cache = TestRedis::new();
+        // need to add first
+        let result = cache.save_group_members_id(group_id, members_id).await;
+        assert!(result.is_ok());
+        let result = cache.del_group_members(group_id).await;
+        assert!(result.is_ok());
     }
 }

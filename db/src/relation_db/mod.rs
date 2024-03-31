@@ -17,7 +17,7 @@ pub(crate) use crate::relation_db::message::{MsgRecBoxRepo, MsgStoreRepo};
 //     pub group: Box<dyn GroupStoreRepo>,
 // }
 //
-// impl DbRepo {
+// rpc DbRepo {
 //     pub async fn new(config: &Config) -> Self {
 //         let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
 //

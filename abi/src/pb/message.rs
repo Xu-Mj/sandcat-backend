@@ -192,8 +192,8 @@ pub struct GroupInvitation {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupInfo {
-    #[prost(int64, tag = "1")]
-    pub id: i64,
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub owner: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -335,7 +335,7 @@ pub struct GroupUpdateRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupUpdateResponse {
     #[prost(message, optional, tag = "1")]
-    pub group: ::core::option::Option<GroupUpdate>,
+    pub group: ::core::option::Option<GroupInfo>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
