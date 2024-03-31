@@ -56,7 +56,6 @@ impl FromRow<'_, PgRow> for GroupInfo {
             avatar: row.get("avatar"),
             description: row.get("description"),
             announcement: row.get("announcement"),
-            member_count: row.get("member_count"),
             create_time: row.get("create_time"),
             update_time: row.get("update_time"),
         })

@@ -205,10 +205,8 @@ pub struct GroupInfo {
     #[prost(string, tag = "6")]
     pub announcement: ::prost::alloc::string::String,
     #[prost(int64, tag = "7")]
-    pub member_count: i64,
-    #[prost(int64, tag = "8")]
     pub create_time: i64,
-    #[prost(int64, tag = "9")]
+    #[prost(int64, tag = "8")]
     pub update_time: i64,
 }
 /// / group member information also related to database table group_members

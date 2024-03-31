@@ -151,9 +151,8 @@ message GroupInfo {
   string avatar = 4;
   string description = 5;
   string announcement = 6;
-  int64 member_count = 7;
-  int64 create_time = 8;
-  int64 update_time = 9;
+  int64 create_time = 7;
+  int64 update_time = 8;
 }
 
 /// group member information also related to database table group_members

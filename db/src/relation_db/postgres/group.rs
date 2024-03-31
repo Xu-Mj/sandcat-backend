@@ -1,7 +1,7 @@
-use abi::config::Config;
 use async_trait::async_trait;
 use sqlx::PgPool;
 
+use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember};
 
@@ -53,13 +53,10 @@ impl GroupStoreRepo for PostgresGroup {
         let members: Vec<GroupMember> =
             sqlx::query_as(
                 "WITH inserted AS (
-                    INSERT INTO group_members as t (user_id, group_id, group_name, delivered, joined_at)
-                    SELECT u.id, $1 as group_id, u.name AS group_name,  CASE
-                            WHEN u.id = $2 THEN true
-                            ELSE false
-                        END AS delivered, $3 AS joined_at
+                    INSERT INTO group_members as t (user_id, group_id, group_name, joined_at)
+                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at
                     FROM users AS u
-                    WHERE u.id = ANY($4)
+                    WHERE u.id = ANY($3)
                     RETURNING t.id, user_id, group_id, joined_at
                 )
                 SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name, usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender
@@ -67,7 +64,6 @@ impl GroupStoreRepo for PostgresGroup {
                 JOIN users AS usr ON ins.user_id = usr.id;
                 ")
                 .bind(&group.id)
-                .bind(&group.owner)
                 .bind(now)
                 .bind(group.members_id)
                 .fetch_all(&mut *tx)
@@ -77,7 +73,54 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(invitation)
     }
 
-    async fn get_group_by_id(&self, _group_id: &str) -> Result<GroupInfo, Error> {
-        todo!()
+    async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error> {
+        let info = sqlx::query_as("SELECT * FROM groups WHERE id = $1")
+            .bind(group_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(info)
+    }
+
+    async fn query_group_members_by_group_id(
+        &self,
+        group_id: &str,
+    ) -> Result<Vec<GroupMember>, Error> {
+        let members = sqlx::query_as(
+            "SELECT m.id, m.user_id, m.group_id, m.group_name, m.group_remark, m.joined_at u. FROM group_members WHERE group_id = $1",
+        )
+            .bind(group_id)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(members)
+    }
+    async fn update_group(&self, group: &GroupInfo) -> Result<GroupInfo, Error> {
+        let now = chrono::Local::now().naive_local();
+        let group = sqlx::query_as(
+            "UPDATE groups SET
+         name = COALESCE(NULLIF($1, ''), name),
+         avatar = COALESCE(NULLIF($2, ''), avatar),
+         description = COALESCE(NULLIF($3, ''), description),
+         announcement = COALESCE(NULLIF($4, ''), announcement),
+         update_time = $5)
+         WHERE id = $6",
+        )
+        .bind(&group.name)
+        .bind(&group.avatar)
+        .bind(&group.description)
+        .bind(&group.announcement)
+        .bind(now)
+        .bind(group.id)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(group)
+    }
+
+    async fn delete_group(&self, group_id: &str, owner: &str) -> Result<GroupInfo, Error> {
+        let group = sqlx::query_as("DELETE FROM groups WHERE id = $1 and owner = $2 RETURNING *")
+            .bind(group_id)
+            .bind(owner)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(group)
     }
 }
