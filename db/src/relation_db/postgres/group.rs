@@ -86,12 +86,24 @@ impl GroupStoreRepo for PostgresGroup {
         group_id: &str,
     ) -> Result<Vec<GroupMember>, Error> {
         let members = sqlx::query_as(
-            "SELECT m.id, m.user_id, m.group_id, m.group_name, m.group_remark, m.joined_at u. FROM group_members WHERE group_id = $1",
+            "SELECT m.id, m.user_id, m.group_id, m.group_name, m.group_remark, m.joined_at
+             FROM group_members
+             WHERE group_id = $1",
         )
-            .bind(group_id)
-            .fetch_all(&self.pool)
-            .await?;
+        .bind(group_id)
+        .fetch_all(&self.pool)
+        .await?;
         Ok(members)
+    }
+
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
+        let result: Vec<(String,)> =
+            sqlx::query_as("SELECT user_id FROM group_members WHERE group_id = $1")
+                .bind(group_id)
+                .fetch_all(&self.pool)
+                .await?;
+        let result = result.into_iter().map(|(user_id,)| user_id).collect();
+        Ok(result)
     }
     async fn update_group(&self, group: &GroupInfo) -> Result<GroupInfo, Error> {
         let now = chrono::Local::now().naive_local();
@@ -113,6 +125,15 @@ impl GroupStoreRepo for PostgresGroup {
         .fetch_one(&self.pool)
         .await?;
         Ok(group)
+    }
+
+    async fn exit_group(&self, user_id: &str, group_id: &str) -> Result<(), Error> {
+        sqlx::query("DELETE FROM group_members WHERE user_id = $1 AND group_id = $2")
+            .bind(user_id)
+            .bind(group_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     async fn delete_group(&self, group_id: &str, owner: &str) -> Result<GroupInfo, Error> {
