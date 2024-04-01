@@ -80,7 +80,10 @@ impl ConsumerService {
                 Err(e) => error!("Kafka error: {}", e),
                 Ok(m) => {
                     if let Some(Ok(payload)) = m.payload_view::<str>() {
-                        self.handle_msg(payload).await?;
+                        if let Err(e) = self.handle_msg(payload).await {
+                            error!("Failed to handle message: {:?}", e);
+                            continue;
+                        }
                         if let Err(e) = self.consumer.commit_message(&m, CommitMode::Async) {
                             error!("Failed to commit message: {:?}", e);
                         }
@@ -99,12 +102,26 @@ impl ConsumerService {
         let mut msg: Msg = serde_json::from_str(payload)?;
 
         // increase seq
-        match self.cache.get_seq(&msg.receiver_id).await {
-            Ok(seq) => {
-                msg.seq = seq;
-            }
-            Err(err) => {
-                error!("failed to get seq, error: {:?}", err);
+        if msg.data.is_some() {
+            match msg.data.as_ref().unwrap() {
+                Data::Single(_)
+                | Data::GroupInvitation(_)
+                | Data::GroupMemberExit(_)
+                | Data::GroupDismiss(_)
+                | Data::GroupUpdate(_)
+                | Data::SingleCallInviteNotAnswer(_)
+                | Data::SingleCallInviteCancel(_)
+                | Data::Hangup(_)
+                | Data::AgreeSingleCall(_) => match self.cache.get_seq(&msg.receiver_id).await {
+                    Ok(seq) => {
+                        msg.seq = seq;
+                    }
+                    Err(err) => {
+                        error!("failed to get seq, error: {:?}", err);
+                        return Err(err);
+                    }
+                },
+                _ => {}
             }
         }
 
@@ -127,6 +144,7 @@ impl ConsumerService {
         // todo try_join! or join!; we should think about it
         if let Err(err) = tokio::try_join!(to_db, to_pusher) {
             error!("failed to consume message, error: {:?}", err);
+            return Err(Error::InternalServer(err.to_string()));
         }
         Ok(())
     }

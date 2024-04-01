@@ -89,9 +89,9 @@ impl DbRpcService {
         Ok(())
     }
 
+    /// todo need to handle group message
     pub async fn handle_message(&self, message: MsgToDb) -> Result<(), Error> {
         // task 1 save message to postgres
-        // self.db.save_message(message.clone()).await?;
         let db = self.db.clone();
         let cloned_msg = message.clone();
         let db_task = tokio::spawn(async move {
@@ -99,8 +99,8 @@ impl DbRpcService {
                 tracing::error!("<db> save message to db failed: {}", e);
             }
         });
+
         // task 2 save message to mongodb
-        // todo think about if the collection name should be here
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
             if let Err(e) = msg_rec_box
