@@ -1014,6 +1014,43 @@ pub mod push_service_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
+        /// / push single message to message gateway
+        pub async fn push_single_msg(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SendMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SendMsgResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.PushService/PushSingleMsg");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.PushService", "PushSingleMsg"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / push group message to message gateway
+        pub async fn push_group_msg(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SendGroupMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SendMsgResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.PushService/PushGroupMsg");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.PushService", "PushGroupMsg"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / push other message to message gateway, need to think about it
         pub async fn push_msg(
             &mut self,
             request: impl tonic::IntoRequest<super::SendMsgRequest>,
@@ -1912,6 +1949,17 @@ pub mod push_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with PushServiceServer.
     #[async_trait]
     pub trait PushService: Send + Sync + 'static {
+        /// / push single message to message gateway
+        async fn push_single_msg(
+            &self,
+            request: tonic::Request<super::SendMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SendMsgResponse>, tonic::Status>;
+        /// / push group message to message gateway
+        async fn push_group_msg(
+            &self,
+            request: tonic::Request<super::SendGroupMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SendMsgResponse>, tonic::Status>;
+        /// / push other message to message gateway, need to think about it
         async fn push_msg(
             &self,
             request: tonic::Request<super::SendMsgRequest>,
@@ -1993,6 +2041,88 @@ pub mod push_service_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
+                "/message.PushService/PushSingleMsg" => {
+                    #[allow(non_camel_case_types)]
+                    struct PushSingleMsgSvc<T: PushService>(pub Arc<T>);
+                    impl<T: PushService> tonic::server::UnaryService<super::SendMsgRequest> for PushSingleMsgSvc<T> {
+                        type Response = super::SendMsgResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SendMsgRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as PushService>::push_single_msg(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = PushSingleMsgSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.PushService/PushGroupMsg" => {
+                    #[allow(non_camel_case_types)]
+                    struct PushGroupMsgSvc<T: PushService>(pub Arc<T>);
+                    impl<T: PushService> tonic::server::UnaryService<super::SendGroupMsgRequest>
+                        for PushGroupMsgSvc<T>
+                    {
+                        type Response = super::SendMsgResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SendGroupMsgRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as PushService>::push_group_msg(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = PushGroupMsgSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/message.PushService/PushMsg" => {
                     #[allow(non_camel_case_types)]
                     struct PushMsgSvc<T: PushService>(pub Arc<T>);

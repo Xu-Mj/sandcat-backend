@@ -7,7 +7,7 @@ use abi::config::Config;
 use abi::errors::Error;
 use abi::message::msg_service_client::MsgServiceClient;
 use abi::message::push_service_server::{PushService, PushServiceServer};
-use abi::message::{SendMsgRequest, SendMsgResponse};
+use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
 use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct PusherRpcService {
@@ -86,6 +86,25 @@ impl PusherRpcService {
 
 #[async_trait]
 impl PushService for PusherRpcService {
+    async fn push_single_msg(
+        &self,
+        request: Request<SendMsgRequest>,
+    ) -> Result<Response<SendMsgResponse>, Status> {
+        debug!("push msg request: {:?}", request);
+        let mut ws_rpc = self.ws_rpc.clone();
+        ws_rpc.send_msg_to_user(request).await
+    }
+
+    async fn push_group_msg(
+        &self,
+        request: Request<SendGroupMsgRequest>,
+    ) -> Result<Response<SendMsgResponse>, Status> {
+        debug!("push group msg request: {:?}", request);
+        let mut ws_rpc = self.ws_rpc.clone();
+        ws_rpc.send_group_msg_to_user(request).await
+    }
+
+    /// push message to ws, need to think about this
     async fn push_msg(
         &self,
         request: Request<SendMsgRequest>,

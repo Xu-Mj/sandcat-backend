@@ -297,5 +297,10 @@ service DbService {
 }
 
 service PushService {
+  /// push single message to message gateway
+  rpc PushSingleMsg(SendMsgRequest) returns (SendMsgResponse);
+  /// push group message to message gateway
+  rpc PushGroupMsg(SendGroupMsgRequest) returns (SendMsgResponse);
+  /// push other message to message gateway, need to think about it
   rpc PushMsg(SendMsgRequest) returns (SendMsgResponse);
 }

@@ -41,8 +41,6 @@ pub async fn create_group_handler(
     }
     let invitation = inner.unwrap();
 
-    // use new task to send message
-    let _cache = app_state.cache.clone();
     let mut msg_rpc = app_state.ws_rpc.clone();
     let msg = invitation.clone();
     tokio::spawn(async move {
