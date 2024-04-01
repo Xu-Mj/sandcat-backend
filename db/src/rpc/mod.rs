@@ -103,10 +103,7 @@ impl DbRpcService {
         // task 2 save message to mongodb
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
-            if let Err(e) = msg_rec_box
-                .save_message(&message.receiver_id.clone(), message)
-                .await
-            {
+            if let Err(e) = msg_rec_box.save_message(message).await {
                 tracing::error!("<db> save message to mongodb failed: {}", e);
             }
         });

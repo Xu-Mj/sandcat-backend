@@ -44,7 +44,7 @@ impl DbService for DbRpcService {
         let req = request.into_inner();
         let result = self
             .msg_rec_box
-            .get_messages("", req.start, req.end)
+            .get_messages(&req.user_id, req.start, req.end)
             .await?;
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
@@ -69,6 +69,8 @@ impl DbService for DbRpcService {
                 acc
             },
         );
+        // todo save the information to message receive box
+
         //todo save the information to cache
         // save members id
         self.cache
