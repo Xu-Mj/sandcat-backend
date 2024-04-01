@@ -282,6 +282,8 @@ message GroupMembersIdResponse {
 service DbService {
   /// save message to postgres and mongodb
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
+  /// save group message to postgres and mongodb
+  rpc SaveGroupMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// query message from mongodb by start seq to end seq
   rpc GetMessages(GetDbMsgRequest) returns (stream MsgToDb);
   /// create group

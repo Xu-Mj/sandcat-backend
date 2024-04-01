@@ -3,7 +3,9 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg::Data;
 use abi::message::push_service_client::PushServiceClient;
-use abi::message::{Msg, MsgToDb, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest};
+use abi::message::{
+    GroupMembersIdRequest, Msg, MsgToDb, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
+};
 use cache::Cache;
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::{ClientConfig, Message};
@@ -100,14 +102,7 @@ impl ConsumerService {
         }
     }
 
-    /// todo we need to handle the errors, like: should we use something like transaction?
-    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
-        debug!("Received message: {:#?}", payload);
-
-        // send to db rpc server
-        let mut db_rpc = self.db_rpc.clone();
-        let mut msg: Msg = serde_json::from_str(payload)?;
-
+    async fn classify_msg_type(&self, msg: &Msg) -> (MsgType, bool) {
         let mut msg_type = MsgType::Other;
         let mut need_increase_seq = false;
         // increase seq
@@ -138,43 +133,44 @@ impl ConsumerService {
                 }
             }
         }
+        (msg_type, need_increase_seq)
+    }
 
-        if need_increase_seq {
-            match self.cache.get_seq(&msg.receiver_id).await {
-                Ok(seq) => {
-                    msg.seq = seq;
-                }
-                Err(err) => {
-                    error!("failed to get seq, error: {:?}", err);
-                    return Err(err);
-                }
+    async fn increase_seq(&self, user_id: &str) -> Result<i64, Error> {
+        match self.cache.get_seq(user_id).await {
+            Ok(seq) => Ok(seq),
+            Err(err) => {
+                error!("failed to get seq, error: {:?}", err);
+                Err(err)
             }
+        }
+    }
+
+    /// todo we need to handle the errors, like: should we use something like transaction?
+    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
+        debug!("Received message: {:#?}", payload);
+
+        // send to db rpc server
+        let mut db_rpc = self.db_rpc.clone();
+        let mut msg: Msg = serde_json::from_str(payload)?;
+        let (msg_type, need_increase_seq) = self.classify_msg_type(&msg).await;
+        if need_increase_seq {
+            msg.seq = self.increase_seq(&msg.receiver_id).await?;
         }
 
         // send to db
         let cloned_msg = msg.clone();
         let cloned_type = msg_type.clone();
         let to_db = tokio::spawn(async move {
-            match cloned_type {
-                MsgType::Single => {
-                    if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
-                        error!("failed to send message to db, error: {:?}", e);
-                    }
-                }
-                MsgType::Group => {
-                    // todo send to db by group method
-                    if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg).await {
-                        error!("failed to send message to db, error: {:?}", e);
-                    }
-                }
-                MsgType::Other => {}
+            if let Err(e) = Self::send_to_db(&mut db_rpc, cloned_msg, cloned_type).await {
+                error!("failed to send message to db, error: {:?}", e);
             }
         });
 
         // send to pusher
         let mut pusher = self.pusher.clone();
         let cache = self.cache.clone();
-        // let db = self.db_rpc.clone();
+        let mut db = self.db_rpc.clone();
         let to_pusher = tokio::spawn(async move {
             match msg_type {
                 MsgType::Single => {
@@ -185,21 +181,23 @@ impl ConsumerService {
                 MsgType::Group => {
                     // query group members id from the cache
                     let members = match cache.query_group_members_id(&msg.receiver_id).await {
-                        Ok(list) => {
-                            if list.is_empty() {
-                                warn!("group members id is empty from cache");
-                                // todo query from db
-
-                                return;
-                            } else {
-                                list
+                        Ok(list) if !list.is_empty() => list,
+                        Ok(_) => {
+                            warn!("group members id is empty from cache");
+                            // query from db
+                            match Self::query_group_members_id_from_db(
+                                &mut db,
+                                cache,
+                                &msg.receiver_id,
+                            )
+                            .await
+                            {
+                                Ok(list) => list,
+                                Err(_) => return,
                             }
                         }
                         Err(err) => {
-                            error!(
-                                "failed to query group members id from cache, error: {:?}",
-                                err
-                            );
+                            error!("failed to query group members id from cache: {:?}", err);
                             return;
                         }
                     };
@@ -219,11 +217,15 @@ impl ConsumerService {
         Ok(())
     }
 
-    async fn send_to_db(db_rpc: &mut DbServiceClient<Channel>, msg: Msg) -> Result<(), Error> {
+    async fn send_to_db(
+        db_rpc: &mut DbServiceClient<Channel>,
+        msg: Msg,
+        msg_type: MsgType,
+    ) -> Result<(), Error> {
         // don't send it if data type is call xxx
         let mut send_flag = true;
         if msg.data.is_some() {
-            // we only skip the single call protocol data for db
+            // only skip the single call protocol data for db
             match msg.data.as_ref().unwrap() {
                 Data::AgreeSingleCall(_)
                 | Data::Candidate(_)
@@ -235,18 +237,35 @@ impl ConsumerService {
                 _ => {}
             }
         }
-        if send_flag {
-            // todo we should match the message type to procedure the different method
-            db_rpc
-                .save_message(SaveMessageRequest {
-                    message: Some(MsgToDb::from(msg)),
-                })
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        if !send_flag {
+            return Ok(());
+        }
+
+        // match the message type to procedure the different method
+        let request = SaveMessageRequest {
+            message: Some(MsgToDb::from(msg)),
+        };
+
+        match msg_type {
+            MsgType::Single => {
+                db_rpc
+                    .save_message(request)
+                    .await
+                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+            }
+            MsgType::Group => {
+                db_rpc
+                    .save_group_message(request)
+                    .await
+                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+            }
+            MsgType::Other => {}
         }
 
         Ok(())
     }
+
     async fn send_single_to_pusher(
         pusher: &mut PushServiceClient<Channel>,
         msg: Msg,
@@ -271,5 +290,34 @@ impl ConsumerService {
             .await
             .map_err(|e| Error::InternalServer(e.to_string()))?;
         Ok(())
+    }
+
+    async fn query_group_members_id_from_db(
+        db_rpc: &mut DbServiceClient<Channel>,
+        cache: Arc<Box<dyn Cache>>,
+        group_id: &str,
+    ) -> Result<Vec<String>, Error> {
+        let request = GroupMembersIdRequest {
+            group_id: group_id.to_string(),
+        };
+        match db_rpc.group_members_id(request).await {
+            Ok(resp) => {
+                let members_id = resp.into_inner().members_id;
+
+                // save it to cache
+                if let Err(e) = cache
+                    .save_group_members_id(group_id, members_id.clone())
+                    .await
+                {
+                    error!("failed to save group members id to cache: {:?}", e);
+                }
+
+                Ok(members_id)
+            }
+            Err(e) => {
+                error!("failed to query group members id from db: {:?}", e);
+                Err(Error::InternalServer(e.to_string()))
+            }
+        }
     }
 }

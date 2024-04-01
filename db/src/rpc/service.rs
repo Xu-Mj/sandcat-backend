@@ -35,6 +35,13 @@ impl DbService for DbRpcService {
         return Ok(Response::new(SaveMessageResponse {}));
     }
 
+    async fn save_group_message(
+        &self,
+        _request: Request<SaveMessageRequest>,
+    ) -> Result<Response<SaveMessageResponse>, Status> {
+        todo!()
+    }
+
     type GetMessagesStream = Pin<Box<dyn Stream<Item = Result<MsgToDb, Status>> + Send>>;
 
     async fn get_messages(
@@ -76,7 +83,7 @@ impl DbService for DbRpcService {
         self.cache
             .save_group_members_id(&group_id, members_id)
             .await?;
-        // save invitation to cache or there is not necessary to cache the group info
+        // save invitation to cache or there is no necessary to cache the group info
 
         let response = GroupCreateResponse {
             invitation: Some(invitation),
@@ -134,8 +141,11 @@ impl DbService for DbRpcService {
         }
         self.group.exit_group(&req.user_id, &req.group_id).await?;
 
-        // todo delete from cache, also get the members id
-        let members_id = Vec::new();
+        // delete from cache, also get the members id
+        let members_id = self.cache.query_group_members_id(&req.group_id).await?;
+        self.cache
+            .remove_group_member_id(&req.group_id, &req.user_id)
+            .await?;
         let response = GroupMemberExitResponse { members_id };
         Ok(Response::new(response))
     }

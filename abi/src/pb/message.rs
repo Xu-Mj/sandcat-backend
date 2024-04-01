@@ -812,6 +812,25 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "SaveMessage"));
             self.inner.unary(req, path, codec).await
         }
+        /// / save group message to postgres and mongodb
+        pub async fn save_group_message(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SaveMessageRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/SaveGroupMessage");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "SaveGroupMessage"));
+            self.inner.unary(req, path, codec).await
+        }
         /// / query message from mongodb by start seq to end seq
         pub async fn get_messages(
             &mut self,
@@ -1506,6 +1525,11 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::SaveMessageRequest>,
         ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
+        /// / save group message to postgres and mongodb
+        async fn save_group_message(
+            &self,
+            request: tonic::Request<super::SaveMessageRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
         /// Server streaming response type for the GetMessages method.
         type GetMessagesStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::MsgToDb, tonic::Status>,
@@ -1644,6 +1668,48 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = SaveMessageSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/SaveGroupMessage" => {
+                    #[allow(non_camel_case_types)]
+                    struct SaveGroupMessageSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::SaveMessageRequest>
+                        for SaveGroupMessageSvc<T>
+                    {
+                        type Response = super::SaveMessageResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SaveMessageRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::save_group_message(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SaveGroupMessageSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
