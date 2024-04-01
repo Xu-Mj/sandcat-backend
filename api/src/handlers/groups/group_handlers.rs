@@ -46,8 +46,6 @@ pub async fn create_group_handler(
     let mut msg_rpc = app_state.ws_rpc.clone();
     let msg = invitation.clone();
     tokio::spawn(async move {
-        // todo store data to redis
-
         let request = SendGroupMsgRequest::new_with_group_invitation(msg, cloned_ids);
         // send it to online users
         if let Err(e) = msg_rpc.send_group_msg_to_user(request).await {
@@ -79,7 +77,7 @@ pub async fn update_group_handler(
             "group update failed, rpc response is none".to_string(),
         ));
     }
-    // notify the group members, except owner
+    //todo notify the group members, except owner
     Ok(Json(inner.unwrap()))
 }
 
@@ -104,7 +102,6 @@ pub async fn delete_group_handler(
             ))
         })?;
         let members_id = response.into_inner().members_id;
-        // todo delete group information and members from cache
         (Data::GroupDismiss(group.group_id.clone()), members_id)
     } else {
         // exit group
@@ -116,9 +113,9 @@ pub async fn delete_group_handler(
             ))
         })?;
         let members = response.into_inner().members_id;
-        // todo delete from cache
         (Data::GroupMemberExit(req), members)
     };
+
     let mut ws_rpc = app_state.ws_rpc.clone();
     // notify members, except self
     tokio::spawn(async move {

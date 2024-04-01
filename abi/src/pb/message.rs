@@ -19,7 +19,7 @@ pub struct Msg {
     pub seq: i64,
     #[prost(
         oneof = "msg::Data",
-        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
+        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24"
     )]
     pub data: ::core::option::Option<msg::Data>,
 }
@@ -32,9 +32,10 @@ pub mod msg {
         /// single message
         #[prost(message, tag = "7")]
         Single(super::Single),
-        /// group message related
+        /// response, indicates that the server received the message
         #[prost(message, tag = "8")]
         Response(super::MsgResponse),
+        /// group message related
         #[prost(message, tag = "9")]
         GroupMsg(super::Single),
         #[prost(message, tag = "10")]
@@ -44,27 +45,43 @@ pub mod msg {
         #[prost(string, tag = "12")]
         GroupDismiss(::prost::alloc::string::String),
         #[prost(message, tag = "13")]
-        GroupDismissOrExitReceived(super::UserAndGroupId),
+        GroupUpdate(super::GroupInfo),
         #[prost(message, tag = "14")]
+        GroupDismissOrExitReceived(super::UserAndGroupId),
+        #[prost(message, tag = "15")]
         GroupInvitationReceived(super::UserAndGroupId),
         /// / single call related
-        #[prost(message, tag = "15")]
-        SingleCallInvite(super::SingleCallInvite),
         #[prost(message, tag = "16")]
-        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
+        SingleCallInvite(super::SingleCallInvite),
         #[prost(message, tag = "17")]
-        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
+        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
         #[prost(message, tag = "18")]
-        SingleCallInviteCancel(super::SingleCallInviteCancel),
+        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
         #[prost(message, tag = "19")]
-        SingleCallOffer(super::SingleCallOffer),
+        SingleCallInviteCancel(super::SingleCallInviteCancel),
         #[prost(message, tag = "20")]
-        Hangup(super::Hangup),
+        SingleCallOffer(super::SingleCallOffer),
         #[prost(message, tag = "21")]
-        AgreeSingleCall(super::AgreeSingleCall),
+        Hangup(super::Hangup),
         #[prost(message, tag = "22")]
+        AgreeSingleCall(super::AgreeSingleCall),
+        #[prost(message, tag = "23")]
         Candidate(super::Candidate),
+        /// message read, maybe don't need
+        #[prost(message, tag = "24")]
+        MessageRead(super::MsgRead),
     }
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgRead {
+    #[prost(string, tag = "1")]
+    pub msg_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub seq: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -291,9 +308,11 @@ pub struct SaveMessageResponse {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDbMsgRequest {
-    #[prost(int64, tag = "1")]
-    pub start: i64,
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
     #[prost(int64, tag = "2")]
+    pub start: i64,
+    #[prost(int64, tag = "3")]
     pub end: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

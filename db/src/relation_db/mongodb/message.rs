@@ -4,6 +4,7 @@ use abi::errors::Error;
 use abi::message::MsgToDb;
 use async_trait::async_trait;
 use bson::{doc, to_document, Document};
+use mongodb::options::FindOptions;
 use mongodb::{Client, Collection, Database};
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
@@ -11,6 +12,7 @@ use tonic::codegen::tokio_stream::StreamExt;
 /// user receive box,
 /// need to category message
 /// like: group message, single message, system message, service message, third party message etc.
+/// or we set everyone a collection,
 pub struct MsgBox {
     db: Database,
 }
@@ -31,15 +33,15 @@ impl MsgBox {
 
 #[async_trait]
 impl MsgRecBoxRepo for MsgBox {
-    async fn save_message(&self, message: MsgToDb, collection: String) -> Result<(), Error> {
-        let chat = self.db.collection(&collection);
+    async fn save_message(&self, collection: &str, message: MsgToDb) -> Result<(), Error> {
+        let chat = self.db.collection(collection);
         chat.insert_one(to_document(&message)?, None).await?;
 
         Ok(())
     }
 
-    async fn delete_message(&self, message_id: String, collection: String) -> Result<(), Error> {
-        let coll: Collection<Document> = self.db.collection(&collection);
+    async fn delete_message(&self, collection: &str, message_id: &str) -> Result<(), Error> {
+        let coll: Collection<Document> = self.db.collection(collection);
         let query = doc! {"server_id": message_id};
         coll.delete_one(query, None).await?;
         Ok(())
@@ -47,10 +49,10 @@ impl MsgRecBoxRepo for MsgBox {
 
     async fn delete_messages(
         &self,
+        collection: &str,
         message_ids: Vec<String>,
-        collection: String,
     ) -> Result<(), Error> {
-        let coll: Collection<Document> = self.db.collection(&collection);
+        let coll: Collection<Document> = self.db.collection(collection);
 
         let query = doc! {"server_id": {"$in": message_ids}};
         coll.delete_many(query, None).await?;
@@ -60,10 +62,10 @@ impl MsgRecBoxRepo for MsgBox {
 
     async fn get_message(
         &self,
-        message_id: String,
-        collection: String,
+        collection: &str,
+        message_id: &str,
     ) -> Result<Option<MsgToDb>, Error> {
-        let coll: Collection<Document> = self.db.collection(&collection);
+        let coll: Collection<Document> = self.db.collection(collection);
         let doc = coll.find_one(doc! {"server_id": message_id}, None).await?;
         match doc {
             None => Ok(None),
@@ -73,22 +75,26 @@ impl MsgRecBoxRepo for MsgBox {
 
     async fn get_messages(
         &self,
+        collection: &str,
         start: i64,
         end: i64,
-        collection: String,
     ) -> Result<mpsc::Receiver<Result<MsgToDb, Error>>, Error> {
-        let coll: Collection<Document> = self.db.collection(&collection);
+        let coll: Collection<Document> = self.db.collection(collection);
         let query = doc! {
             "seq": {
                 "$gte": start,
                 "$lte": end
             }
         };
-        let mut doc = coll.find(query, None).await?;
-        // let mut result = Vec::with_capacity((end-start) as usize);
+
+        // sort by seq
+        let option = FindOptions::builder().sort(Some(doc! {"seq": 1})).build();
+
+        // query
+        let mut cursor = coll.find(query, Some(option)).await?;
         let (tx, rx) = mpsc::channel(100);
-        while let Some(doc) = doc.next().await {
-            match doc {
+        while let Some(result) = cursor.next().await {
+            match result {
                 Ok(doc) => {
                     if tx.send(Ok(MsgToDb::try_from(doc)?)).await.is_err() {
                         break;
@@ -154,13 +160,10 @@ mod tests {
             receiver_id: "111".to_string(),
             seq: 0,
         };
-        let collection = "test".to_string();
+        let collection = "test";
         // save it into mongodb
-        msg_box.save_message(msg, collection.clone()).await.unwrap();
-        let msg = msg_box
-            .get_message(msg_id.to_string(), collection)
-            .await
-            .unwrap();
+        msg_box.save_message(collection, msg).await.unwrap();
+        let msg = msg_box.get_message(collection, msg_id).await.unwrap();
         assert!(msg.is_some());
         assert_eq!(msg.unwrap().server_id, msg_id);
     }
@@ -179,20 +182,14 @@ mod tests {
             receiver_id: "111".to_string(),
             seq: 0,
         };
-        let collection = "test".to_string();
+        let collection = "test";
         // save it into mongodb
-        msg_box.save_message(msg, collection.clone()).await.unwrap();
+        msg_box.save_message(collection, msg).await.unwrap();
 
         // delete it
-        msg_box
-            .delete_message(msg_id.to_string(), collection.clone())
-            .await
-            .unwrap();
+        msg_box.delete_message(collection, msg_id).await.unwrap();
 
-        let msg = msg_box
-            .get_message(msg_id.to_string(), collection)
-            .await
-            .unwrap();
+        let msg = msg_box.get_message(collection, msg_id).await.unwrap();
         assert!(msg.is_none());
     }
 
@@ -210,47 +207,29 @@ mod tests {
             receiver_id: "111".to_string(),
             seq: 0,
         };
-        let collection = "test".to_string();
+        let collection = "test";
         // save it into mongodb
-        msg_box
-            .save_message(msg.clone(), collection.clone())
-            .await
-            .unwrap();
+        msg_box.save_message(collection, msg.clone()).await.unwrap();
 
         msg.server_id = msg_id[1].clone();
-        msg_box
-            .save_message(msg.clone(), collection.clone())
-            .await
-            .unwrap();
+        msg_box.save_message(collection, msg.clone()).await.unwrap();
 
         msg.server_id = msg_id[2].clone();
-        msg_box
-            .save_message(msg.clone(), collection.clone())
-            .await
-            .unwrap();
+        msg_box.save_message(collection, msg.clone()).await.unwrap();
 
         // delete it
         msg_box
-            .delete_messages(msg_id.clone(), collection.clone())
+            .delete_messages(collection, msg_id.clone())
             .await
             .unwrap();
 
-        let msg = msg_box
-            .get_message(msg_id[0].to_owned(), collection.clone())
-            .await
-            .unwrap();
+        let msg = msg_box.get_message(collection, &msg_id[0]).await.unwrap();
         assert!(msg.is_none());
 
-        let msg = msg_box
-            .get_message(msg_id[1].to_owned(), collection.clone())
-            .await
-            .unwrap();
+        let msg = msg_box.get_message(collection, &msg_id[1]).await.unwrap();
         assert!(msg.is_none());
 
-        let msg = msg_box
-            .get_message(msg_id[2].to_owned(), collection)
-            .await
-            .unwrap();
+        let msg = msg_box.get_message(collection, &msg_id[2]).await.unwrap();
         assert!(msg.is_none());
     }
 }

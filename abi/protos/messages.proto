@@ -28,28 +28,38 @@ message Msg {
     // single message
     Single single = 7;
 
-    // group message related
+    // response, indicates that the server received the message
     MsgResponse response = 8;
+
+    // group message related
     Single group_msg = 9;
     GroupInvitation group_invitation = 10;
     UserAndGroupID group_member_exit = 11;
     string group_dismiss = 12;
-    UserAndGroupID group_dismiss_or_exit_received = 13;
-    UserAndGroupID group_invitation_received = 14;
+    GroupInfo group_update = 13;
+    UserAndGroupID group_dismiss_or_exit_received = 14;
+    UserAndGroupID group_invitation_received = 15;
 
     /// single call related
-    SingleCallInvite single_call_invite = 15;
-    SingleCallInviteAnswer single_call_invite_answer = 16;
-    SingleCallInviteNotAnswer single_call_invite_not_answer = 17;
-    SingleCallInviteCancel single_call_invite_cancel = 18;
-    SingleCallOffer single_call_offer = 19;
-    Hangup hangup = 20;
-    AgreeSingleCall agree_single_call = 21;
-    Candidate candidate = 22;
+    SingleCallInvite single_call_invite = 16;
+    SingleCallInviteAnswer single_call_invite_answer = 17;
+    SingleCallInviteNotAnswer single_call_invite_not_answer = 18;
+    SingleCallInviteCancel single_call_invite_cancel = 19;
+    SingleCallOffer single_call_offer = 20;
+    Hangup hangup = 21;
+    AgreeSingleCall agree_single_call = 22;
+    Candidate candidate = 23;
 
-    // message read
+    // message read, maybe don't need
+    MsgRead message_read = 24;
 
   }
+}
+
+message MsgRead{
+  string msg_id = 1;
+  string user_id = 2;
+  string seq = 3;
 }
 
 message Candidate{
@@ -216,9 +226,10 @@ message SaveMessageRequest {
 
 message SaveMessageResponse {}
 
-message GetDbMsgRequest{
-  int64 start = 1;
-  int64 end = 2;
+message GetDbMsgRequest {
+  string user_id = 1;
+  int64 start = 2;
+  int64 end = 3;
 }
 
 message GroupCreateRequest {

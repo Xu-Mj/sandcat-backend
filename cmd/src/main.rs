@@ -15,7 +15,8 @@ async fn main() {
     // consumer rely on db and pusher rpc server;
 
     // init tracing
-    tracing_subscriber::fmt()
+    tracing_subscriber::FmtSubscriber::builder()
+        .with_line_number(true)
         .with_max_level(Level::DEBUG)
         .init();
 

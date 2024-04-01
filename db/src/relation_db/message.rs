@@ -16,28 +16,28 @@ pub trait MsgStoreRepo: Sync + Send {
 #[async_trait]
 pub trait MsgRecBoxRepo: Sync + Send {
     /// save message, need message structure and collection name
-    async fn save_message(&self, message: MsgToDb, collection: String) -> Result<(), Error>;
+    async fn save_message(&self, collection: &str, message: MsgToDb) -> Result<(), Error>;
 
-    async fn delete_message(&self, message_id: String, collection: String) -> Result<(), Error>;
+    async fn delete_message(&self, collection: &str, message_id: &str) -> Result<(), Error>;
 
     async fn delete_messages(
         &self,
+        collection: &str,
         message_ids: Vec<String>,
-        collection: String,
     ) -> Result<(), Error>;
 
     /// need to think about how to get message from receive box,
     /// use stream? or use pagination? prefer stream
     async fn get_message(
         &self,
-        message_id: String,
-        collection: String,
+        collection: &str,
+        message_id: &str,
     ) -> Result<Option<MsgToDb>, Error>;
 
     async fn get_messages(
         &self,
+        collection: &str,
         start: i64,
         end: i64,
-        collection: String,
     ) -> Result<mpsc::Receiver<Result<MsgToDb, Error>>, Error>;
 }

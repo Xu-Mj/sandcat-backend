@@ -20,7 +20,7 @@ pub use service::*;
 /// DbRpcService contains the postgres trait, mongodb trait and redis trait
 pub struct DbRpcService {
     db: Arc<Box<dyn MsgStoreRepo>>,
-    mongodb: Arc<Box<dyn MsgRecBoxRepo>>,
+    msg_rec_box: Arc<Box<dyn MsgRecBoxRepo>>,
     group: Arc<Box<dyn GroupStoreRepo>>,
     cache: Arc<Box<dyn Cache>>,
 }
@@ -29,7 +29,7 @@ impl DbRpcService {
     pub async fn new(config: &Config) -> Self {
         Self {
             db: Arc::new(relation_db::msg_store_repo(config).await),
-            mongodb: Arc::new(relation_db::msg_rec_box_repo(config).await),
+            msg_rec_box: Arc::new(relation_db::msg_rec_box_repo(config).await),
             group: Arc::new(relation_db::group_repo(config).await),
             cache: Arc::new(cache::cache(config)),
         }
@@ -91,11 +91,27 @@ impl DbRpcService {
 
     pub async fn handle_message(&self, message: MsgToDb) -> Result<(), Error> {
         // task 1 save message to postgres
-        self.db.save_message(message.clone()).await?;
+        // self.db.save_message(message.clone()).await?;
+        let db = self.db.clone();
+        let cloned_msg = message.clone();
+        let db_task = tokio::spawn(async move {
+            if let Err(e) = db.save_message(cloned_msg).await {
+                tracing::error!("<db> save message to db failed: {}", e);
+            }
+        });
         // task 2 save message to mongodb
         // todo think about if the collection name should be here
-        self.mongodb.save_message(message, "".to_string()).await?;
-
+        let msg_rec_box = self.msg_rec_box.clone();
+        let msg_rec_box_task = tokio::spawn(async move {
+            if let Err(e) = msg_rec_box
+                .save_message(&message.receiver_id.clone(), message)
+                .await
+            {
+                tracing::error!("<db> save message to mongodb failed: {}", e);
+            }
+        });
+        tokio::try_join!(db_task, msg_rec_box_task)
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
         Ok(())
     }
 }

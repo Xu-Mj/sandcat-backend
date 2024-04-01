@@ -29,7 +29,9 @@ impl DbService for DbRpcService {
         if message.is_none() {
             return Err(Status::invalid_argument("message is empty"));
         }
-        debug!("save message: {:?}", message.unwrap());
+        let message = message.unwrap();
+        debug!("save message: {:?}", message);
+        self.handle_message(message).await?;
         return Ok(Response::new(SaveMessageResponse {}));
     }
 
@@ -41,8 +43,8 @@ impl DbService for DbRpcService {
     ) -> Result<Response<Self::GetMessagesStream>, Status> {
         let req = request.into_inner();
         let result = self
-            .mongodb
-            .get_messages(req.start, req.end, "".to_string())
+            .msg_rec_box
+            .get_messages("", req.start, req.end)
             .await?;
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
