@@ -2,6 +2,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::Stream;
+use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
 use tonic::{async_trait, Request, Response, Status};
 use tracing::debug;
@@ -9,10 +10,11 @@ use tracing::debug;
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
-    GetDbMsgRequest, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
-    GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse,
-    UserAndGroupId,
+    CreateUserRequest, CreateUserResponse, GetDbMsgRequest, GetUserRequest, GetUserResponse,
+    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
+    GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest,
+    GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
+    SearchUserResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId,
 };
 
 use crate::rpc::DbRpcService;
@@ -68,7 +70,7 @@ impl DbService for DbRpcService {
         let group = group.unwrap();
         let group_id = group.id.clone();
         // insert group information and members information to db
-        let invitation = self.group.create_group_with_members(group).await?;
+        let invitation = self.db.group.create_group_with_members(group).await?;
         let members_id = invitation.members.iter().fold(
             Vec::with_capacity(invitation.members.len()),
             |mut acc, member| {
@@ -101,7 +103,7 @@ impl DbService for DbRpcService {
         }
         let group = group.unwrap();
         // update db
-        let group = self.group.update_group(&group).await?;
+        let group = self.db.group.update_group(&group).await?;
 
         // todo update cache
         let response = GroupUpdateResponse { group: Some(group) };
@@ -119,7 +121,7 @@ impl DbService for DbRpcService {
             return Err(Status::invalid_argument("user_id or group_id is empty"));
         }
 
-        let _group = self.group.delete_group(&group_id, &user_id).await?;
+        let _group = self.db.group.delete_group(&group_id, &user_id).await?;
 
         // query the members id before delete it
         let members_id = self.cache.query_group_members_id(&group_id).await?;
@@ -139,7 +141,10 @@ impl DbService for DbRpcService {
         if req.user_id.is_empty() || req.group_id.is_empty() {
             return Err(Status::invalid_argument("user_id or group_id is empty"));
         }
-        self.group.exit_group(&req.user_id, &req.group_id).await?;
+        self.db
+            .group
+            .exit_group(&req.user_id, &req.group_id)
+            .await?;
 
         // delete from cache, also get the members id
         let members_id = self.cache.query_group_members_id(&req.group_id).await?;
@@ -160,9 +165,50 @@ impl DbService for DbRpcService {
         }
 
         // todo query from cache, and if not exist, query from db
-        let members_id = self.group.query_group_members_id(&group_id).await?;
+        let members_id = self.db.group.query_group_members_id(&group_id).await?;
         let response = GroupMembersIdResponse { members_id };
         Ok(Response::new(response))
+    }
+
+    async fn create_user(
+        &self,
+        request: Request<CreateUserRequest>,
+    ) -> Result<Response<CreateUserResponse>, Status> {
+        let user = request.into_inner().user;
+        if user.is_none() {
+            return Err(Status::invalid_argument("user is empty"));
+        }
+        let mut user = user.unwrap();
+        user.id = nanoid!();
+
+        let user = self.db.user.create_user(user).await?;
+        Ok(Response::new(CreateUserResponse { user: Some(user) }))
+    }
+
+    async fn get_user(
+        &self,
+        request: Request<GetUserRequest>,
+    ) -> Result<Response<GetUserResponse>, Status> {
+        let user_id = request.into_inner().user_id;
+        if user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        let user = self.db.user.get_user_by_id(&user_id).await?;
+        Ok(Response::new(GetUserResponse { user: Some(user) }))
+    }
+
+    async fn update_user(
+        &self,
+        _request: Request<UpdateUserRequest>,
+    ) -> Result<Response<UpdateUserResponse>, Status> {
+        todo!()
+    }
+
+    async fn search_user(
+        &self,
+        _request: Request<SearchUserRequest>,
+    ) -> Result<Response<SearchUserResponse>, Status> {
+        todo!()
     }
 }
 

@@ -4,7 +4,13 @@ use abi::errors::Error;
 use async_trait::async_trait;
 use redis::AsyncCommands;
 
+/// group members id prefix
 const GROUP_MEMBERS_ID_PREFIX: &str = "group_members_id";
+
+/// register code key
+const REGISTER_CODE_KEY: &str = "register_code";
+const REGISTER_CODE_EXPIRE: i64 = 300;
+
 #[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
@@ -104,6 +110,30 @@ impl Cache for RedisCache {
             .await
             .unwrap();
         conn.del(&key).await?;
+        Ok(())
+    }
+
+    async fn save_register_code(&self, email: &str, code: &str) -> Result<(), Error> {
+        // set the register code with 5 minutes expiration time
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // use pipe to exec two commands
+        let mut pipe = redis::pipe();
+        pipe.hset(REGISTER_CODE_KEY, email, code)
+            .expire(REGISTER_CODE_KEY, REGISTER_CODE_EXPIRE)
+            .query_async(&mut conn)
+            .await?;
+        Ok(())
+    }
+
+    async fn get_register_code(&self, email: &str) -> Result<Option<String>, Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let result = conn.hget(REGISTER_CODE_KEY, email).await?;
+        Ok(result)
+    }
+
+    async fn del_register_code(&self, email: &str) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        conn.hdel(REGISTER_CODE_KEY, email).await?;
         Ok(())
     }
 }

@@ -1,25 +1,17 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
 
-use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember, GroupUpdate};
 
-use crate::relation_db::group::GroupStoreRepo;
+use crate::database::group::GroupStoreRepo;
 
 pub struct PostgresGroup {
     pool: PgPool,
 }
 
 impl PostgresGroup {
-    #[allow(dead_code)]
     pub async fn new(pool: PgPool) -> Self {
-        Self { pool }
-    }
-
-    pub async fn from_config(config: &Config) -> Self {
-        let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
-
         Self { pool }
     }
 }
@@ -81,6 +73,16 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(info)
     }
 
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
+        let result: Vec<(String,)> =
+            sqlx::query_as("SELECT user_id FROM group_members WHERE group_id = $1")
+                .bind(group_id)
+                .fetch_all(&self.pool)
+                .await?;
+        let result = result.into_iter().map(|(user_id,)| user_id).collect();
+        Ok(result)
+    }
+
     async fn query_group_members_by_group_id(
         &self,
         group_id: &str,
@@ -96,15 +98,6 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(members)
     }
 
-    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
-        let result: Vec<(String,)> =
-            sqlx::query_as("SELECT user_id FROM group_members WHERE group_id = $1")
-                .bind(group_id)
-                .fetch_all(&self.pool)
-                .await?;
-        let result = result.into_iter().map(|(user_id,)| user_id).collect();
-        Ok(result)
-    }
     async fn update_group(&self, group: &GroupUpdate) -> Result<GroupInfo, Error> {
         let now = chrono::Local::now().naive_local();
         let group = sqlx::query_as(

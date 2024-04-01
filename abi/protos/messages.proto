@@ -278,6 +278,57 @@ message GroupMembersIdResponse {
   repeated string members_id = 1;
 }
 
+message User{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string password = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string phone = 8;
+  optional string email = 9;
+  optional string address = 10;
+  optional string region = 11;
+  optional int64 birthday = 12;
+  int64 create_time = 13;
+  int64 update_time = 14;
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  User user = 1;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message SearchUserRequest {
+  string keyword = 1;
+  string way = 2;
+}
+
+message SearchUserResponse {
+  string way = 1;
+  repeated User users = 2;
+}
+
 /// db interface think about if it is necessary to put api interface together.
 service DbService {
   /// save message to postgres and mongodb
@@ -296,6 +347,14 @@ service DbService {
   rpc GroupMemberExit(UserAndGroupID) returns (GroupMemberExitResponse);
   /// query group members id
   rpc GroupMembersId(GroupMembersIdRequest) returns (GroupMembersIdResponse);
+  /// create user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  /// get user by id
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  /// update user
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  /// search user
+  rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
 }
 
 service PushService {

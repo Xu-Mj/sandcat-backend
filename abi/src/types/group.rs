@@ -46,6 +46,7 @@ impl FromRow<'_, PgRow> for GroupMember {
         })
     }
 }
+
 // implement slqx FromRow trait
 impl FromRow<'_, PgRow> for GroupInfo {
     fn from_row(row: &PgRow) -> Result<Self, Error> {

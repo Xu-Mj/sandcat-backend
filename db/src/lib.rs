@@ -1,2 +1,2 @@
-pub(crate) mod relation_db;
+pub(crate) mod database;
 pub mod rpc;

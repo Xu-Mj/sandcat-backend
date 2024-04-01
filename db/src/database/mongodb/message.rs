@@ -1,4 +1,4 @@
-use crate::relation_db::message::MsgRecBoxRepo;
+use crate::database::message::MsgRecBoxRepo;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupInvitation, MsgToDb};

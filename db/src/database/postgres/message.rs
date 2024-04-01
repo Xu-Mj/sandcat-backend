@@ -1,5 +1,4 @@
-use crate::relation_db::message::MsgStoreRepo;
-use abi::config::Config;
+use crate::database::message::MsgStoreRepo;
 use abi::errors::Error;
 use abi::message::MsgToDb;
 use async_trait::async_trait;
@@ -10,16 +9,11 @@ pub struct PostgresMessage {
 }
 
 impl PostgresMessage {
-    #[allow(dead_code)]
     pub async fn new(pool: PgPool) -> Self {
         Self { pool }
     }
-    pub async fn from_config(config: &Config) -> Self {
-        let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
-
-        Self { pool }
-    }
 }
+
 #[async_trait]
 impl MsgStoreRepo for PostgresMessage {
     async fn save_message(&self, message: MsgToDb) -> Result<(), Error> {

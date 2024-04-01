@@ -11,26 +11,24 @@ use abi::message::MsgToDb;
 use cache::Cache;
 use utils::typos::{GrpcHealthCheck, Registration};
 
-use crate::relation_db;
-use crate::relation_db::{GroupStoreRepo, MsgRecBoxRepo, MsgStoreRepo};
+use crate::database;
+use crate::database::{DbRepo, MsgRecBoxRepo};
 
 pub mod service;
 pub use service::*;
 
 /// DbRpcService contains the postgres trait, mongodb trait and redis trait
 pub struct DbRpcService {
-    db: Arc<Box<dyn MsgStoreRepo>>,
+    db: Arc<DbRepo>,
     msg_rec_box: Arc<Box<dyn MsgRecBoxRepo>>,
-    group: Arc<Box<dyn GroupStoreRepo>>,
     cache: Arc<Box<dyn Cache>>,
 }
 
 impl DbRpcService {
     pub async fn new(config: &Config) -> Self {
         Self {
-            db: Arc::new(relation_db::msg_store_repo(config).await),
-            msg_rec_box: Arc::new(relation_db::msg_rec_box_repo(config).await),
-            group: Arc::new(relation_db::group_repo(config).await),
+            db: Arc::new(DbRepo::new(config).await),
+            msg_rec_box: Arc::new(database::msg_rec_box_repo(config).await),
             cache: Arc::new(cache::cache(config)),
         }
     }
@@ -95,7 +93,7 @@ impl DbRpcService {
         let db = self.db.clone();
         let cloned_msg = message.clone();
         let db_task = tokio::spawn(async move {
-            if let Err(e) = db.save_message(cloned_msg).await {
+            if let Err(e) = db.msg.save_message(cloned_msg).await {
                 tracing::error!("<db> save message to db failed: {}", e);
             }
         });
