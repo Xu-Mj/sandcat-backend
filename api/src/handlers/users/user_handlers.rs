@@ -21,7 +21,13 @@ pub async fn create_user(
     State(app_state): State<AppState>,
     JsonExtractor(new_user): JsonExtractor<UserRegister>,
 ) -> Result<Json<User>, Error> {
-    let result = app_state.cache.get_register_code(&new_user.email).await?;
+    // verify register code
+    app_state
+        .cache
+        .get_register_code(&new_user.email)
+        .await?
+        .filter(|code| *code == new_user.code)
+        .ok_or_else(|| Error::InvalidRegisterCode)?;
     // if let Some(code) = result {
     //     if code != new_user.code {
     //         return Err(Error::Register);
@@ -29,11 +35,11 @@ pub async fn create_user(
     // } else {
     //     return Err(Error::Register);
     // }
-    result
-        .filter(|code| *code == new_user.code)
-        .ok_or_else(|| Error::InvalidRegisterCode)?;
+
+    // encode the password
     let salt = utils::generate_salt();
     let password = utils::hash_password(new_user.password.as_bytes(), &salt)?;
+
     let id = nanoid!();
     // 结构体转换
     let user2db = User {
@@ -55,12 +61,12 @@ pub async fn create_user(
         .create_user(request)
         .await
         .map_err(|err| Error::InternalServer(err.to_string()))?;
-    let user = response.into_inner().user;
-    if user.is_none() {
-        return Err(Error::InternalServer("Unknown Error".to_string()));
-    }
 
-    let user = user.unwrap();
+    let user = response
+        .into_inner()
+        .user
+        .ok_or_else(|| Error::InternalServer("Unknown Error".to_string()))?;
+
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
 
@@ -111,7 +117,9 @@ pub async fn login(
     State(app_state): State<AppState>,
     JsonExtractor(mut login): JsonExtractor<LoginRequest>,
 ) -> Result<Json<Token>, Error> {
+    // decode password from base64
     login.decode()?;
+
     let mut db_rpc = app_state.db_rpc.clone();
     let user = db_rpc
         .verify_password(VerifyPwdRequest {
@@ -121,19 +129,16 @@ pub async fn login(
         .await
         .map_err(|err| Error::InternalServer(err.to_string()))?
         .into_inner()
-        .user;
-    if user.is_none() {
-        return Err(Error::AccountOrPassword);
-    }
-    let user = user.unwrap();
+        .user
+        .ok_or_else(|| Error::AccountOrPassword)?;
+
     // 生成token
     let claims = Claims::new(user.name.clone());
 
-    // todo configure jwt
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret("CONFIG.get().unwrap().jwt_secret()".as_bytes()),
+        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
     app_state.cache.user_login(&user.account).await?;
@@ -156,15 +161,13 @@ pub async fn send_email(
     State(state): State<AppState>,
     JsonExtractor(email): JsonExtractor<Email>,
 ) -> Result<(), Error> {
-    // if email.email.is_empty() {
-    //     return Err(Error::BadRequest("parameter is none".to_string()));
-    // }
+    if email.email.is_empty() {
+        return Err(Error::BadRequest("parameter is none".to_string()));
+    }
     // 生成随机数（验证码）
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000..1_000_000);
     // 将随机数存入redis--五分钟有效
-    // let e = email.email.clone();
-
     let msg = Message::builder()
         .from(
             "653609824@qq.com"

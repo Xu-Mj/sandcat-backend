@@ -17,6 +17,7 @@ pub struct AppState {
     pub db_rpc: DbServiceClient<Channel>,
     pub ws_rpc: MsgServiceClient<Channel>,
     pub cache: Arc<Box<dyn Cache>>,
+    pub jwt_secret: String,
 }
 
 impl AppState {
@@ -31,6 +32,7 @@ impl AppState {
             ws_rpc,
             db_rpc,
             cache,
+            jwt_secret: config.server.jwt_secret.clone(),
         }
     }
 

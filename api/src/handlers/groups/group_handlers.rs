@@ -35,11 +35,10 @@ pub async fn create_group_handler(
             e
         ))
     })?;
-    let inner = response.into_inner().invitation;
-    if inner.is_none() {
-        return Err(Error::InternalServer("group create failed".to_string()));
-    }
-    let invitation = inner.unwrap();
+    let invitation = response
+        .into_inner()
+        .invitation
+        .ok_or_else(|| Error::InternalServer("group create failed".to_string()))?;
 
     let mut msg_rpc = app_state.ws_rpc.clone();
     let msg = invitation.clone();
@@ -69,14 +68,11 @@ pub async fn update_group_handler(
             e
         ))
     })?;
-    let inner = response.into_inner().group;
-    if inner.is_none() {
-        return Err(Error::InternalServer(
-            "group update failed, rpc response is none".to_string(),
-        ));
-    }
+    let inner = response.into_inner().group.ok_or_else(|| {
+        Error::InternalServer("group update failed, rpc response is none".to_string())
+    })?;
     //todo notify the group members, except owner
-    Ok(Json(inner.unwrap()))
+    Ok(Json(inner))
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -89,7 +85,7 @@ pub struct DeleteGroupRequest {
 pub async fn delete_group_handler(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(group): JsonWithAuthExtractor<DeleteGroupRequest>,
-) -> Result<Json<()>, Error> {
+) -> Result<(), Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let (msg, mut members) = if group.is_dismiss {
         let req = GroupDeleteRequest::new(group.group_id.clone(), group.user_id.clone());
@@ -128,5 +124,5 @@ pub async fn delete_group_handler(
         }
     });
 
-    Ok(Json(()))
+    Ok(())
 }

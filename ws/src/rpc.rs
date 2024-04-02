@@ -104,11 +104,10 @@ impl MsgService for MsgRpcService {
         &self,
         request: Request<SendMsgRequest>,
     ) -> Result<Response<SendMsgResponse>, Status> {
-        let msg = request.into_inner().message;
-        if msg.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
-        let msg = msg.unwrap();
+        let msg = request
+            .into_inner()
+            .message
+            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
         if msg.data.is_none() {
             return Err(Status::invalid_argument("message is empty"));
         }

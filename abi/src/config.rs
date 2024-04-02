@@ -184,6 +184,7 @@ fn default_conn() -> u32 {
 pub struct ServerConfig {
     pub host: String,
     pub port: u16,
+    pub jwt_secret: String,
 }
 
 impl Config {
@@ -238,6 +239,7 @@ impl ServerConfig {
         ServerConfig {
             host: self.host.clone(),
             port,
+            jwt_secret: self.jwt_secret.clone(),
         }
     }
 }

@@ -68,6 +68,7 @@ Please also take into consideration that rust sometimes intentionally diverges f
   list in the interval time.
 - db services have their own pool about postgres, is there necessary to use the same pool?
 - unhandled group member join time, when the member joined group, we need to insert a record to the user's group collection
+- need to design a websocket register center, to achieve the load balance.
 
 ## Future possibilities
 

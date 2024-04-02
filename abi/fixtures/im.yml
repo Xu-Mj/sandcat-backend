@@ -15,6 +15,7 @@ db:
 server:
   host: 127.0.0.1
   port: 50001
+  jwt_secret: xmj
 
 service_center:
   host: 127.0.0.1
