@@ -34,15 +34,15 @@ impl GroupMembersIdRequest {
 impl FromRow<'_, PgRow> for GroupMember {
     fn from_row(row: &PgRow) -> Result<Self, Error> {
         Ok(Self {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            group_id: row.get("group_id"),
-            avatar: row.get("avatar"),
-            gender: row.get("gender"),
-            age: row.get("age"),
-            region: row.get("region"),
-            group_name: row.get("group_name"),
-            joined_at: row.get("joined_at"),
+            id: row.try_get("id")?,
+            user_id: row.try_get("user_id")?,
+            group_id: row.try_get("group_id")?,
+            avatar: row.try_get("avatar")?,
+            gender: row.try_get("gender")?,
+            age: row.try_get("age")?,
+            region: row.try_get("region")?,
+            group_name: row.try_get("group_name")?,
+            joined_at: row.try_get("joined_at")?,
         })
     }
 }
@@ -51,14 +51,14 @@ impl FromRow<'_, PgRow> for GroupMember {
 impl FromRow<'_, PgRow> for GroupInfo {
     fn from_row(row: &PgRow) -> Result<Self, Error> {
         Ok(Self {
-            id: row.get("id"),
-            name: row.get("name"),
-            owner: row.get("owner"),
-            avatar: row.get("avatar"),
-            description: row.get("description"),
-            announcement: row.get("announcement"),
-            create_time: row.get("create_time"),
-            update_time: row.get("update_time"),
+            id: row.try_get("id")?,
+            name: row.try_get("name")?,
+            owner: row.try_get("owner")?,
+            avatar: row.try_get("avatar")?,
+            description: row.try_get("description")?,
+            announcement: row.try_get("announcement")?,
+            create_time: row.try_get("create_time")?,
+            update_time: row.try_get("update_time")?,
         })
     }
 }

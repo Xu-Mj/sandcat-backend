@@ -199,16 +199,27 @@ impl DbService for DbRpcService {
 
     async fn update_user(
         &self,
-        _request: Request<UpdateUserRequest>,
+        request: Request<UpdateUserRequest>,
     ) -> Result<Response<UpdateUserResponse>, Status> {
-        todo!()
+        let user = request.into_inner().user;
+        if user.is_none() {
+            return Err(Status::invalid_argument("user is empty"));
+        }
+        let user = user.unwrap();
+        let user = self.db.user.update_user(user).await?;
+        Ok(Response::new(UpdateUserResponse { user: Some(user) }))
     }
 
     async fn search_user(
         &self,
-        _request: Request<SearchUserRequest>,
+        request: Request<SearchUserRequest>,
     ) -> Result<Response<SearchUserResponse>, Status> {
-        todo!()
+        let SearchUserRequest { user_id, pattern } = request.into_inner();
+        if pattern.is_empty() || pattern.chars().count() > 32 {
+            return Err(Status::invalid_argument("keyword is empty or too long"));
+        }
+        let users = self.db.user.search_user(&user_id, &pattern).await?;
+        Ok(Response::new(SearchUserResponse { users }))
     }
 }
 

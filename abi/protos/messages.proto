@@ -320,13 +320,30 @@ message UpdateUserResponse {
 }
 
 message SearchUserRequest {
-  string keyword = 1;
-  string way = 2;
+  string user_id = 1;
+  string pattern = 2;
 }
 
 message SearchUserResponse {
-  string way = 1;
-  repeated User users = 2;
+  repeated UserWithMatchType users = 1;
+}
+
+message UserWithMatchType{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string password = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string phone = 8;
+  optional string email = 9;
+  optional string address = 10;
+  optional string region = 11;
+  optional int64 birthday = 12;
+  int64 create_time = 13;
+  int64 update_time = 14;
+  optional string match_type = 15;
 }
 
 /// db interface think about if it is necessary to put api interface together.

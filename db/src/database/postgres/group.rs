@@ -102,12 +102,12 @@ impl GroupStoreRepo for PostgresGroup {
         let now = chrono::Local::now().naive_local();
         let group = sqlx::query_as(
             "UPDATE groups SET
-         name = COALESCE(NULLIF($1, ''), name),
-         avatar = COALESCE(NULLIF($2, ''), avatar),
-         description = COALESCE(NULLIF($3, ''), description),
-         announcement = COALESCE(NULLIF($4, ''), announcement),
-         update_time = $5)
-         WHERE id = $6 RETURNING *",
+             name = COALESCE(NULLIF($1, ''), name),
+             avatar = COALESCE(NULLIF($2, ''), avatar),
+             description = COALESCE(NULLIF($3, ''), description),
+             announcement = COALESCE(NULLIF($4, ''), announcement),
+             update_time = $5)
+             WHERE id = $6 RETURNING *",
         )
         .bind(&group.name)
         .bind(&group.avatar)

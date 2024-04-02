@@ -460,17 +460,49 @@ pub struct UpdateUserResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchUserRequest {
     #[prost(string, tag = "1")]
-    pub keyword: ::prost::alloc::string::String,
+    pub user_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub way: ::prost::alloc::string::String,
+    pub pattern: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchUserResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub users: ::prost::alloc::vec::Vec<UserWithMatchType>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserWithMatchType {
     #[prost(string, tag = "1")]
-    pub way: ::prost::alloc::string::String,
-    #[prost(message, repeated, tag = "2")]
-    pub users: ::prost::alloc::vec::Vec<User>,
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub password: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub phone: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "9")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "10")]
+    pub address: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "12")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(int64, tag = "13")]
+    pub create_time: i64,
+    #[prost(int64, tag = "14")]
+    pub update_time: i64,
+    #[prost(string, optional, tag = "15")]
+    pub match_type: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
