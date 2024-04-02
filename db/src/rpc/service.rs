@@ -14,7 +14,8 @@ use abi::message::{
     GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
     GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest,
     GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
-    SearchUserResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId,
+    SearchUserResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
+    VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -220,6 +221,20 @@ impl DbService for DbRpcService {
         }
         let users = self.db.user.search_user(&user_id, &pattern).await?;
         Ok(Response::new(SearchUserResponse { users }))
+    }
+
+    async fn verify_password(
+        &self,
+        request: Request<VerifyPwdRequest>,
+    ) -> Result<Response<VerifyPwdResponse>, Status> {
+        let VerifyPwdRequest { account, password } = request.into_inner();
+        if account.is_empty() || password.is_empty() {
+            return Err(Status::invalid_argument("account or password is empty"));
+        }
+
+        let user = self.db.user.verify_pwd(&account, &password).await?;
+        let response = VerifyPwdResponse { user: Some(user) };
+        Ok(Response::new(response))
     }
 }
 

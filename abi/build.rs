@@ -50,12 +50,15 @@ impl BuilderExt for tonic_build::Builder {
 fn main() {
     tonic_build::configure()
         .out_dir("src/pb")
+        .field_attribute("User.password", "#[serde(skip_serializing)]")
         .with_serde(&[
             "Msg",
             "MsgRead",
             "MsgToDb",
             "Msg.data",
             "UserAndGroupID",
+            "User",
+            "UserWithMatchType",
             "Single",
             "MsgResponse",
             "GroupMsgWrapper",

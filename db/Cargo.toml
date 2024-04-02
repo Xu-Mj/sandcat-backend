@@ -28,3 +28,4 @@ cache = { version = "0.1.0", path = "../cache" }
 futures = "0.3.30"
 tonic-health = "0.11.0"
 nanoid = "0.4.0"
+argon2 = "0.5.3"

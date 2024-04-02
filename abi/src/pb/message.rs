@@ -388,6 +388,7 @@ pub struct GroupMembersIdResponse {
     #[prost(string, repeated, tag = "1")]
     pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct User {
@@ -398,6 +399,7 @@ pub struct User {
     #[prost(string, tag = "3")]
     pub account: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
+    #[serde(skip_serializing)]
     pub password: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
     pub avatar: ::prost::alloc::string::String,
@@ -419,6 +421,8 @@ pub struct User {
     pub create_time: i64,
     #[prost(int64, tag = "14")]
     pub update_time: i64,
+    #[prost(string, tag = "15")]
+    pub salt: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -470,6 +474,7 @@ pub struct SearchUserResponse {
     #[prost(message, repeated, tag = "1")]
     pub users: ::prost::alloc::vec::Vec<UserWithMatchType>,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserWithMatchType {
@@ -480,29 +485,38 @@ pub struct UserWithMatchType {
     #[prost(string, tag = "3")]
     pub account: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub password: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
     pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
+    #[prost(string, tag = "5")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "7")]
+    #[prost(int32, tag = "6")]
     pub age: i32,
-    #[prost(string, optional, tag = "8")]
+    #[prost(string, optional, tag = "7")]
     pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
+    #[prost(string, optional, tag = "8")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
+    #[prost(string, optional, tag = "9")]
     pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "11")]
+    #[prost(string, optional, tag = "10")]
     pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "12")]
+    #[prost(int64, optional, tag = "11")]
     pub birthday: ::core::option::Option<i64>,
-    #[prost(int64, tag = "13")]
-    pub create_time: i64,
-    #[prost(int64, tag = "14")]
-    pub update_time: i64,
-    #[prost(string, optional, tag = "15")]
+    #[prost(string, optional, tag = "12")]
     pub match_type: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VerifyPwdRequest {
+    /// / could be account, email or phone number
+    #[prost(string, tag = "1")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub password: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VerifyPwdResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
 }
 /// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1136,6 +1150,24 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "SearchUser"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / verify password
+        pub async fn verify_password(
+            &mut self,
+            request: impl tonic::IntoRequest<super::VerifyPwdRequest>,
+        ) -> std::result::Result<tonic::Response<super::VerifyPwdResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/VerifyPassword");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "VerifyPassword"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -1776,6 +1808,11 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::SearchUserRequest>,
         ) -> std::result::Result<tonic::Response<super::SearchUserResponse>, tonic::Status>;
+        /// / verify password
+        async fn verify_password(
+            &self,
+            request: tonic::Request<super::VerifyPwdRequest>,
+        ) -> std::result::Result<tonic::Response<super::VerifyPwdResponse>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -2323,6 +2360,46 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = SearchUserSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/VerifyPassword" => {
+                    #[allow(non_camel_case_types)]
+                    struct VerifyPasswordSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::VerifyPwdRequest> for VerifyPasswordSvc<T> {
+                        type Response = super::VerifyPwdResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::VerifyPwdRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::verify_password(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = VerifyPasswordSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

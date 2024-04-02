@@ -9,7 +9,11 @@ const GROUP_MEMBERS_ID_PREFIX: &str = "group_members_id";
 
 /// register code key
 const REGISTER_CODE_KEY: &str = "register_code";
+
+/// register code expire time
 const REGISTER_CODE_EXPIRE: i64 = 300;
+
+const USER_ONLINE_SET: &str = "user_online_set";
 
 #[derive(Debug)]
 pub struct RedisCache {
@@ -135,6 +139,24 @@ impl Cache for RedisCache {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         conn.hdel(REGISTER_CODE_KEY, email).await?;
         Ok(())
+    }
+
+    async fn user_login(&self, user_id: &str) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        conn.sadd(USER_ONLINE_SET, user_id).await?;
+        Ok(())
+    }
+
+    async fn user_logout(&self, user_id: &str) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        conn.srem(USER_ONLINE_SET, user_id).await?;
+        Ok(())
+    }
+
+    async fn online_count(&self) -> Result<i64, Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let result: i64 = conn.scard(USER_ONLINE_SET).await?;
+        Ok(result)
     }
 }
 

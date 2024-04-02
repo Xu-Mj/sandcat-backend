@@ -293,6 +293,7 @@ message User{
   optional int64 birthday = 12;
   int64 create_time = 13;
   int64 update_time = 14;
+  string salt = 15;
 }
 
 message CreateUserRequest {
@@ -332,18 +333,25 @@ message UserWithMatchType{
   string id = 1;
   string name = 2;
   string account = 3;
-  string password = 4;
-  string avatar = 5;
-  string gender = 6;
-  int32 age = 7;
-  optional string phone = 8;
-  optional string email = 9;
-  optional string address = 10;
-  optional string region = 11;
-  optional int64 birthday = 12;
-  int64 create_time = 13;
-  int64 update_time = 14;
-  optional string match_type = 15;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string phone = 7;
+  optional string email = 8;
+  optional string address = 9;
+  optional string region = 10;
+  optional int64 birthday = 11;
+  optional string match_type = 12;
+}
+
+message VerifyPwdRequest {
+  /// could be account, email or phone number
+  string account = 1;
+  string password = 2;
+}
+
+message VerifyPwdResponse {
+  User user = 1;
 }
 
 /// db interface think about if it is necessary to put api interface together.
@@ -372,6 +380,8 @@ service DbService {
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   /// search user
   rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+  /// verify password
+  rpc VerifyPassword(VerifyPwdRequest) returns (VerifyPwdResponse);
 }
 
 service PushService {

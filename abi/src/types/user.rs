@@ -19,6 +19,7 @@ impl FromRow<'_, PgRow> for User {
             birthday: row.try_get("birthday")?,
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,
+            salt: row.try_get("salt")?,
         })
     }
 }
@@ -28,7 +29,6 @@ impl FromRow<'_, PgRow> for UserWithMatchType {
             id: row.try_get("id")?,
             name: row.try_get("name")?,
             account: row.try_get("account")?,
-            password: row.try_get("password")?,
             avatar: row.try_get("avatar")?,
             gender: row.try_get("gender")?,
             age: row.try_get("age")?,
@@ -37,8 +37,6 @@ impl FromRow<'_, PgRow> for UserWithMatchType {
             address: row.try_get("address")?,
             region: row.try_get("region")?,
             birthday: row.try_get("birthday")?,
-            create_time: row.try_get("create_time")?,
-            update_time: row.try_get("update_time")?,
             match_type: row.try_get("match_type")?,
         })
     }

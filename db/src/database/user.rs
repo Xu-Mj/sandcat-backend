@@ -19,4 +19,6 @@ pub trait UserRepo: Sync + Send + Debug {
     ) -> Result<Vec<UserWithMatchType>, Error>;
 
     async fn update_user(&self, user: User) -> Result<User, Error>;
+
+    async fn verify_pwd(&self, account: &str, password: &str) -> Result<User, Error>;
 }

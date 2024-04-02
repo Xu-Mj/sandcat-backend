@@ -72,6 +72,15 @@ pub enum Error {
 
     #[error("SERVICE NOT FOUND: {0}")]
     ServiceNotFound(String),
+
+    #[error("invalid register code ")]
+    InvalidRegisterCode,
+
+    #[error("bad request: {0}")]
+    BadRequest(String),
+
+    #[error("account or password error")]
+    AccountOrPassword,
 }
 
 impl From<std::io::Error> for Error {
@@ -175,6 +184,13 @@ impl From<Error> for tonic::Status {
             Error::ReqwestError(_) => tonic::Status::internal(format!("REDIS ERROR: {e}")),
             Error::IOError(_) => tonic::Status::internal(format!("IO ERROR: {e}")),
             Error::ServiceNotFound(_) => tonic::Status::internal(format!("SERVICE NOT FOUND: {e}")),
+            Error::InvalidRegisterCode => {
+                tonic::Status::invalid_argument(format!("REGISTER ERROR: {e}"))
+            }
+            Error::BadRequest(_) => tonic::Status::invalid_argument(format!(" BAD REQUEST: {e}")),
+            Error::AccountOrPassword => {
+                tonic::Status::invalid_argument(" INVALID ACCOUNT OR PASSWORD".to_string())
+            }
         }
     }
 }
@@ -221,6 +237,17 @@ impl IntoResponse for Error {
             Error::BroadCastError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "BROADCAST ERROR".to_string(),
+            ),
+            Error::InvalidRegisterCode => {
+                (StatusCode::BAD_REQUEST, "INVALID REGISTER CODE".to_string())
+            }
+            Error::BadRequest(msg) => (
+                StatusCode::BAD_REQUEST,
+                format!("Bad Request errors: {msg}"),
+            ),
+            Error::AccountOrPassword => (
+                StatusCode::UNAUTHORIZED,
+                "INVALID ACCOUNT OR PASSWORD".to_string(),
             ),
         };
         (status, Json(json!({"message":msg}))).into_response()

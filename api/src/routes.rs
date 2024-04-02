@@ -5,19 +5,10 @@ use crate::handlers::files::file::{get_file_by_name, upload};
 use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, update_group_handler,
 };
+use crate::handlers::users::{create_user, get_user_by_id, login, logout, search_user, send_email};
 use crate::AppState;
 
-/*use crate::handlers::files::file::{get_file_by_name, upload};
-use crate::handlers::friends::friend_handlers::{
-    agree, black_list, create, deny, get_apply_list_by_user_id, get_friends_list_by_user_id2,
-    update_friend_remark,
-};
-use crate::handlers::groups::{create_group_handler, delete_group_handler, update_group_handler};
-use crate::handlers::users::user_handlers::{logout, search_user};
-use crate::handlers::users::{create_user, get_user_by_id, login, send_email};
-use crate::handlers::ws::websocket_handler;
-use crate::AppState;
-
+/*
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()
         .nest("/user", user_routes(state.clone()))
@@ -65,12 +56,23 @@ fn file_routes(state: AppState) -> Router {
 */
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()
-        // .nest("/user", user_routes(state.clone()))
+        .nest("/user", user_routes(state.clone()))
         // .nest("/friend", friend_routes(state.clone()))
         // .nest("/ws", ws_routes(state.clone()))
         .nest("/file", file_routes(state.clone()))
         .nest("/group", group_routes(state.clone()))
 }
+fn user_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/", post(create_user))
+        .route("/:id", get(get_user_by_id))
+        .route("/:user_id/search/:pattern", get(search_user))
+        .route("/login", post(login))
+        .route("/logout/:uuid", delete(logout))
+        .route("/mail/send", post(send_email))
+        .with_state(state)
+}
+
 fn group_routes(state: AppState) -> Router {
     Router::new()
         .route("/:user_id", post(create_group_handler))

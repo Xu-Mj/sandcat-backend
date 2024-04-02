@@ -39,6 +39,15 @@ pub trait Cache: Sync + Send + Debug {
 
     /// delete the register code after user register
     async fn del_register_code(&self, email: &str) -> Result<(), Error>;
+
+    /// user login
+    async fn user_login(&self, user_id: &str) -> Result<(), Error>;
+
+    /// user logout
+    async fn user_logout(&self, user_id: &str) -> Result<(), Error>;
+
+    /// online count
+    async fn online_count(&self) -> Result<i64, Error>;
 }
 
 pub fn cache(config: &Config) -> Box<dyn Cache> {
