@@ -11,7 +11,7 @@ pub struct PostgresGroup {
 }
 
 impl PostgresGroup {
-    pub async fn new(pool: PgPool) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }

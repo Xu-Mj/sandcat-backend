@@ -13,7 +13,7 @@ pub struct PostgresUser {
 }
 
 impl PostgresUser {
-    pub async fn new(pool: PgPool) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         PostgresUser { pool }
     }
 }

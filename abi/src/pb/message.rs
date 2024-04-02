@@ -266,6 +266,308 @@ pub struct GroupCreate {
     #[prost(string, repeated, tag = "5")]
     pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub announcement: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct User {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    #[serde(skip_serializing)]
+    pub password: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub phone: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "9")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "10")]
+    pub address: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "12")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(int64, tag = "13")]
+    pub create_time: i64,
+    #[prost(int64, tag = "14")]
+    pub update_time: i64,
+    #[prost(string, tag = "15")]
+    pub salt: ::prost::alloc::string::String,
+    #[prost(string, tag = "16")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserWithMatchType {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "6")]
+    pub age: i32,
+    #[prost(string, optional, tag = "7")]
+    pub phone: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "8")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "9")]
+    pub address: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "10")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "11")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(string, optional, tag = "12")]
+    pub match_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "13")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Friendship {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "4")]
+    pub status: i32,
+    #[prost(string, tag = "5")]
+    pub apply_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub req_remark: ::prost::alloc::string::String,
+    #[prost(string, tag = "7")]
+    pub resp_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "8")]
+    pub resp_remark: ::prost::alloc::string::String,
+    #[prost(string, tag = "9")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "10")]
+    pub create_time: i64,
+    #[prost(int64, tag = "11")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsCreateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_create: ::core::option::Option<FsCreate>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsCreate {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "3")]
+    pub status: i32,
+    #[prost(string, tag = "4")]
+    pub apply_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub req_remark: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub source: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendshipResponse {
+    #[prost(message, optional, tag = "1")]
+    pub friendship: ::core::option::Option<Friendship>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsReplyRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_reply: ::core::option::Option<FsReply>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsReply {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "3")]
+    pub status: i32,
+    #[prost(string, tag = "4")]
+    pub resp_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub resp_remark: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsListRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+/// / only for update friend apply request
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsUpdate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "2")]
+    pub status: i32,
+    #[prost(string, tag = "3")]
+    pub apply_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub req_remark: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsUpdateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_update: ::core::option::Option<FsUpdate>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupUpdate>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdateResponse {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupDeleteRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupDeleteResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMemberExitResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMembersIdRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMembersIdResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserRequest {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserRequest {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchUserRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub pattern: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchUserResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub users: ::prost::alloc::vec::Vec<UserWithMatchType>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VerifyPwdRequest {
+    /// / could be account, email or phone number
+    #[prost(string, tag = "1")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub password: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VerifyPwdResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SendMsgRequest {
@@ -327,201 +629,6 @@ pub struct GroupCreateResponse {
     #[prost(message, optional, tag = "1")]
     pub invitation: ::core::option::Option<GroupInvitation>,
 }
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupUpdate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub description: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub announcement: ::prost::alloc::string::String,
-    #[prost(int64, tag = "6")]
-    pub update_time: i64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupUpdateRequest {
-    #[prost(message, optional, tag = "1")]
-    pub group: ::core::option::Option<GroupUpdate>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupUpdateResponse {
-    #[prost(message, optional, tag = "1")]
-    pub group: ::core::option::Option<GroupInfo>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupDeleteRequest {
-    #[prost(string, tag = "1")]
-    pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupDeleteResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMemberExitResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMembersIdRequest {
-    #[prost(string, tag = "1")]
-    pub group_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMembersIdResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct User {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    #[serde(skip_serializing)]
-    pub password: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "7")]
-    pub age: i32,
-    #[prost(string, optional, tag = "8")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "11")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "12")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(int64, tag = "13")]
-    pub create_time: i64,
-    #[prost(int64, tag = "14")]
-    pub update_time: i64,
-    #[prost(string, tag = "15")]
-    pub salt: ::prost::alloc::string::String,
-    #[prost(string, tag = "16")]
-    pub signature: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateUserRequest {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateUserResponse {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetUserRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetUserResponse {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateUserRequest {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateUserResponse {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SearchUserRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub pattern: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SearchUserResponse {
-    #[prost(message, repeated, tag = "1")]
-    pub users: ::prost::alloc::vec::Vec<UserWithMatchType>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserWithMatchType {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "6")]
-    pub age: i32,
-    #[prost(string, optional, tag = "7")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "11")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(string, optional, tag = "12")]
-    pub match_type: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "13")]
-    pub signature: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct VerifyPwdRequest {
-    /// / could be account, email or phone number
-    #[prost(string, tag = "1")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub password: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct VerifyPwdResponse {
-    #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
-}
 /// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -566,6 +673,50 @@ impl ContentType {
             "Audio" => Some(Self::Audio),
             "VideoCall" => Some(Self::VideoCall),
             "AudioCall" => Some(Self::AudioCall),
+            _ => None,
+        }
+    }
+}
+/// / friendship status
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FriendshipStatus {
+    /// / default status
+    Default = 0,
+    Pending = 1,
+    Accepted = 2,
+    Rejected = 3,
+    /// / blacklist
+    Blacked = 4,
+    Canceled = 5,
+    Deleted = 6,
+}
+impl FriendshipStatus {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            FriendshipStatus::Default => "FriendshipStatusDefault",
+            FriendshipStatus::Pending => "Pending",
+            FriendshipStatus::Accepted => "Accepted",
+            FriendshipStatus::Rejected => "Rejected",
+            FriendshipStatus::Blacked => "Blacked",
+            FriendshipStatus::Canceled => "Canceled",
+            FriendshipStatus::Deleted => "Deleted",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "FriendshipStatusDefault" => Some(Self::Default),
+            "Pending" => Some(Self::Pending),
+            "Accepted" => Some(Self::Accepted),
+            "Rejected" => Some(Self::Rejected),
+            "Blacked" => Some(Self::Blacked),
+            "Canceled" => Some(Self::Canceled),
+            "Deleted" => Some(Self::Deleted),
             _ => None,
         }
     }
@@ -1173,6 +1324,65 @@ pub mod db_service_client {
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "VerifyPassword"));
             self.inner.unary(req, path, codec).await
+        }
+        /// / create friendship
+        pub async fn create_friendship(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FsCreateRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/CreateFriendship");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "CreateFriendship"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / reply friendship: agree, reject
+        pub async fn reply_friendship(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FsReplyRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/ReplyFriendship");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "ReplyFriendship"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / get friendship list
+        pub async fn get_friendship_list(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FsListRequest>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::Friendship>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetFriendshipList");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetFriendshipList"));
+            self.inner.server_streaming(req, path, codec).await
         }
     }
 }
@@ -1817,6 +2027,26 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::VerifyPwdRequest>,
         ) -> std::result::Result<tonic::Response<super::VerifyPwdResponse>, tonic::Status>;
+        /// / create friendship
+        async fn create_friendship(
+            &self,
+            request: tonic::Request<super::FsCreateRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>;
+        /// / reply friendship: agree, reject
+        async fn reply_friendship(
+            &self,
+            request: tonic::Request<super::FsReplyRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>;
+        /// Server streaming response type for the GetFriendshipList method.
+        type GetFriendshipListStream: tonic::codegen::tokio_stream::Stream<
+                Item = std::result::Result<super::Friendship, tonic::Status>,
+            > + Send
+            + 'static;
+        /// / get friendship list
+        async fn get_friendship_list(
+            &self,
+            request: tonic::Request<super::FsListRequest>,
+        ) -> std::result::Result<tonic::Response<Self::GetFriendshipListStream>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -2415,6 +2645,130 @@ pub mod db_service_server {
                                 max_encoding_message_size,
                             );
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/CreateFriendship" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateFriendshipSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::FsCreateRequest> for CreateFriendshipSvc<T> {
+                        type Response = super::FriendshipResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::FsCreateRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::create_friendship(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = CreateFriendshipSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/ReplyFriendship" => {
+                    #[allow(non_camel_case_types)]
+                    struct ReplyFriendshipSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::FsReplyRequest> for ReplyFriendshipSvc<T> {
+                        type Response = super::FriendshipResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::FsReplyRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::reply_friendship(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = ReplyFriendshipSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetFriendshipList" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFriendshipListSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::ServerStreamingService<super::FsListRequest>
+                        for GetFriendshipListSvc<T>
+                    {
+                        type Response = super::Friendship;
+                        type ResponseStream = T::GetFriendshipListStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::FsListRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_friendship_list(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFriendshipListSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

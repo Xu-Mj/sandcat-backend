@@ -1,9 +1,11 @@
+mod friend;
 mod group;
 mod message;
 mod mongodb;
 mod postgres;
 mod user;
 
+use crate::database::friend::FriendRepo;
 use abi::config::Config;
 use sqlx::PgPool;
 // use sqlx::PgPool;
@@ -18,17 +20,24 @@ pub struct DbRepo {
     pub msg: Box<dyn MsgStoreRepo>,
     pub group: Box<dyn GroupStoreRepo>,
     pub user: Box<dyn UserRepo>,
+    pub _friend: Box<dyn FriendRepo>,
 }
 
 impl DbRepo {
     pub async fn new(config: &Config) -> Self {
         let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
 
-        let msg = Box::new(postgres::PostgresMessage::new(pool.clone()).await);
-        let user = Box::new(postgres::PostgresUser::new(pool.clone()).await);
-        let group = Box::new(postgres::PostgresGroup::new(pool).await);
+        let msg = Box::new(postgres::PostgresMessage::new(pool.clone()));
+        let user = Box::new(postgres::PostgresUser::new(pool.clone()));
+        let _friend = Box::new(postgres::PostgresFriend::new(pool.clone()));
+        let group = Box::new(postgres::PostgresGroup::new(pool));
 
-        Self { msg, group, user }
+        Self {
+            msg,
+            group,
+            user,
+            _friend,
+        }
     }
 }
 

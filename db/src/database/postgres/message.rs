@@ -9,7 +9,7 @@ pub struct PostgresMessage {
 }
 
 impl PostgresMessage {
-    pub async fn new(pool: PgPool) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }

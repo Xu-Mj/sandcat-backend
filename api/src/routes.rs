@@ -9,26 +9,6 @@ use crate::handlers::users::{create_user, get_user_by_id, login, logout, search_
 use crate::AppState;
 
 /*
-pub(crate) fn app_routes(state: AppState) -> Router {
-    Router::new()
-        .nest("/user", user_routes(state.clone()))
-        .nest("/friend", friend_routes(state.clone()))
-        .nest("/ws", ws_routes(state.clone()))
-        .nest("/file", file_routes(state.clone()))
-        .nest("/group", group_routes(state.clone()))
-}
-
-fn user_routes(state: AppState) -> Router {
-    Router::new()
-        .route("/", post(create_user))
-        .route("/:id", get(get_user_by_id))
-        .route("/:user_id/search/:pattern", get(search_user))
-        .route("/login", post(login))
-        .route("/logout/:uuid", delete(logout))
-        .route("/mail/send", post(send_email))
-        .with_state(state)
-}
-
 fn friend_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create))
@@ -41,18 +21,6 @@ fn friend_routes(state: AppState) -> Router {
         .with_state(state)
 }
 
-fn ws_routes(state: AppState) -> Router {
-    Router::new()
-        .route("/:user_id/conn/:token/:pointer_id", get(websocket_handler))
-        .with_state(state)
-}
-
-fn file_routes(state: AppState) -> Router {
-    Router::new()
-        .route("/upload", post(upload))
-        .route("/get/:filename", get(get_file_by_name))
-        .with_state(state)
-}
 */
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()

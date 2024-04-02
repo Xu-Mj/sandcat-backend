@@ -14,6 +14,19 @@ enum ContentType {
   AudioCall = 8;
 }
 
+/// friendship status
+enum FriendshipStatus {
+  /// default status
+  FriendshipStatusDefault = 0;
+  Pending = 1;
+  Accepted = 2;
+  Rejected = 3;
+  /// blacklist
+  Blacked = 4;
+  Canceled = 5;
+  Deleted = 6;
+}
+
 /// message wrapper
 /// because of the protobuf syntax limited
 message Msg {
@@ -187,59 +200,6 @@ message GroupCreate{
   repeated string members_id = 5;
 }
 
-message SendMsgRequest {
-  Msg message = 1;
-}
-
-message SendGroupMsgRequest {
-  Msg message = 1;
-  repeated string members_id = 2;
-}
-
-message SendMsgResponse {}
-
-message MsgResponse {
-  string local_id = 1;
-  string server_id = 2;
-  int64  send_time = 3;
-  string err = 4;
-}
-
-service MsgService {
-  // send message through rpc
-  rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
-  // send single message to user by websocket
-  rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
-  // send group message to user by websocket
-  rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
-}
-
-/// chat service, receive message then generate message id and send message to mq;
-/// response operation result;
-service ChatService {
-  rpc SendMsg(SendMsgRequest) returns (MsgResponse);
-}
-
-message SaveMessageRequest {
-  MsgToDb message = 1;
-}
-
-message SaveMessageResponse {}
-
-message GetDbMsgRequest {
-  string user_id = 1;
-  int64 start = 2;
-  int64 end = 3;
-}
-
-message GroupCreateRequest {
-  GroupCreate group = 1;
-}
-
-message GroupCreateResponse {
-  GroupInvitation invitation = 1;
-}
-
 message GroupUpdate{
   string id = 1;
   string name = 2;
@@ -247,6 +207,100 @@ message GroupUpdate{
   string description = 4;
   string announcement = 5;
   int64 update_time = 6;
+}
+
+message User{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string password = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string phone = 8;
+  optional string email = 9;
+  optional string address = 10;
+  optional string region = 11;
+  optional int64 birthday = 12;
+  int64 create_time = 13;
+  int64 update_time = 14;
+  string salt = 15;
+  string signature = 16;
+}
+
+message UserWithMatchType{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string phone = 7;
+  optional string email = 8;
+  optional string address = 9;
+  optional string region = 10;
+  optional int64 birthday = 11;
+  optional string match_type = 12;
+  string signature = 13;
+}
+
+message Friendship{
+  string id = 1;
+  string user_id = 2;
+  string friend_id = 3;
+  FriendshipStatus status = 4;
+  string apply_msg = 5;
+  string req_remark = 6;
+  string resp_msg = 7;
+  string resp_remark = 8;
+  string source = 9;
+  int64 create_time = 10;
+  int64 update_time = 11;
+}
+
+message FsCreateRequest {
+  FsCreate fs_create = 1;
+}
+
+message FsCreate {
+  string user_id = 1;
+  string friend_id = 2;
+  FriendshipStatus status = 3;
+  string apply_msg = 4;
+  string req_remark = 5;
+  string source = 6;
+}
+
+message FriendshipResponse{
+  Friendship friendship = 1;
+}
+
+message FsReplyRequest {
+  FsReply fs_reply = 1;
+}
+
+message FsReply {
+  string user_id = 1;
+  string friend_id = 2;
+  FriendshipStatus status = 3;
+  string resp_msg = 4;
+  string resp_remark = 5;
+}
+
+message FsListRequest {
+  string user_id = 1;
+}
+
+/// only for update friend apply request
+message FsUpdate {
+  string id = 1;
+  FriendshipStatus status = 2;
+  string apply_msg = 3;
+  string req_remark = 4;
+}
+
+message FsUpdateRequest{
+  FsUpdate fs_update = 1;
 }
 
 message GroupUpdateRequest {
@@ -276,25 +330,6 @@ message GroupMembersIdRequest {
 
 message GroupMembersIdResponse {
   repeated string members_id = 1;
-}
-
-message User{
-  string id = 1;
-  string name = 2;
-  string account = 3;
-  string password = 4;
-  string avatar = 5;
-  string gender = 6;
-  int32 age = 7;
-  optional string phone = 8;
-  optional string email = 9;
-  optional string address = 10;
-  optional string region = 11;
-  optional int64 birthday = 12;
-  int64 create_time = 13;
-  int64 update_time = 14;
-  string salt = 15;
-  string signature = 16;
 }
 
 message CreateUserRequest {
@@ -330,22 +365,6 @@ message SearchUserResponse {
   repeated UserWithMatchType users = 1;
 }
 
-message UserWithMatchType{
-  string id = 1;
-  string name = 2;
-  string account = 3;
-  string avatar = 4;
-  string gender = 5;
-  int32 age = 6;
-  optional string phone = 7;
-  optional string email = 8;
-  optional string address = 9;
-  optional string region = 10;
-  optional int64 birthday = 11;
-  optional string match_type = 12;
-  string signature = 13;
-}
-
 message VerifyPwdRequest {
   /// could be account, email or phone number
   string account = 1;
@@ -354,6 +373,59 @@ message VerifyPwdRequest {
 
 message VerifyPwdResponse {
   User user = 1;
+}
+
+message SendMsgRequest {
+  Msg message = 1;
+}
+
+message SendGroupMsgRequest {
+  Msg message = 1;
+  repeated string members_id = 2;
+}
+
+message SendMsgResponse {}
+
+message MsgResponse {
+  string local_id = 1;
+  string server_id = 2;
+  int64  send_time = 3;
+  string err = 4;
+}
+
+message SaveMessageRequest {
+  MsgToDb message = 1;
+}
+
+message SaveMessageResponse {}
+
+message GetDbMsgRequest {
+  string user_id = 1;
+  int64 start = 2;
+  int64 end = 3;
+}
+
+message GroupCreateRequest {
+  GroupCreate group = 1;
+}
+
+message GroupCreateResponse {
+  GroupInvitation invitation = 1;
+}
+
+service MsgService {
+  // send message through rpc
+  rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+  // send single message to user by websocket
+  rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
+  // send group message to user by websocket
+  rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
+}
+
+/// chat service, receive message then generate message id and send message to mq;
+/// response operation result;
+service ChatService {
+  rpc SendMsg(SendMsgRequest) returns (MsgResponse);
 }
 
 /// db interface think about if it is necessary to put api interface together.
@@ -384,6 +456,12 @@ service DbService {
   rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
   /// verify password
   rpc VerifyPassword(VerifyPwdRequest) returns (VerifyPwdResponse);
+  /// create friendship
+  rpc CreateFriendship(FsCreateRequest) returns (FriendshipResponse);
+  /// reply friendship: agree, reject
+  rpc ReplyFriendship(FsReplyRequest) returns (FriendshipResponse);
+  /// get friendship list
+  rpc GetFriendshipList(FsListRequest) returns (stream Friendship);
 }
 
 service PushService {

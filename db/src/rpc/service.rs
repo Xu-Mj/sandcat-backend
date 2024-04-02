@@ -10,7 +10,8 @@ use tracing::debug;
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
-    CreateUserRequest, CreateUserResponse, GetDbMsgRequest, GetUserRequest, GetUserResponse,
+    CreateUserRequest, CreateUserResponse, Friendship, FriendshipResponse, FsCreateRequest,
+    FsListRequest, FsReplyRequest, GetDbMsgRequest, GetUserRequest, GetUserResponse,
     GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
     GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest,
     GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
@@ -235,6 +236,29 @@ impl DbService for DbRpcService {
         let user = self.db.user.verify_pwd(&account, &password).await?;
         let response = VerifyPwdResponse { user: Some(user) };
         Ok(Response::new(response))
+    }
+
+    async fn create_friendship(
+        &self,
+        _request: Request<FsCreateRequest>,
+    ) -> Result<Response<FriendshipResponse>, Status> {
+        todo!()
+    }
+
+    async fn reply_friendship(
+        &self,
+        _request: Request<FsReplyRequest>,
+    ) -> Result<Response<FriendshipResponse>, Status> {
+        todo!()
+    }
+
+    type GetFriendshipListStream = Pin<Box<dyn Stream<Item = Result<Friendship, Status>> + Send>>;
+
+    async fn get_friendship_list(
+        &self,
+        _request: Request<FsListRequest>,
+    ) -> Result<Response<Self::GetFriendshipListStream>, Status> {
+        todo!()
     }
 }
 
