@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
+dashmap = "5.5.3"
 tokio = { version = "1.36.0", features = ["full"] }
 tonic = { version = "0.11.0", features = ["gzip"] }
 tonic-health = "0.11.0"
