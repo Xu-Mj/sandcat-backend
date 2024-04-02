@@ -4,7 +4,7 @@ use tonic::Status;
 use crate::errors::Error;
 use crate::message::msg::Data;
 use crate::message::{
-    GroupInvitation, Msg, MsgResponse, MsgToDb, SendGroupMsgRequest, UserAndGroupId,
+    GroupInfo, GroupInvitation, Msg, MsgResponse, MsgToDb, SendGroupMsgRequest, UserAndGroupId,
 };
 use crate::utils;
 
@@ -88,6 +88,7 @@ impl UserAndGroupId {
         Self { user_id, group_id }
     }
 }
+
 impl SendGroupMsgRequest {
     pub fn new(msg: Msg, members_id: Vec<String>) -> Self {
         Self {
@@ -96,19 +97,38 @@ impl SendGroupMsgRequest {
         }
     }
 
-    pub fn new_with_group_invitation(msg: GroupInvitation, members_id: Vec<String>) -> Self {
+    pub fn new_with_group_invitation(
+        send_id: String,
+        msg: GroupInvitation,
+        members_id: Vec<String>,
+    ) -> Self {
         Self {
             message: Some(Msg {
+                send_id,
+                send_time: chrono::Local::now().timestamp_millis(),
                 data: Some(Data::GroupInvitation(msg)),
                 ..Default::default()
             }),
             members_id,
         }
     }
+
     pub fn new_with_group_msg(msg: Data, members_id: Vec<String>) -> Self {
         Self {
             message: Some(Msg {
                 data: Some(msg),
+                ..Default::default()
+            }),
+            members_id,
+        }
+    }
+
+    pub fn new_with_group_update(send_id: String, msg: GroupInfo, members_id: Vec<String>) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                data: Some(Data::GroupUpdate(msg)),
                 ..Default::default()
             }),
             members_id,

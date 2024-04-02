@@ -24,7 +24,7 @@ pub async fn create_group_handler(
     let cloned_ids = new_group.members_id.clone();
 
     // put the owner to the group members
-    new_group.members_id.push(user_id);
+    new_group.members_id.push(user_id.clone());
 
     // send rpc request
     let request = GroupCreateRequest::new(new_group);
@@ -43,7 +43,7 @@ pub async fn create_group_handler(
     let mut msg_rpc = app_state.ws_rpc.clone();
     let msg = invitation.clone();
     tokio::spawn(async move {
-        let request = SendGroupMsgRequest::new_with_group_invitation(msg, cloned_ids);
+        let request = SendGroupMsgRequest::new_with_group_invitation(user_id, msg, cloned_ids);
         // send it to online users
         if let Err(e) = msg_rpc.send_group_msg_to_user(request).await {
             error!("send_group_msg_to_user errors: {:#?}", e);
@@ -56,7 +56,7 @@ pub async fn create_group_handler(
 // todo add generate update message when members update information
 pub async fn update_group_handler(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(_user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
     JsonWithAuthExtractor(group_info): JsonWithAuthExtractor<GroupUpdate>,
 ) -> Result<Json<GroupInfo>, Error> {
     // send rpc request to update group
@@ -68,10 +68,27 @@ pub async fn update_group_handler(
             e
         ))
     })?;
+
     let inner = response.into_inner().group.ok_or_else(|| {
         Error::InternalServer("group update failed, rpc response is none".to_string())
     })?;
-    //todo notify the group members, except owner
+
+    //todo notify the group members, except updater
+    let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
+    let mut ws_rpc = app_state.ws_rpc.clone();
+    // notify members, except self
+    let msg = inner.clone();
+    tokio::spawn(async move {
+        members.retain(|x| *x != user_id);
+        debug!("delete group success; send group message");
+        let ws_req = SendGroupMsgRequest::new_with_group_update(user_id, msg, members);
+        if let Err(e) = ws_rpc.send_group_msg_to_user(ws_req).await {
+            error!(
+                "procedure ws rpc service error: send_group_msg_to_user {:?}",
+                e
+            )
+        }
+    });
     Ok(Json(inner))
 }
 

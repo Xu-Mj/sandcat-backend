@@ -67,8 +67,11 @@ Please also take into consideration that rust sometimes intentionally diverges f
 - tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
   list in the interval time.
 - db services have their own pool about postgres, is there necessary to use the same pool?
-- unhandled group member join time, when the member joined group, we need to insert a record to the user's group collection
+- unhandled group member join time, when the member joined group, we need to insert a record to the user's group
+  collection
 - need to design a websocket register center, to achieve the load balance.
+- shall we put the method that we get members id from cache into db service?
+- use ws rpc to send message need to send to all rpc services, but we don't achieve it now.
 
 ## Future possibilities
 
