@@ -23,9 +23,9 @@ impl UserRepo for PostgresUser {
     async fn create_user(&self, user: User) -> Result<User, Error> {
         let result = sqlx::query_as(
             "INSERT INTO users
-            (id, name, account, password, avatar, gender, age, phone, email, address, region, birthday, salt)
+            (id, name, account, password, avatar, gender, age, phone, email, address, region, birthday, salt, signature)
             VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *")
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
             .bind(&user.id)
             .bind(&user.name)
             .bind(&user.account)
@@ -39,6 +39,7 @@ impl UserRepo for PostgresUser {
             .bind(&user.region)
             .bind(user.birthday)
             .bind(&user.salt)
+            .bind(&user.signature)
             .fetch_one(&self.pool)
             .await?;
         Ok(result)
@@ -58,7 +59,7 @@ impl UserRepo for PostgresUser {
         pattern: &str,
     ) -> Result<Vec<UserWithMatchType>, Error> {
         let users: Vec<UserWithMatchType> = sqlx::query_as(
-            "SELECT id, name, account, avatar, gender, age, phone, email, address, region, birthday,
+            "SELECT id, name, account, avatar, gender, age, phone, email, address, region, birthday, signature,
              CASE
                 WHEN name LIKE '%$2%' THEN 'name'
                 WHEN phone = $2 THEN 'phone'
@@ -84,7 +85,8 @@ impl UserRepo for PostgresUser {
             email = COALESCE(NULLIF($7, ''), email),
             address = COALESCE(NULLIF($8, ''), address),
             region = COALESCE(NULLIF($9, ''), region),
-            birthday = COALESCE(NULLIF($10, 0), birthday)
+            birthday = COALESCE(NULLIF($10, 0), birthday),
+            signature = COALESCE(NULLIF($11, ''), signature),
             WHERE id = $1",
         )
         .bind(&user.id)
@@ -97,6 +99,7 @@ impl UserRepo for PostgresUser {
         .bind(&user.address)
         .bind(&user.region)
         .bind(user.birthday)
+        .bind(&user.signature)
         .fetch_one(&self.pool)
         .await?;
         Ok(user)

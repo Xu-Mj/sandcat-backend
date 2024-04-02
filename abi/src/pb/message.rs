@@ -423,6 +423,8 @@ pub struct User {
     pub update_time: i64,
     #[prost(string, tag = "15")]
     pub salt: ::prost::alloc::string::String,
+    #[prost(string, tag = "16")]
+    pub signature: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -502,6 +504,8 @@ pub struct UserWithMatchType {
     pub birthday: ::core::option::Option<i64>,
     #[prost(string, optional, tag = "12")]
     pub match_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "13")]
+    pub signature: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

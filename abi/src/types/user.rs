@@ -20,6 +20,7 @@ impl FromRow<'_, PgRow> for User {
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,
             salt: row.try_get("salt")?,
+            signature: row.try_get("signature")?,
         })
     }
 }
@@ -38,6 +39,7 @@ impl FromRow<'_, PgRow> for UserWithMatchType {
             region: row.try_get("region")?,
             birthday: row.try_get("birthday")?,
             match_type: row.try_get("match_type")?,
+            signature: row.try_get("signature")?,
         })
     }
 }

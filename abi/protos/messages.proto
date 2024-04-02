@@ -294,6 +294,7 @@ message User{
   int64 create_time = 13;
   int64 update_time = 14;
   string salt = 15;
+  string signature = 16;
 }
 
 message CreateUserRequest {
@@ -342,6 +343,7 @@ message UserWithMatchType{
   optional string region = 10;
   optional int64 birthday = 11;
   optional string match_type = 12;
+  string signature = 13;
 }
 
 message VerifyPwdRequest {
