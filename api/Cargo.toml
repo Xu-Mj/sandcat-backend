@@ -27,3 +27,4 @@ rand = "0.8.5"
 chrono = "0.4.37"
 base64 = "0.22.0"
 argon2 = "0.5.3"
+axum-streams =  { version = "0.14", features=["json", "csv", "protobuf", "text"] }

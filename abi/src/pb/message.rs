@@ -19,7 +19,7 @@ pub struct Msg {
     pub seq: i64,
     #[prost(
         oneof = "msg::Data",
-        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24"
+        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26"
     )]
     pub data: ::core::option::Option<msg::Data>,
 }
@@ -50,25 +50,30 @@ pub mod msg {
         GroupDismissOrExitReceived(super::UserAndGroupId),
         #[prost(message, tag = "15")]
         GroupInvitationReceived(super::UserAndGroupId),
-        /// / single call related
+        /// / friendship related
         #[prost(message, tag = "16")]
-        SingleCallInvite(super::SingleCallInvite),
+        RecRelationShip(super::FriendshipWithUser),
         #[prost(message, tag = "17")]
-        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
+        RelationShipResp(super::Friend),
+        /// / single call related
         #[prost(message, tag = "18")]
-        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
+        SingleCallInvite(super::SingleCallInvite),
         #[prost(message, tag = "19")]
-        SingleCallInviteCancel(super::SingleCallInviteCancel),
+        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
         #[prost(message, tag = "20")]
-        SingleCallOffer(super::SingleCallOffer),
+        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
         #[prost(message, tag = "21")]
-        Hangup(super::Hangup),
+        SingleCallInviteCancel(super::SingleCallInviteCancel),
         #[prost(message, tag = "22")]
-        AgreeSingleCall(super::AgreeSingleCall),
+        SingleCallOffer(super::SingleCallOffer),
         #[prost(message, tag = "23")]
+        Hangup(super::Hangup),
+        #[prost(message, tag = "24")]
+        AgreeSingleCall(super::AgreeSingleCall),
+        #[prost(message, tag = "25")]
         Candidate(super::Candidate),
         /// message read, maybe don't need
-        #[prost(message, tag = "24")]
+        #[prost(message, tag = "26")]
         MessageRead(super::MsgRead),
     }
 }
@@ -364,14 +369,14 @@ pub struct Friendship {
     pub friend_id: ::prost::alloc::string::String,
     #[prost(enumeration = "FriendshipStatus", tag = "4")]
     pub status: i32,
-    #[prost(string, tag = "5")]
-    pub apply_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub req_remark: ::prost::alloc::string::String,
-    #[prost(string, tag = "7")]
-    pub resp_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "8")]
-    pub resp_remark: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "5")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "6")]
+    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "7")]
+    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "8")]
+    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "9")]
     pub source: ::prost::alloc::string::String,
     #[prost(int64, tag = "10")]
@@ -379,6 +384,36 @@ pub struct Friendship {
     #[prost(int64, tag = "11")]
     pub accept_time: i64,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendshipWithUser {
+    #[prost(string, tag = "1")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "6")]
+    pub age: i32,
+    #[prost(string, optional, tag = "7")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration = "FriendshipStatus", tag = "8")]
+    pub status: i32,
+    #[prost(string, optional, tag = "9")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "10")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "11")]
+    pub create_time: i64,
+    #[prost(string, tag = "12")]
+    pub account: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Friend {
@@ -393,14 +428,14 @@ pub struct Friend {
     pub gender: ::prost::alloc::string::String,
     #[prost(int32, tag = "5")]
     pub age: i32,
-    #[prost(string, tag = "6")]
-    pub region: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "6")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(enumeration = "FriendshipStatus", tag = "7")]
     pub status: i32,
-    #[prost(string, tag = "8")]
-    pub hello: ::prost::alloc::string::String,
-    #[prost(string, tag = "9")]
-    pub remark: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "8")]
+    pub hello: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "9")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "10")]
     pub source: ::prost::alloc::string::String,
     #[prost(int64, tag = "11")]
@@ -425,43 +460,70 @@ pub struct FsCreate {
     pub friend_id: ::prost::alloc::string::String,
     #[prost(enumeration = "FriendshipStatus", tag = "3")]
     pub status: i32,
-    #[prost(string, tag = "4")]
-    pub apply_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub req_remark: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "4")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "5")]
+    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "6")]
     pub source: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FriendshipResponse {
+pub struct FsCreateResponse {
     #[prost(message, optional, tag = "1")]
-    pub friendship: ::core::option::Option<Friendship>,
+    pub fs_req: ::core::option::Option<FriendshipWithUser>,
+    #[prost(message, optional, tag = "2")]
+    pub fs_send: ::core::option::Option<FriendshipWithUser>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsAgreeRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_reply: ::core::option::Option<AgreeReply>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsAgreeResponse {
+    #[prost(message, optional, tag = "1")]
+    pub req: ::core::option::Option<Friend>,
+    #[prost(message, optional, tag = "2")]
+    pub send: ::core::option::Option<Friend>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsReplyRequest {
-    #[prost(message, optional, tag = "1")]
-    pub fs_reply: ::core::option::Option<FsReply>,
+pub struct UpdateRemarkRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub remark: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateRemarkResponse {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsReply {
+pub struct AgreeReply {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "2")]
-    pub status: i32,
-    #[prost(string, tag = "3")]
-    pub resp_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub resp_remark: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "2")]
+    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "3")]
+    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsListRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendListRequest {
     #[prost(string, tag = "1")]
     pub user_id: ::prost::alloc::string::String,
 }
@@ -488,7 +550,13 @@ pub struct FsUpdateRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsListResponse {
     #[prost(message, repeated, tag = "1")]
-    pub friendships: ::prost::alloc::vec::Vec<Friendship>,
+    pub friendships: ::prost::alloc::vec::Vec<FriendshipWithUser>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendListResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub friends: ::prost::alloc::vec::Vec<Friend>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1360,8 +1428,7 @@ pub mod db_service_client {
         pub async fn create_friendship(
             &mut self,
             request: impl tonic::IntoRequest<super::FsCreateRequest>,
-        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>
-        {
+        ) -> std::result::Result<tonic::Response<super::FsCreateResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1376,11 +1443,10 @@ pub mod db_service_client {
             self.inner.unary(req, path, codec).await
         }
         /// / reply friendship: agree, reject
-        pub async fn reply_friendship(
+        pub async fn agree_friendship(
             &mut self,
-            request: impl tonic::IntoRequest<super::FsReplyRequest>,
-        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>
-        {
+            request: impl tonic::IntoRequest<super::FsAgreeRequest>,
+        ) -> std::result::Result<tonic::Response<super::FsAgreeResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1388,10 +1454,10 @@ pub mod db_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/message.DbService/ReplyFriendship");
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/AgreeFriendship");
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("message.DbService", "ReplyFriendship"));
+                .insert(GrpcMethod::new("message.DbService", "AgreeFriendship"));
             self.inner.unary(req, path, codec).await
         }
         /// / get friendship list
@@ -1414,11 +1480,9 @@ pub mod db_service_client {
         }
         pub async fn get_friend_list(
             &mut self,
-            request: impl tonic::IntoRequest<super::FsListRequest>,
-        ) -> std::result::Result<
-            tonic::Response<tonic::codec::Streaming<super::Friend>>,
-            tonic::Status,
-        > {
+            request: impl tonic::IntoRequest<super::FriendListRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendListResponse>, tonic::Status>
+        {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1430,7 +1494,26 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "GetFriendList"));
-            self.inner.server_streaming(req, path, codec).await
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn update_friend_remark(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateRemarkRequest>,
+        ) -> std::result::Result<tonic::Response<super::UpdateRemarkResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/message.DbService/UpdateFriendRemark");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "UpdateFriendRemark"));
+            self.inner.unary(req, path, codec).await
         }
     }
 }
@@ -2079,26 +2162,25 @@ pub mod db_service_server {
         async fn create_friendship(
             &self,
             request: tonic::Request<super::FsCreateRequest>,
-        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>;
+        ) -> std::result::Result<tonic::Response<super::FsCreateResponse>, tonic::Status>;
         /// / reply friendship: agree, reject
-        async fn reply_friendship(
+        async fn agree_friendship(
             &self,
-            request: tonic::Request<super::FsReplyRequest>,
-        ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>;
+            request: tonic::Request<super::FsAgreeRequest>,
+        ) -> std::result::Result<tonic::Response<super::FsAgreeResponse>, tonic::Status>;
         /// / get friendship list
         async fn get_friendship_list(
             &self,
             request: tonic::Request<super::FsListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status>;
-        /// Server streaming response type for the GetFriendList method.
-        type GetFriendListStream: tonic::codegen::tokio_stream::Stream<
-                Item = std::result::Result<super::Friend, tonic::Status>,
-            > + Send
-            + 'static;
         async fn get_friend_list(
             &self,
-            request: tonic::Request<super::FsListRequest>,
-        ) -> std::result::Result<tonic::Response<Self::GetFriendListStream>, tonic::Status>;
+            request: tonic::Request<super::FriendListRequest>,
+        ) -> std::result::Result<tonic::Response<super::FriendListResponse>, tonic::Status>;
+        async fn update_friend_remark(
+            &self,
+            request: tonic::Request<super::UpdateRemarkRequest>,
+        ) -> std::result::Result<tonic::Response<super::UpdateRemarkResponse>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -2705,7 +2787,7 @@ pub mod db_service_server {
                     #[allow(non_camel_case_types)]
                     struct CreateFriendshipSvc<T: DbService>(pub Arc<T>);
                     impl<T: DbService> tonic::server::UnaryService<super::FsCreateRequest> for CreateFriendshipSvc<T> {
-                        type Response = super::FriendshipResponse;
+                        type Response = super::FsCreateResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
@@ -2741,19 +2823,19 @@ pub mod db_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/message.DbService/ReplyFriendship" => {
+                "/message.DbService/AgreeFriendship" => {
                     #[allow(non_camel_case_types)]
-                    struct ReplyFriendshipSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::UnaryService<super::FsReplyRequest> for ReplyFriendshipSvc<T> {
-                        type Response = super::FriendshipResponse;
+                    struct AgreeFriendshipSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::FsAgreeRequest> for AgreeFriendshipSvc<T> {
+                        type Response = super::FsAgreeResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::FsReplyRequest>,
+                            request: tonic::Request<super::FsAgreeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as DbService>::reply_friendship(&inner, request).await
+                                <T as DbService>::agree_friendship(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -2765,7 +2847,7 @@ pub mod db_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = ReplyFriendshipSvc(inner);
+                        let method = AgreeFriendshipSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -2824,16 +2906,12 @@ pub mod db_service_server {
                 "/message.DbService/GetFriendList" => {
                     #[allow(non_camel_case_types)]
                     struct GetFriendListSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::ServerStreamingService<super::FsListRequest>
-                        for GetFriendListSvc<T>
-                    {
-                        type Response = super::Friend;
-                        type ResponseStream = T::GetFriendListStream;
-                        type Future =
-                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                    impl<T: DbService> tonic::server::UnaryService<super::FriendListRequest> for GetFriendListSvc<T> {
+                        type Response = super::FriendListResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::FsListRequest>,
+                            request: tonic::Request<super::FriendListRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
@@ -2860,7 +2938,49 @@ pub mod db_service_server {
                                 max_decoding_message_size,
                                 max_encoding_message_size,
                             );
-                        let res = grpc.server_streaming(method, req).await;
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/UpdateFriendRemark" => {
+                    #[allow(non_camel_case_types)]
+                    struct UpdateFriendRemarkSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::UpdateRemarkRequest>
+                        for UpdateFriendRemarkSvc<T>
+                    {
+                        type Response = super::UpdateRemarkResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UpdateRemarkRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::update_friend_remark(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = UpdateFriendRemarkSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

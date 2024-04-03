@@ -10,13 +10,14 @@ use tracing::debug;
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
-    CreateUserRequest, CreateUserResponse, Friend, FriendshipResponse, FsCreateRequest,
-    FsListRequest, FsListResponse, FsReplyRequest, GetDbMsgRequest, GetUserRequest,
-    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
-    GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, MsgToDb, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId,
-    VerifyPwdRequest, VerifyPwdResponse,
+    CreateUserRequest, CreateUserResponse, FriendListRequest, FriendListResponse, FsAgreeRequest,
+    FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
+    GetDbMsgRequest, GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse,
+    GroupDeleteRequest, GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest,
+    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, MsgToDb, SaveMessageRequest,
+    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRemarkRequest,
+    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
+    VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -241,28 +242,30 @@ impl DbService for DbRpcService {
     async fn create_friendship(
         &self,
         request: Request<FsCreateRequest>,
-    ) -> Result<Response<FriendshipResponse>, Status> {
+    ) -> Result<Response<FsCreateResponse>, Status> {
         let fs = request
             .into_inner()
             .fs_create
             .ok_or_else(|| Status::invalid_argument("fs_create is empty"))?;
-        let friendship = self.db._friend.create_fs(fs).await?;
-        Ok(Response::new(FriendshipResponse {
-            friendship: Some(friendship),
+        let (fs_req, fs_send) = self.db._friend.create_fs(fs).await?;
+        Ok(Response::new(FsCreateResponse {
+            fs_req: Some(fs_req),
+            fs_send: Some(fs_send),
         }))
     }
 
-    async fn reply_friendship(
+    async fn agree_friendship(
         &self,
-        request: Request<FsReplyRequest>,
-    ) -> Result<Response<FriendshipResponse>, Status> {
+        request: Request<FsAgreeRequest>,
+    ) -> Result<Response<FsAgreeResponse>, Status> {
         let fs = request
             .into_inner()
             .fs_reply
             .ok_or_else(|| Status::invalid_argument("fs_reply is empty"))?;
-        let friendship = self.db._friend.agree_friend_apply_request(fs).await?;
-        Ok(Response::new(FriendshipResponse {
-            friendship: Some(friendship),
+        let (req, send) = self.db._friend.agree_friend_apply_request(fs).await?;
+        Ok(Response::new(FsAgreeResponse {
+            req: Some(req),
+            send: Some(send),
         }))
     }
 
@@ -278,18 +281,31 @@ impl DbService for DbRpcService {
         Ok(Response::new(FsListResponse { friendships: list }))
     }
 
-    type GetFriendListStream = Pin<Box<dyn Stream<Item = Result<Friend, Status>> + Send>>;
+    // type GetFriendListStream = Pin<Box<dyn Stream<Item = Result<Friend, Status>> + Send>>;
 
     async fn get_friend_list(
         &self,
-        request: Request<FsListRequest>,
-    ) -> Result<Response<Self::GetFriendListStream>, Status> {
+        request: Request<FriendListRequest>,
+    ) -> Result<Response<FriendListResponse>, Status> {
         let user_id = request.into_inner().user_id;
         if user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let receiver = self.db._friend.get_friend_list(&user_id).await?;
-        Ok(Response::new(Box::pin(TonicReceiverStream::new(receiver))))
+        let friends = self.db._friend.get_friend_list(&user_id).await?;
+        Ok(Response::new(FriendListResponse { friends }))
+        // Ok(Response::new(Box::pin(TonicReceiverStream::new(receiver))))
+    }
+
+    async fn update_friend_remark(
+        &self,
+        request: Request<UpdateRemarkRequest>,
+    ) -> Result<Response<UpdateRemarkResponse>, Status> {
+        let req = request.into_inner();
+        self.db
+            ._friend
+            .update_friend_remark(&req.user_id, &req.friend_id, &req.remark)
+            .await?;
+        Ok(Response::new(UpdateRemarkResponse {}))
     }
 }
 

@@ -4,7 +4,8 @@ use tonic::Status;
 use crate::errors::Error;
 use crate::message::msg::Data;
 use crate::message::{
-    GroupInfo, GroupInvitation, Msg, MsgResponse, MsgToDb, SendGroupMsgRequest, UserAndGroupId,
+    Friend, FriendshipWithUser, GroupInfo, GroupInvitation, Msg, MsgResponse, MsgToDb,
+    SendGroupMsgRequest, SendMsgRequest, UserAndGroupId,
 };
 use crate::utils;
 
@@ -132,6 +133,29 @@ impl SendGroupMsgRequest {
                 ..Default::default()
             }),
             members_id,
+        }
+    }
+}
+
+impl SendMsgRequest {
+    pub fn new_with_friend_ship_req(fs: FriendshipWithUser) -> Self {
+        Self {
+            message: Some(Msg {
+                receiver_id: fs.user_id.clone(),
+                send_time: chrono::Local::now().timestamp_millis(),
+                data: Some(Data::RecRelationShip(fs)),
+                ..Default::default()
+            }),
+        }
+    }
+    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Friend) -> Self {
+        Self {
+            message: Some(Msg {
+                receiver_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                data: Some(Data::RelationShipResp(fs)),
+                ..Default::default()
+            }),
         }
     }
 }

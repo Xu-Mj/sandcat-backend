@@ -1,19 +1,23 @@
 use async_trait::async_trait;
-use tokio::sync::mpsc;
 
 use abi::errors::Error;
-use abi::message::{Friend, Friendship, FriendshipStatus, FsCreate, FsReply, FsUpdate};
+use abi::message::{
+    AgreeReply, Friend, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate, FsUpdate,
+};
 
 #[async_trait]
 pub trait FriendRepo: Send + Sync {
     /// create friend apply request, ignore friendship status in fs, it always be pending
-    async fn create_fs(&self, fs: FsCreate) -> Result<Friendship, Error>;
+    async fn create_fs(
+        &self,
+        fs: FsCreate,
+    ) -> Result<(FriendshipWithUser, FriendshipWithUser), Error>;
 
     /// is it necessary to exists?
-    async fn get_fs(&self, user_id: &str, friend_id: &str) -> Result<Friendship, Error>;
+    // async fn get_fs(&self, user_id: &str, friend_id: &str) -> Result<FriendshipWithUser, Error>;
 
     /// get friend apply request list
-    async fn get_fs_list(&self, user_id: &str) -> Result<Vec<Friendship>, Error>;
+    async fn get_fs_list(&self, user_id: &str) -> Result<Vec<FriendshipWithUser>, Error>;
 
     /// update friend apply request
     async fn update_fs(&self, fs: FsUpdate) -> Result<Friendship, Error>;
@@ -38,11 +42,9 @@ pub trait FriendRepo: Send + Sync {
     /// get friend list;
     /// we need to determine user_id is the friend or not
     /// use 'OR'
-    async fn get_friend_list(
-        &self,
-        user_id: &str,
-    ) -> Result<mpsc::Receiver<Result<Friend, Error>>, Error>;
+    async fn get_friend_list(&self, user_id: &str) -> Result<Vec<Friend>, Error>;
+    // ) -> Result<mpsc::Receiver<Result<Friend, Error>>, Error>;
 
     /// agree friend-apply-request
-    async fn agree_friend_apply_request(&self, fs: FsReply) -> Result<Friendship, Error>;
+    async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error>;
 }

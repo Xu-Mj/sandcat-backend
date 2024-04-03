@@ -53,18 +53,21 @@ message Msg {
     UserAndGroupID group_dismiss_or_exit_received = 14;
     UserAndGroupID group_invitation_received = 15;
 
+    /// friendship related
+    FriendshipWithUser rec_relation_ship = 16;
+    Friend relation_ship_resp = 17;
     /// single call related
-    SingleCallInvite single_call_invite = 16;
-    SingleCallInviteAnswer single_call_invite_answer = 17;
-    SingleCallInviteNotAnswer single_call_invite_not_answer = 18;
-    SingleCallInviteCancel single_call_invite_cancel = 19;
-    SingleCallOffer single_call_offer = 20;
-    Hangup hangup = 21;
-    AgreeSingleCall agree_single_call = 22;
-    Candidate candidate = 23;
+    SingleCallInvite single_call_invite = 18;
+    SingleCallInviteAnswer single_call_invite_answer = 19;
+    SingleCallInviteNotAnswer single_call_invite_not_answer = 20;
+    SingleCallInviteCancel single_call_invite_cancel = 21;
+    SingleCallOffer single_call_offer = 22;
+    Hangup hangup = 23;
+    AgreeSingleCall agree_single_call = 24;
+    Candidate candidate = 25;
 
     // message read, maybe don't need
-    MsgRead message_read = 24;
+    MsgRead message_read = 26;
 
   }
 }
@@ -249,13 +252,28 @@ message Friendship{
   string user_id = 2;
   string friend_id = 3;
   FriendshipStatus status = 4;
-  string apply_msg = 5;
-  string req_remark = 6;
-  string resp_msg = 7;
-  string resp_remark = 8;
+  optional string apply_msg = 5;
+  optional string req_remark = 6;
+  optional string resp_msg = 7;
+  optional string resp_remark = 8;
   string source = 9;
   int64 create_time = 10;
   int64 accept_time = 11;
+}
+
+message FriendshipWithUser{
+  string fs_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string region = 7;
+  FriendshipStatus status = 8;
+  optional string apply_msg = 9;
+  string source = 10;
+  int64 create_time = 11;
+  string account = 12;
 }
 
 message Friend{
@@ -265,10 +283,10 @@ message Friend{
   string avatar = 3;
   string gender = 4;
   int32 age = 5;
-  string region = 6;
+  optional string region = 6;
   FriendshipStatus status = 7;
-  string hello = 8;
-  string remark = 9;
+  optional string hello = 8;
+  optional string remark = 9;
   string source = 10;
   int64 accept_time = 11;
   string account = 12;
@@ -282,27 +300,45 @@ message FsCreate {
   string user_id = 1;
   string friend_id = 2;
   FriendshipStatus status = 3;
-  string apply_msg = 4;
-  string req_remark = 5;
+  optional string apply_msg = 4;
+  optional string req_remark = 5;
   string source = 6;
 }
 
-message FriendshipResponse{
-  Friendship friendship = 1;
+message FsCreateResponse{
+  FriendshipWithUser fs_req = 1;
+  FriendshipWithUser fs_send = 2;
 }
 
-message FsReplyRequest {
-  FsReply fs_reply = 1;
+message FsAgreeRequest {
+  AgreeReply fs_reply = 1;
 }
 
-message FsReply {
+message FsAgreeResponse {
+  Friend req = 1;
+  Friend send = 2;
+}
+
+message UpdateRemarkRequest{
+  string user_id = 1;
+  string friend_id = 2;
+  string remark = 3;
+}
+
+message UpdateRemarkResponse{
+}
+
+message AgreeReply {
   string id = 1;
-  FriendshipStatus status = 2;
-  string resp_msg = 3;
-  string resp_remark = 4;
+  optional string resp_msg = 2;
+  optional  string resp_remark = 3;
 }
 
 message FsListRequest {
+  string user_id = 1;
+}
+
+message FriendListRequest {
   string user_id = 1;
 }
 
@@ -318,7 +354,11 @@ message FsUpdateRequest{
 }
 
 message FsListResponse {
-  repeated Friendship friendships = 1;
+  repeated FriendshipWithUser friendships = 1;
+}
+
+message FriendListResponse {
+  repeated Friend friends = 1;
 }
 
 message GroupUpdateRequest {
@@ -475,12 +515,13 @@ service DbService {
   /// verify password
   rpc VerifyPassword(VerifyPwdRequest) returns (VerifyPwdResponse);
   /// create friendship
-  rpc CreateFriendship(FsCreateRequest) returns (FriendshipResponse);
+  rpc CreateFriendship(FsCreateRequest) returns (FsCreateResponse);
   /// reply friendship: agree, reject
-  rpc ReplyFriendship(FsReplyRequest) returns (FriendshipResponse);
+  rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
   /// get friendship list
   rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
-  rpc GetFriendList(FsListRequest) returns (stream Friend);
+  rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
+  rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
 }
 
 service PushService {
