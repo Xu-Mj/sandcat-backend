@@ -377,7 +377,36 @@ pub struct Friendship {
     #[prost(int64, tag = "10")]
     pub create_time: i64,
     #[prost(int64, tag = "11")]
-    pub update_time: i64,
+    pub accept_time: i64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Friend {
+    /// / friendship related user's id
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "5")]
+    pub age: i32,
+    #[prost(string, tag = "6")]
+    pub region: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "7")]
+    pub status: i32,
+    #[prost(string, tag = "8")]
+    pub hello: ::prost::alloc::string::String,
+    #[prost(string, tag = "9")]
+    pub remark: ::prost::alloc::string::String,
+    #[prost(string, tag = "10")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "11")]
+    pub accept_time: i64,
+    #[prost(string, tag = "12")]
+    pub account: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -421,14 +450,12 @@ pub struct FsReplyRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsReply {
     #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "3")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "2")]
     pub status: i32,
-    #[prost(string, tag = "4")]
+    #[prost(string, tag = "3")]
     pub resp_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
+    #[prost(string, tag = "4")]
     pub resp_remark: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -445,11 +472,9 @@ pub struct FsListRequest {
 pub struct FsUpdate {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "2")]
-    pub status: i32,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub apply_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
+    #[prost(string, tag = "3")]
     pub req_remark: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -458,6 +483,12 @@ pub struct FsUpdate {
 pub struct FsUpdateRequest {
     #[prost(message, optional, tag = "1")]
     pub fs_update: ::core::option::Option<FsUpdate>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsListResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub friendships: ::prost::alloc::vec::Vec<Friendship>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1367,10 +1398,7 @@ pub mod db_service_client {
         pub async fn get_friendship_list(
             &mut self,
             request: impl tonic::IntoRequest<super::FsListRequest>,
-        ) -> std::result::Result<
-            tonic::Response<tonic::codec::Streaming<super::Friendship>>,
-            tonic::Status,
-        > {
+        ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1382,6 +1410,26 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "GetFriendshipList"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_friend_list(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FsListRequest>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::Friend>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetFriendList");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetFriendList"));
             self.inner.server_streaming(req, path, codec).await
         }
     }
@@ -2037,16 +2085,20 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::FsReplyRequest>,
         ) -> std::result::Result<tonic::Response<super::FriendshipResponse>, tonic::Status>;
-        /// Server streaming response type for the GetFriendshipList method.
-        type GetFriendshipListStream: tonic::codegen::tokio_stream::Stream<
-                Item = std::result::Result<super::Friendship, tonic::Status>,
-            > + Send
-            + 'static;
         /// / get friendship list
         async fn get_friendship_list(
             &self,
             request: tonic::Request<super::FsListRequest>,
-        ) -> std::result::Result<tonic::Response<Self::GetFriendshipListStream>, tonic::Status>;
+        ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status>;
+        /// Server streaming response type for the GetFriendList method.
+        type GetFriendListStream: tonic::codegen::tokio_stream::Stream<
+                Item = std::result::Result<super::Friend, tonic::Status>,
+            > + Send
+            + 'static;
+        async fn get_friend_list(
+            &self,
+            request: tonic::Request<super::FsListRequest>,
+        ) -> std::result::Result<tonic::Response<Self::GetFriendListStream>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -2732,13 +2784,9 @@ pub mod db_service_server {
                 "/message.DbService/GetFriendshipList" => {
                     #[allow(non_camel_case_types)]
                     struct GetFriendshipListSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::ServerStreamingService<super::FsListRequest>
-                        for GetFriendshipListSvc<T>
-                    {
-                        type Response = super::Friendship;
-                        type ResponseStream = T::GetFriendshipListStream;
-                        type Future =
-                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                    impl<T: DbService> tonic::server::UnaryService<super::FsListRequest> for GetFriendshipListSvc<T> {
+                        type Response = super::FsListResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::FsListRequest>,
@@ -2758,6 +2806,50 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetFriendshipListSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetFriendList" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFriendListSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::ServerStreamingService<super::FsListRequest>
+                        for GetFriendListSvc<T>
+                    {
+                        type Response = super::Friend;
+                        type ResponseStream = T::GetFriendListStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::FsListRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_friend_list(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFriendListSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

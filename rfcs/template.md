@@ -73,6 +73,7 @@ Please also take into consideration that rust sometimes intentionally diverges f
 - shall we put the method that we get members id from cache into db service?
 - use ws rpc to send message need to send to all rpc services, but we don't achieve it now. solved but didn't handle the
   errors.
+- friendship need to redesign
 
 ## Future possibilities
 

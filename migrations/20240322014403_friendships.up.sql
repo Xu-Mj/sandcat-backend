@@ -11,8 +11,6 @@ create table friendships
     res_remark   VARCHAR,
     source       VARCHAR,
     create_time  timestamp             NOT NULL DEFAULT now(),
-    update_time  timestamp             NOT NULL DEFAULT now(),
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (friend_id) REFERENCES users (id),
+    accept_time  timestamp             NOT NULL DEFAULT now(),
     Unique (user_id, friend_id)
 )

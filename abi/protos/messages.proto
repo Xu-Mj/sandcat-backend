@@ -255,7 +255,23 @@ message Friendship{
   string resp_remark = 8;
   string source = 9;
   int64 create_time = 10;
-  int64 update_time = 11;
+  int64 accept_time = 11;
+}
+
+message Friend{
+  /// friendship related user's id
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string gender = 4;
+  int32 age = 5;
+  string region = 6;
+  FriendshipStatus status = 7;
+  string hello = 8;
+  string remark = 9;
+  string source = 10;
+  int64 accept_time = 11;
+  string account = 12;
 }
 
 message FsCreateRequest {
@@ -280,11 +296,10 @@ message FsReplyRequest {
 }
 
 message FsReply {
-  string user_id = 1;
-  string friend_id = 2;
-  FriendshipStatus status = 3;
-  string resp_msg = 4;
-  string resp_remark = 5;
+  string id = 1;
+  FriendshipStatus status = 2;
+  string resp_msg = 3;
+  string resp_remark = 4;
 }
 
 message FsListRequest {
@@ -294,13 +309,16 @@ message FsListRequest {
 /// only for update friend apply request
 message FsUpdate {
   string id = 1;
-  FriendshipStatus status = 2;
-  string apply_msg = 3;
-  string req_remark = 4;
+  string apply_msg = 2;
+  string req_remark = 3;
 }
 
 message FsUpdateRequest{
   FsUpdate fs_update = 1;
+}
+
+message FsListResponse {
+  repeated Friendship friendships = 1;
 }
 
 message GroupUpdateRequest {
@@ -461,7 +479,8 @@ service DbService {
   /// reply friendship: agree, reject
   rpc ReplyFriendship(FsReplyRequest) returns (FriendshipResponse);
   /// get friendship list
-  rpc GetFriendshipList(FsListRequest) returns (stream Friendship);
+  rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
+  rpc GetFriendList(FsListRequest) returns (stream Friend);
 }
 
 service PushService {
