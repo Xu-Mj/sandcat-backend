@@ -1,12 +1,8 @@
-// mod conflict;
-
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use mongodb::bson::document::ValueAccessError;
 use serde_json::json;
-
-// pub use self::conflict::ConflictReservationInfo;
 
 type Message = String;
 type Location = String;
