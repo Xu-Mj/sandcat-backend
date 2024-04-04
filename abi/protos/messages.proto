@@ -375,11 +375,12 @@ message GroupDeleteRequest {
 }
 
 message GroupDeleteResponse {
-  repeated string members_id = 1;
+//  repeated string members_id = 1;
+  GroupInfo group = 1;
 }
 
 message GroupMemberExitResponse {
-  repeated string members_id = 1;
+//  repeated string members_id = 1;
 }
 
 message GroupMembersIdRequest {

@@ -158,4 +158,43 @@ impl SendMsgRequest {
             }),
         }
     }
+
+    pub fn new_with_group_invitation(
+        send_id: String,
+        receiver_id: String,
+        msg: GroupInvitation,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                receiver_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                data: Some(Data::GroupInvitation(msg)),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn new_with_group_update(send_id: String, receiver_id: String, msg: GroupInfo) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                receiver_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                data: Some(Data::GroupUpdate(msg)),
+                ..Default::default()
+            }),
+        }
+    }
+
+    pub fn new_with_group_msg(send_id: String, receiver_id: String, msg: Data) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                receiver_id,
+                data: Some(msg),
+                ..Default::default()
+            }),
+        }
+    }
 }

@@ -63,8 +63,9 @@ pub async fn create_friendship(
     // send create fs message for online user
     let msg = SendMsgRequest::new_with_friend_ship_req(fs_send);
     let mut ws_rpc = app_state.ws_rpc.clone();
+    // need to send message to mq, because need to store
     ws_rpc
-        .send_msg_to_user(msg)
+        .send_message(msg)
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     Ok(Json(fs_req))
@@ -111,7 +112,7 @@ pub async fn agree(
     // send message
     let mut ws_rpc = app_state.ws_rpc.clone();
     ws_rpc
-        .send_msg_to_user(SendMsgRequest::new_with_friend_ship_resp(
+        .send_message(SendMsgRequest::new_with_friend_ship_resp(
             req.id.clone(),
             send,
         ))

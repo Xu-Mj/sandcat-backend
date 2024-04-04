@@ -2,18 +2,18 @@ use axum::extract::State;
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use tracing::log::debug;
 
 use abi::errors::Error;
 use abi::message::msg::Data;
 use abi::message::{
     GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation, GroupUpdate,
-    GroupUpdateRequest, SendGroupMsgRequest, UserAndGroupId,
+    GroupUpdateRequest, SendGroupMsgRequest, SendMsgRequest, UserAndGroupId,
 };
 use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 use crate::AppState;
 
+// todo need to use the send_message, need to store the notification message
 /// create a new record handler
 pub async fn create_group_handler(
     State(app_state): State<AppState>,
@@ -74,21 +74,17 @@ pub async fn update_group_handler(
     })?;
 
     //todo notify the group members, except updater
-    let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
+    // let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
     let mut ws_rpc = app_state.ws_rpc.clone();
     // notify members, except self
     let msg = inner.clone();
-    tokio::spawn(async move {
-        members.retain(|x| *x != user_id);
-        debug!("delete group success; send group message");
-        let ws_req = SendGroupMsgRequest::new_with_group_update(user_id, msg, members);
-        if let Err(e) = ws_rpc.send_group_msg_to_user(ws_req).await {
-            error!(
-                "procedure ws rpc service error: send_group_msg_to_user {:?}",
-                e
-            )
-        }
-    });
+    let req = SendMsgRequest::new_with_group_update(user_id, msg.id.clone(), msg);
+    if let Err(e) = ws_rpc.send_message(req).await {
+        error!(
+            "procedure ws rpc service error: send_group_msg_to_user {:?}",
+            e
+        )
+    }
     Ok(Json(inner))
 }
 
@@ -104,42 +100,36 @@ pub async fn delete_group_handler(
     JsonWithAuthExtractor(group): JsonWithAuthExtractor<DeleteGroupRequest>,
 ) -> Result<(), Error> {
     let mut db_rpc = app_state.db_rpc.clone();
-    let (msg, mut members) = if group.is_dismiss {
+    let msg = if group.is_dismiss {
         let req = GroupDeleteRequest::new(group.group_id.clone(), group.user_id.clone());
-        let response = db_rpc.group_delete(req).await.map_err(|e| {
+        db_rpc.group_delete(req).await.map_err(|e| {
             Error::InternalServer(format!(
                 "procedure db rpc service error: group_delete {:?}",
                 e
             ))
         })?;
-        let members_id = response.into_inner().members_id;
-        (Data::GroupDismiss(group.group_id.clone()), members_id)
+        Data::GroupDismiss(group.group_id.clone())
     } else {
         // exit group
         let req = UserAndGroupId::new(group.user_id.clone(), group.group_id.clone());
-        let response = db_rpc.group_member_exit(req.clone()).await.map_err(|e| {
+        db_rpc.group_member_exit(req.clone()).await.map_err(|e| {
             Error::InternalServer(format!(
                 "procedure db rpc service error: group_member_exit {:?}",
                 e
             ))
         })?;
-        let members = response.into_inner().members_id;
-        (Data::GroupMemberExit(req), members)
+        Data::GroupMemberExit(req)
     };
 
     let mut ws_rpc = app_state.ws_rpc.clone();
     // notify members, except self
-    tokio::spawn(async move {
-        members.retain(|x| *x != group.user_id);
-        debug!("delete group success; send group message");
-        let ws_req = SendGroupMsgRequest::new_with_group_msg(msg, members);
-        if let Err(e) = ws_rpc.send_group_msg_to_user(ws_req).await {
-            error!(
-                "procedure ws rpc service error: send_group_msg_to_user {:?}",
-                e
-            )
-        }
-    });
+    let ws_req = SendMsgRequest::new_with_group_msg(group.user_id, group.group_id, msg);
+    if let Err(e) = ws_rpc.send_message(ws_req).await {
+        error!(
+            "procedure ws rpc service error: send_group_msg_to_user {:?}",
+            e
+        )
+    }
 
     Ok(())
 }

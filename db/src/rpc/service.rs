@@ -124,15 +124,12 @@ impl DbService for DbRpcService {
             return Err(Status::invalid_argument("user_id or group_id is empty"));
         }
 
-        let _group = self.db.group.delete_group(&group_id, &user_id).await?;
-
-        // query the members id before delete it
-        let members_id = self.cache.query_group_members_id(&group_id).await?;
+        let group = self.db.group.delete_group(&group_id, &user_id).await?;
 
         // delete from cache, and return the members id, this is performance than db
         self.cache.del_group_members(&group_id).await?;
 
-        let response = GroupDeleteResponse { members_id };
+        let response = GroupDeleteResponse { group: Some(group) };
         Ok(Response::new(response))
     }
 
@@ -150,11 +147,10 @@ impl DbService for DbRpcService {
             .await?;
 
         // delete from cache, also get the members id
-        let members_id = self.cache.query_group_members_id(&req.group_id).await?;
         self.cache
             .remove_group_member_id(&req.group_id, &req.user_id)
             .await?;
-        let response = GroupMemberExitResponse { members_id };
+        let response = GroupMemberExitResponse {};
         Ok(Response::new(response))
     }
 

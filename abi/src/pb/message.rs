@@ -581,15 +581,14 @@ pub struct GroupDeleteRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupDeleteResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    ///   repeated string members_id = 1;
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
 }
+///   repeated string members_id = 1;
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMemberExitResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
+pub struct GroupMemberExitResponse {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupMembersIdRequest {
