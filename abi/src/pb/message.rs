@@ -30,6 +30,12 @@ pub struct Msg {
     pub content: ::prost::alloc::vec::Vec<u8>,
     #[prost(bool, tag = "11")]
     pub is_read: bool,
+    #[prost(string, optional, tag = "12")]
+    pub sdp: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "13")]
+    pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag = "14")]
+    pub sdp_m_index: ::core::option::Option<i32>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

@@ -71,6 +71,9 @@ message Msg {
   ContentType content_type = 9;
   bytes content = 10;
   bool is_read = 11;
+  optional string sdp = 12;
+  optional string sdp_mid = 13;
+  optional int32 sdp_m_index = 14;
 }
 
 message MsgRead{

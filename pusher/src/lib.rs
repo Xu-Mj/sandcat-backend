@@ -171,8 +171,6 @@ impl PushService for PusherRpcService {
         debug!("push group msg request: {:?}", request);
         // extract request
         let request = request.into_inner();
-        // let mut ws_rpc = self.ws_rpc.clone();
-        // ws_rpc.send_msg_to_user(request).await
         let ws_rpc = self.ws_rpc_list.clone();
         let (tx, mut rx) = mpsc::channel(ws_rpc.len());
         // send message to ws with asynchronous way

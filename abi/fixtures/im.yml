@@ -4,7 +4,7 @@ db:
     port: 5432
     user: postgres
     password: root
-    database: im
+    database: im2
   mongodb:
     host: localhost
     port: 27017

@@ -69,6 +69,8 @@ Please also take into consideration that rust sometimes intentionally diverges f
 - need to design a websocket register center, to achieve the load balance.
 - shall we put the method that we get members id from cache into db service?
 - friendship need to redesign
+- conversation has nothing yet, it's only on the client side.
+- partition table for message have not been implemented yet.
 
 ## Future possibilities
 

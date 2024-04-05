@@ -32,6 +32,10 @@ impl TryFrom<Document> for Msg {
             group_id: value.get_str("group_id")?.to_string(),
             msg_type: value.get_i32("msg_type")?,
             is_read: value.get_bool("is_read")?,
+            // those do not save to mongodb
+            sdp: None,
+            sdp_mid: None,
+            sdp_m_index: None,
         })
     }
 }

@@ -200,6 +200,9 @@ mod tests {
             group_id: "".to_string(),
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
+            sdp: None,
+            sdp_mid: None,
+            sdp_m_index: None,
         }
     }
     #[tokio::test]
