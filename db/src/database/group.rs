@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 
 use abi::errors::Error;
-use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember, GroupUpdate};
+use abi::message::{
+    GroupCreate, GroupInfo, GroupInvitation, GroupInviteNew, GroupMember, GroupUpdate,
+};
 
 #[async_trait]
 pub trait GroupStoreRepo: Sync + Send {
@@ -9,6 +11,8 @@ pub trait GroupStoreRepo: Sync + Send {
         &self,
         group: &GroupCreate,
     ) -> Result<GroupInvitation, Error>;
+
+    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error>;
 
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error>;
 

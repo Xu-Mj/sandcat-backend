@@ -27,74 +27,30 @@ enum FriendshipStatus {
   Deleted = 6;
 }
 
-/// message wrapper
-/// because of the protobuf syntax limited
-//message Msg {
-//  string send_id = 1;
-//  string receiver_id = 2;
-//  string local_id = 3;
-//  string server_id = 4;
-//  // timestamp
-//  int64 send_time = 5;
-//  int64 seq = 6;
-//  oneof data {
-//    // single message
-//    Single single = 7;
-//
-//    // response, indicates that the server received the message
-//    MsgResponse response = 8;
-//
-//    // group message related
-//    Single group_msg = 9;
-//    GroupInvitation group_invitation = 10;
-//    UserAndGroupID group_member_exit = 11;
-//    string group_dismiss = 12;
-//    GroupInfo group_update = 13;
-//    UserAndGroupID group_dismiss_or_exit_received = 14;
-//    UserAndGroupID group_invitation_received = 15;
-//
-//    /// friendship related
-//    FriendshipWithUser rec_relation_ship = 16;
-//    Friend relation_ship_resp = 17;
-//    /// single call related
-//    SingleCallInvite single_call_invite = 18;
-//    SingleCallInviteAnswer single_call_invite_answer = 19;
-//    SingleCallInviteNotAnswer single_call_invite_not_answer = 20;
-//    SingleCallInviteCancel single_call_invite_cancel = 21;
-//    SingleCallOffer single_call_offer = 22;
-//    Hangup hangup = 23;
-//    AgreeSingleCall agree_single_call = 24;
-//    Candidate candidate = 25;
-//
-//    // message read, maybe don't need
-//    MsgRead message_read = 26;
-//
-//  }
-//}
-
 enum MsgType{
   MsgTypeSingleMsg = 0;
   MsgTypeGroupMsg = 1;
   MsgTypeGroupInvitation = 2;
-  MsgTypeGroupMemberExit = 3;
-  MsgTypeGroupDismiss = 4;
-  MsgTypeGroupDismissOrExitReceived = 5;
-  MsgTypeGroupInvitationReceived = 6;
-  MsgTypeGroupUpdate = 7;
-  MsgTypeFriendApplyReq = 8;
-  MsgTypeFriendApplyResp = 9;
-  MsgTypeSingleCallInvite = 10;
-  MsgTypeSingleCallInviteAnswer = 11;
-  MsgTypeSingleCallInviteNotAnswer = 12;
-  MsgTypeSingleCallInviteCancel = 13;
-  MsgTypeSingleCallOffer = 14;
-  MsgTypeHangup = 15;
-  MsgTypeAgreeSingleCall = 16;
-  MsgTypeCandidate = 17;
-  MsgTypeRead = 18;
-  MsgTypeMsgRecResp = 19;
-  MsgTypeNotification = 20;
-  MsgTypeService = 21;
+  MsgTypeGroupInviteNew = 3;
+  MsgTypeGroupMemberExit = 4;
+  MsgTypeGroupDismiss = 5;
+  MsgTypeGroupDismissOrExitReceived = 6;
+  MsgTypeGroupInvitationReceived = 7;
+  MsgTypeGroupUpdate = 8;
+  MsgTypeFriendApplyReq = 9;
+  MsgTypeFriendApplyResp = 10;
+  MsgTypeSingleCallInvite = 11;
+  MsgTypeSingleCallInviteAnswer = 12;
+  MsgTypeSingleCallInviteNotAnswer = 13;
+  MsgTypeSingleCallInviteCancel = 14;
+  MsgTypeSingleCallOffer = 15;
+  MsgTypeHangup = 16;
+  MsgTypeAgreeSingleCall = 17;
+  MsgTypeCandidate = 18;
+  MsgTypeRead = 19;
+  MsgTypeMsgRecResp = 20;
+  MsgTypeNotification = 21;
+  MsgTypeService = 22;
 }
 
 /// decode message content by content type
@@ -164,18 +120,6 @@ message Hangup {
   int64 sustain = 2;
 }
 
-//message MsgToDb {
-//  string send_id = 1;
-//  string receiver_id = 2;
-//  string local_id = 3;
-//  string server_id = 4;
-//  // timestamp
-//  int64 send_time = 5;
-//  ContentType content_type = 6;
-//  string content = 7;
-//  int64 seq = 8;
-//}
-
 /// use to send single message or group message;
 /// message ws is used to connect the client by websocket;
 /// and it receive message from clients; then send message to mq;
@@ -186,21 +130,6 @@ message Single {
   // message type
   ContentType content_type = 3;
 }
-
-
-/// group message wrapper;
-/// because of the grpc proto syntax limited
-/// we need use oneof to wrap the message;
-//message GroupMsgWrapper{
-//  oneof group_msg {
-//    Single message = 1;
-//    GroupInvitation invitation = 2;
-//    UserAndGroupID member_exit = 3;
-//    string dismiss = 4;
-//    UserAndGroupID dismiss_or_exit_received = 5;
-//    UserAndGroupID invitation_received = 6;
-//  }
-//}
 
 /// user and group id
 message UserAndGroupID{
@@ -248,6 +177,12 @@ message GroupCreate{
   string avatar = 3;
   string group_name = 4;
   repeated string members_id = 5;
+}
+
+message GroupInviteNew{
+  string user_id = 1;
+  string group_id = 2;
+  repeated string members = 3;
 }
 
 message GroupUpdate{
@@ -408,6 +343,14 @@ message FriendListResponse {
   repeated Friend friends = 1;
 }
 
+message GroupInviteNewRequest{
+  GroupInviteNew group_invite = 1;
+}
+
+message GroupInviteNewResp{
+  repeated GroupMember members = 1;
+}
+
 message GroupUpdateRequest {
   GroupUpdate group = 1;
 }
@@ -545,6 +488,8 @@ service DbService {
   rpc GetMessages(GetDbMsgRequest) returns (stream Msg);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
+  /// member invites new member
+  rpc GroupInviteNew(GroupInviteNewRequest) returns (GroupInviteNewResp);
   /// update group
   rpc GroupUpdate(GroupUpdateRequest) returns (GroupUpdateResponse);
   /// delete group

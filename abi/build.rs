@@ -81,6 +81,7 @@ fn main() {
             "GroupMsgWrapper",
             "GroupMsgWrapper.group_msg",
             "GroupInfo",
+            "GroupInviteNew",
             "GroupMember",
             "GroupCreate",
             "GroupUpdate",

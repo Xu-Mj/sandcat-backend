@@ -5,8 +5,9 @@ use tracing::error;
 
 use abi::errors::Error;
 use abi::message::{
-    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation, GroupUpdate,
-    GroupUpdateRequest, MsgType, SendMsgRequest, UserAndGroupId,
+    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation,
+    GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate, GroupUpdateRequest, MsgType,
+    SendMsgRequest, UserAndGroupId,
 };
 use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
@@ -51,6 +52,52 @@ pub async fn create_group_handler(
     });
 
     Ok(Json(invitation))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GroupInviteNewResponse {
+    pub user_id: String,
+    pub group_id: String,
+    pub members: Vec<GroupMember>,
+}
+
+pub async fn invite_new_members(
+    State(app_state): State<AppState>,
+    JsonWithAuthExtractor(invitation): JsonWithAuthExtractor<GroupInviteNew>,
+) -> Result<(), Error> {
+    let user_id = invitation.user_id.clone();
+    let group_id = invitation.group_id.clone();
+    // update members
+    let mut db_rpc = app_state.db_rpc.clone();
+    let request = GroupInviteNewRequest {
+        group_invite: Some(invitation),
+    };
+    let response = db_rpc.group_invite_new(request).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure db rpc service error: group_invite_new {:?}",
+            e
+        ))
+    })?;
+
+    let members = response.into_inner().members;
+    let new_invite = GroupInviteNewResponse {
+        user_id,
+        group_id,
+        members,
+    };
+    let mut msg_rpc = app_state.ws_rpc.clone();
+
+    let msg = bincode::serialize(&new_invite).map_err(|e| Error::InternalServer(e.to_string()))?;
+    tokio::spawn(async move {
+        let request =
+            SendMsgRequest::new_with_group_invite_new(new_invite.user_id, new_invite.group_id, msg);
+        // send it to online users
+        if let Err(e) = msg_rpc.send_message(request).await {
+            error!("send_group_msg_to_user errors: {:#?}", e);
+        }
+    });
+
+    Ok(())
 }
 
 pub async fn update_group_handler(

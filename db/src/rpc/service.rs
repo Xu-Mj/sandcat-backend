@@ -13,11 +13,11 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
     GetDbMsgRequest, GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse,
-    GroupDeleteRequest, GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest,
-    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, SaveMessageRequest,
-    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRemarkRequest,
-    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
-    VerifyPwdResponse,
+    GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp,
+    GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest,
+    GroupUpdateResponse, Msg, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
+    SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
+    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -92,6 +92,26 @@ impl DbService for DbRpcService {
         let response = GroupCreateResponse {
             invitation: Some(invitation),
         };
+        Ok(Response::new(response))
+    }
+
+    async fn group_invite_new(
+        &self,
+        request: Request<GroupInviteNewRequest>,
+    ) -> Result<Response<GroupInviteNewResp>, Status> {
+        let invitation = request
+            .into_inner()
+            .group_invite
+            .ok_or_else(|| Status::invalid_argument("group_invite is empty"))?;
+
+        let members = self.db.group.invite_new_members(&invitation).await?;
+
+        // update cache
+        self.cache
+            .save_group_members_id(&invitation.group_id, invitation.members)
+            .await?;
+
+        let response = GroupInviteNewResp { members };
         Ok(Response::new(response))
     }
 

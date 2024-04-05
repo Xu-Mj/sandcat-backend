@@ -2,7 +2,9 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use abi::errors::Error;
-use abi::message::{GroupCreate, GroupInfo, GroupInvitation, GroupMember, GroupUpdate};
+use abi::message::{
+    GroupCreate, GroupInfo, GroupInvitation, GroupInviteNew, GroupMember, GroupUpdate,
+};
 
 use crate::database::group::GroupStoreRepo;
 
@@ -27,9 +29,7 @@ impl GroupStoreRepo for PostgresGroup {
         let mut invitation = GroupInvitation::default();
         // create group
         let info: GroupInfo = sqlx::query_as(
-            "INSERT INTO groups
-            (id, owner, name, avatar)
-             VALUES ($1, $2, $3, $4, $5)",
+            "INSERT INTO groups (id, owner, name, avatar) VALUES ($1, $2, $3, $4, $5)",
         )
         .bind(&group.id)
         .bind(&group.owner)
@@ -62,6 +62,35 @@ impl GroupStoreRepo for PostgresGroup {
         invitation.members = members;
         tx.commit().await?;
         Ok(invitation)
+    }
+
+    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error> {
+        sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2")
+            .bind(&group.group_id)
+            .bind(&group.user_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        // update members
+        let members: Vec<GroupMember> =
+        sqlx::query_as(
+            "WITH inserted AS (
+                    INSERT INTO group_members as t (user_id, group_id, group_name, joined_at)
+                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at
+                    FROM users AS u
+                    WHERE u.id = ANY($3)
+                    RETURNING t.id, user_id, group_id, joined_at
+                )
+                SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name, usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender
+                FROM inserted AS ins
+                JOIN users AS usr ON ins.user_id = usr.id;
+                ")
+            .bind(&group.group_id)
+            .bind(chrono::Local::now().timestamp_millis())
+            .bind(&group.members)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(members)
     }
 
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error> {

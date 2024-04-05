@@ -97,6 +97,23 @@ impl SendMsgRequest {
         }
     }
 
+    pub fn new_with_group_invite_new(
+        send_id: String,
+        receiver_id: String,
+        invitation: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                receiver_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                msg_type: MsgType::GroupInviteNew as i32,
+                content: invitation,
+                ..Default::default()
+            }),
+        }
+    }
+
     pub fn new_with_group_update(send_id: String, receiver_id: String, msg: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
