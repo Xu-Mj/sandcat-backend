@@ -44,6 +44,7 @@ pub async fn create_friendship(
 ) -> Result<Json<FriendshipWithUser>, Error> {
     // 需要根据目标用户id查找是否在线，如果在线直接发送消息过去
     tracing::debug!("{:?}", &new_friend);
+    let receiver_id = new_friend.friend_id.clone();
     let mut db_rpc = app_state.db_rpc.clone();
     let response = db_rpc
         .create_friendship(FsCreateRequest {
@@ -60,8 +61,10 @@ pub async fn create_friendship(
         .fs_send
         .ok_or_else(|| Error::InternalServer("send fs error".to_string()))?;
 
+    // decode fs
+    let fs = bincode::serialize(&fs_send).map_err(|e| Error::InternalServer(e.to_string()))?;
     // send create fs message for online user
-    let msg = SendMsgRequest::new_with_friend_ship_req(fs_send);
+    let msg = SendMsgRequest::new_with_friend_ship_req(fs_send.user_id, receiver_id, fs);
     let mut ws_rpc = app_state.ws_rpc.clone();
     // need to send message to mq, because need to store
     ws_rpc
@@ -109,12 +112,14 @@ pub async fn agree(
     let send = inner
         .send
         .ok_or_else(|| Error::InternalServer("send fs error".to_string()))?;
+    // decode friend
+    let friend = bincode::serialize(&send).map_err(|e| Error::InternalServer(e.to_string()))?;
     // send message
     let mut ws_rpc = app_state.ws_rpc.clone();
     ws_rpc
         .send_message(SendMsgRequest::new_with_friend_ship_resp(
             req.id.clone(),
-            send,
+            friend,
         ))
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;

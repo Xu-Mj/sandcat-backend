@@ -7,7 +7,7 @@ use tracing::info;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_server::DbServiceServer;
-use abi::message::MsgToDb;
+use abi::message::Msg;
 use cache::Cache;
 use utils::typos::{GrpcHealthCheck, Registration};
 
@@ -88,7 +88,7 @@ impl DbRpcService {
     }
 
     /// todo need to handle group message
-    pub async fn handle_message(&self, message: MsgToDb) -> Result<(), Error> {
+    pub async fn handle_message(&self, message: Msg) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
         let cloned_msg = message.clone();
@@ -101,7 +101,7 @@ impl DbRpcService {
         // task 2 save message to mongodb
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
-            if let Err(e) = msg_rec_box.save_message(message).await {
+            if let Err(e) = msg_rec_box.save_message(&message).await {
                 tracing::error!("<db> save message to mongodb failed: {}", e);
             }
         });

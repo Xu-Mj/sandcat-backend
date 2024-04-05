@@ -20,7 +20,7 @@ impl PostgresGroup {
 impl GroupStoreRepo for PostgresGroup {
     async fn create_group_with_members(
         &self,
-        group: GroupCreate,
+        group: &GroupCreate,
     ) -> Result<GroupInvitation, Error> {
         let now = chrono::Local::now().timestamp_millis();
         let mut tx = self.pool.begin().await?;
@@ -28,14 +28,13 @@ impl GroupStoreRepo for PostgresGroup {
         // create group
         let info: GroupInfo = sqlx::query_as(
             "INSERT INTO groups
-            (id, owner, name, avatar, member_count)
+            (id, owner, name, avatar)
              VALUES ($1, $2, $3, $4, $5)",
         )
         .bind(&group.id)
         .bind(&group.owner)
         .bind(&group.group_name)
         .bind(&group.avatar)
-        .bind(group.members_id.len() as i32)
         .fetch_one(&mut *tx)
         .await?;
         invitation.info = Some(info);
@@ -57,7 +56,7 @@ impl GroupStoreRepo for PostgresGroup {
                 ")
                 .bind(&group.id)
                 .bind(now)
-                .bind(group.members_id)
+                .bind(&group.members_id)
                 .fetch_all(&mut *tx)
                 .await?;
         invitation.members = members;

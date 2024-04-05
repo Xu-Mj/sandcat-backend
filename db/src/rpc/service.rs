@@ -14,7 +14,7 @@ use abi::message::{
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
     GetDbMsgRequest, GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse,
     GroupDeleteRequest, GroupDeleteResponse, GroupMemberExitResponse, GroupMembersIdRequest,
-    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, MsgToDb, SaveMessageRequest,
+    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, SaveMessageRequest,
     SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRemarkRequest,
     UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
     VerifyPwdResponse,
@@ -47,7 +47,7 @@ impl DbService for DbRpcService {
         todo!()
     }
 
-    type GetMessagesStream = Pin<Box<dyn Stream<Item = Result<MsgToDb, Status>> + Send>>;
+    type GetMessagesStream = Pin<Box<dyn Stream<Item = Result<Msg, Status>> + Send>>;
 
     async fn get_messages(
         &self,
@@ -65,15 +65,14 @@ impl DbService for DbRpcService {
         &self,
         request: Request<GroupCreateRequest>,
     ) -> Result<Response<GroupCreateResponse>, Status> {
-        let group = request.into_inner().group;
-        if group.is_none() {
-            return Err(Status::invalid_argument("group is empty"));
-        }
+        let group = request
+            .into_inner()
+            .group
+            .ok_or_else(|| Status::invalid_argument("group is empty"))?;
 
-        let group = group.unwrap();
         let group_id = group.id.clone();
         // insert group information and members information to db
-        let invitation = self.db.group.create_group_with_members(group).await?;
+        let invitation = self.db.group.create_group_with_members(&group).await?;
         let members_id = invitation.members.iter().fold(
             Vec::with_capacity(invitation.members.len()),
             |mut acc, member| {
@@ -100,11 +99,11 @@ impl DbService for DbRpcService {
         &self,
         request: Request<GroupUpdateRequest>,
     ) -> Result<Response<GroupUpdateResponse>, Status> {
-        let group = request.into_inner().group;
-        if group.is_none() {
-            return Err(Status::invalid_argument("group information is empty"));
-        }
-        let group = group.unwrap();
+        let group = request
+            .into_inner()
+            .group
+            .ok_or_else(|| Status::invalid_argument("group information is empty"))?;
+
         // update db
         let group = self.db.group.update_group(&group).await?;
 
@@ -173,11 +172,10 @@ impl DbService for DbRpcService {
         &self,
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
-        let user = request.into_inner().user;
-        if user.is_none() {
-            return Err(Status::invalid_argument("user is empty"));
-        }
-        let mut user = user.unwrap();
+        let mut user = request
+            .into_inner()
+            .user
+            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
         user.id = nanoid!();
 
         let user = self.db.user.create_user(user).await?;
@@ -200,11 +198,11 @@ impl DbService for DbRpcService {
         &self,
         request: Request<UpdateUserRequest>,
     ) -> Result<Response<UpdateUserResponse>, Status> {
-        let user = request.into_inner().user;
-        if user.is_none() {
-            return Err(Status::invalid_argument("user is empty"));
-        }
-        let user = user.unwrap();
+        let user = request
+            .into_inner()
+            .user
+            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
+
         let user = self.db.user.update_user(user).await?;
         Ok(Response::new(UpdateUserResponse { user: Some(user) }))
     }
@@ -243,7 +241,7 @@ impl DbService for DbRpcService {
             .into_inner()
             .fs_create
             .ok_or_else(|| Status::invalid_argument("fs_create is empty"))?;
-        let (fs_req, fs_send) = self.db._friend.create_fs(fs).await?;
+        let (fs_req, fs_send) = self.db.friend.create_fs(fs).await?;
         Ok(Response::new(FsCreateResponse {
             fs_req: Some(fs_req),
             fs_send: Some(fs_send),
@@ -258,7 +256,7 @@ impl DbService for DbRpcService {
             .into_inner()
             .fs_reply
             .ok_or_else(|| Status::invalid_argument("fs_reply is empty"))?;
-        let (req, send) = self.db._friend.agree_friend_apply_request(fs).await?;
+        let (req, send) = self.db.friend.agree_friend_apply_request(fs).await?;
         Ok(Response::new(FsAgreeResponse {
             req: Some(req),
             send: Some(send),
@@ -273,7 +271,7 @@ impl DbService for DbRpcService {
         if user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let list = self.db._friend.get_fs_list(&user_id).await?;
+        let list = self.db.friend.get_fs_list(&user_id).await?;
         Ok(Response::new(FsListResponse { friendships: list }))
     }
 
@@ -287,7 +285,7 @@ impl DbService for DbRpcService {
         if user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let friends = self.db._friend.get_friend_list(&user_id).await?;
+        let friends = self.db.friend.get_friend_list(&user_id).await?;
         Ok(Response::new(FriendListResponse { friends }))
         // Ok(Response::new(Box::pin(TonicReceiverStream::new(receiver))))
     }
@@ -298,7 +296,7 @@ impl DbService for DbRpcService {
     ) -> Result<Response<UpdateRemarkResponse>, Status> {
         let req = request.into_inner();
         self.db
-            ._friend
+            .friend
             .update_friend_remark(&req.user_id, &req.friend_id, &req.remark)
             .await?;
         Ok(Response::new(UpdateRemarkResponse {}))

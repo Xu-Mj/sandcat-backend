@@ -4,16 +4,15 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 
 use abi::errors::Error;
-use abi::message::msg::Data;
 use abi::message::{
     GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation, GroupUpdate,
-    GroupUpdateRequest, SendGroupMsgRequest, SendMsgRequest, UserAndGroupId,
+    GroupUpdateRequest, MsgType, SendMsgRequest, UserAndGroupId,
 };
 use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 use crate::AppState;
 
-// todo need to use the send_message, need to store the notification message
+///  use the send_message, need to store the notification message
 /// create a new record handler
 pub async fn create_group_handler(
     State(app_state): State<AppState>,
@@ -21,7 +20,7 @@ pub async fn create_group_handler(
     JsonWithAuthExtractor(mut new_group): JsonWithAuthExtractor<GroupCreate>,
 ) -> Result<Json<GroupInvitation>, Error> {
     // use it to send message to other users except owner
-    let cloned_ids = new_group.members_id.clone();
+    // let cloned_ids = new_group.members_id.clone();
 
     // put the owner to the group members
     new_group.members_id.push(user_id.clone());
@@ -41,11 +40,12 @@ pub async fn create_group_handler(
         .ok_or_else(|| Error::InternalServer("group create failed".to_string()))?;
 
     let mut msg_rpc = app_state.ws_rpc.clone();
-    let msg = invitation.clone();
+    let msg = bincode::serialize(&invitation).map_err(|e| Error::InternalServer(e.to_string()))?;
+    let receiver_id = invitation.info.as_ref().unwrap().id.clone();
     tokio::spawn(async move {
-        let request = SendGroupMsgRequest::new_with_group_invitation(user_id, msg, cloned_ids);
+        let request = SendMsgRequest::new_with_group_invitation(user_id, receiver_id, msg);
         // send it to online users
-        if let Err(e) = msg_rpc.send_group_msg_to_user(request).await {
+        if let Err(e) = msg_rpc.send_message(request).await {
             error!("send_group_msg_to_user errors: {:#?}", e);
         }
     });
@@ -53,7 +53,6 @@ pub async fn create_group_handler(
     Ok(Json(invitation))
 }
 
-// todo add generate update message when members update information
 pub async fn update_group_handler(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
@@ -77,8 +76,8 @@ pub async fn update_group_handler(
     // let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
     let mut ws_rpc = app_state.ws_rpc.clone();
     // notify members, except self
-    let msg = inner.clone();
-    let req = SendMsgRequest::new_with_group_update(user_id, msg.id.clone(), msg);
+    let msg = bincode::serialize(&inner).map_err(|e| Error::InternalServer(e.to_string()))?;
+    let req = SendMsgRequest::new_with_group_update(user_id, inner.id.clone(), msg);
     if let Err(e) = ws_rpc.send_message(req).await {
         error!(
             "procedure ws rpc service error: send_group_msg_to_user {:?}",
@@ -108,7 +107,7 @@ pub async fn delete_group_handler(
                 e
             ))
         })?;
-        Data::GroupDismiss(group.group_id.clone())
+        MsgType::GroupDismiss
     } else {
         // exit group
         let req = UserAndGroupId::new(group.user_id.clone(), group.group_id.clone());
@@ -118,12 +117,12 @@ pub async fn delete_group_handler(
                 e
             ))
         })?;
-        Data::GroupMemberExit(req)
+        MsgType::GroupMemberExit
     };
 
     let mut ws_rpc = app_state.ws_rpc.clone();
     // notify members, except self
-    let ws_req = SendMsgRequest::new_with_group_msg(group.user_id, group.group_id, msg);
+    let ws_req = SendMsgRequest::new_with_group_operation(group.user_id, group.group_id, msg);
     if let Err(e) = ws_rpc.send_message(ws_req).await {
         error!(
             "procedure ws rpc service error: send_group_msg_to_user {:?}",

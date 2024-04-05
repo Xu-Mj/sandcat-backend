@@ -1,13 +1,16 @@
-use crate::database::message::MsgRecBoxRepo;
-use abi::config::Config;
-use abi::errors::Error;
-use abi::message::{GroupInvitation, MsgToDb};
 use async_trait::async_trait;
-use bson::{doc, to_document, Document};
+use bson::{doc, Document};
 use mongodb::options::FindOptions;
 use mongodb::{Client, Collection, Database};
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
+
+use abi::config::Config;
+use abi::errors::Error;
+use abi::message::{GroupInvitation, Msg};
+
+use crate::database::message::MsgRecBoxRepo;
+use crate::database::mongodb::utils::to_doc;
 
 /// user receive box,
 /// need to category message
@@ -62,9 +65,18 @@ impl MsgBox {
 
 #[async_trait]
 impl MsgRecBoxRepo for MsgBox {
-    async fn save_message(&self, message: MsgToDb) -> Result<(), Error> {
-        self.sb.insert_one(to_document(&message)?, None).await?;
+    async fn save_message(&self, message: &Msg) -> Result<(), Error> {
+        self.sb.insert_one(to_doc(message)?, None).await?;
 
+        Ok(())
+    }
+
+    async fn save_group_msg(&self, mut message: Msg, members: Vec<String>) -> Result<(), Error> {
+        // modify message receiver id
+        for id in members {
+            message.receiver_id = id;
+            self.save_message(&message).await?;
+        }
         Ok(())
     }
 
@@ -85,14 +97,14 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn get_message(&self, message_id: &str) -> Result<Option<MsgToDb>, Error> {
+    async fn get_message(&self, message_id: &str) -> Result<Option<Msg>, Error> {
         let doc = self
             .sb
             .find_one(doc! {"server_id": message_id}, None)
             .await?;
         match doc {
             None => Ok(None),
-            Some(doc) => Ok(Some(MsgToDb::try_from(doc)?)),
+            Some(doc) => Ok(Some(Msg::try_from(doc)?)),
         }
     }
 
@@ -101,7 +113,7 @@ impl MsgRecBoxRepo for MsgBox {
         user_id: &str,
         start: i64,
         end: i64,
-    ) -> Result<mpsc::Receiver<Result<MsgToDb, Error>>, Error> {
+    ) -> Result<mpsc::Receiver<Result<Msg, Error>>, Error> {
         let query = doc! {
             "receiver_id": user_id,
             "seq": {
@@ -119,7 +131,7 @@ impl MsgRecBoxRepo for MsgBox {
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(doc) => {
-                    if tx.send(Ok(MsgToDb::try_from(doc)?)).await.is_err() {
+                    if tx.send(Ok(Msg::try_from(doc)?)).await.is_err() {
                         break;
                     }
                 }
@@ -136,9 +148,13 @@ impl MsgRecBoxRepo for MsgBox {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ops::Deref;
+
+    use abi::message::MsgType;
     use utils::mongodb_tester::MongoDbTester;
+
+    use super::*;
+
     struct TestConfig {
         box_: MsgBox,
         _tdb: MongoDbTester,
@@ -173,18 +189,9 @@ mod tests {
     async fn mongodb_insert_and_get_works() {
         let msg_box = TestConfig::new().await;
         let msg_id = "123";
-        let msg = MsgToDb {
-            local_id: "123".to_string(),
-            server_id: msg_id.to_string(),
-            send_time: chrono::Local::now().timestamp(),
-            content_type: 0,
-            content: "test".to_string(),
-            send_id: "123".to_string(),
-            receiver_id: "111".to_string(),
-            seq: 0,
-        };
+        let msg = get_test_msg(msg_id.to_string());
         // save it into mongodb
-        msg_box.save_message(msg).await.unwrap();
+        msg_box.save_message(&msg).await.unwrap();
         let msg = msg_box.get_message(msg_id).await.unwrap();
         assert!(msg.is_some());
         assert_eq!(msg.unwrap().server_id, msg_id);
@@ -194,18 +201,9 @@ mod tests {
     async fn mongodb_insert_and_delete_and_get_works() {
         let msg_box = TestConfig::new().await;
         let msg_id = "123";
-        let msg = MsgToDb {
-            local_id: "123".to_string(),
-            server_id: msg_id.to_string(),
-            send_time: chrono::Local::now().timestamp(),
-            content_type: 0,
-            content: "test".to_string(),
-            send_id: "123".to_string(),
-            receiver_id: "111".to_string(),
-            seq: 0,
-        };
+        let msg = get_test_msg(msg_id.to_string());
         // save it into mongodb
-        msg_box.save_message(msg).await.unwrap();
+        msg_box.save_message(&msg).await.unwrap();
 
         // delete it
         msg_box.delete_message(msg_id).await.unwrap();
@@ -214,28 +212,34 @@ mod tests {
         assert!(msg.is_none());
     }
 
+    fn get_test_msg(msg_id: String) -> Msg {
+        Msg {
+            local_id: "123".to_string(),
+            server_id: msg_id,
+            send_time: chrono::Local::now().timestamp(),
+            content_type: 0,
+            content: "test".to_string().into_bytes(),
+            send_id: "123".to_string(),
+            receiver_id: "111".to_string(),
+            seq: 0,
+            group_id: "".to_string(),
+            msg_type: MsgType::SingleMsg as i32,
+            is_read: false,
+        }
+    }
     #[tokio::test]
     async fn mongodb_insert_and_batch_delete_and_get_should_works() {
         let msg_box = TestConfig::new().await;
         let msg_id = vec!["123".to_string(), "124".to_string(), "125".to_string()];
-        let mut msg = MsgToDb {
-            local_id: "123".to_string(),
-            server_id: msg_id[0].clone(),
-            send_time: chrono::Local::now().timestamp(),
-            content_type: 0,
-            content: "test".to_string(),
-            send_id: "123".to_string(),
-            receiver_id: "111".to_string(),
-            seq: 0,
-        };
+        let mut msg = get_test_msg(msg_id[0].clone());
         // save it into mongodb
-        msg_box.save_message(msg.clone()).await.unwrap();
+        msg_box.save_message(&msg).await.unwrap();
 
         msg.server_id = msg_id[1].clone();
-        msg_box.save_message(msg.clone()).await.unwrap();
+        msg_box.save_message(&msg).await.unwrap();
 
         msg.server_id = msg_id[2].clone();
-        msg_box.save_message(msg.clone()).await.unwrap();
+        msg_box.save_message(&msg).await.unwrap();
 
         // delete it
         msg_box.delete_messages(msg_id.clone()).await.unwrap();

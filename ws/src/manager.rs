@@ -2,7 +2,6 @@ use crate::client::Client;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::msg::Data;
 use abi::message::{Msg, MsgResponse, SendMsgRequest};
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -51,25 +50,6 @@ impl Manager {
         Ok(chat_rpc)
     }
 
-    pub async fn send_msg(&self, msg: Msg) {
-        if msg.data.is_none() {
-            return;
-        }
-        let data = msg.data.as_ref().unwrap();
-        match data {
-            Data::Single(_) => {
-                self.send_single_msg(&msg.receiver_id, &msg).await;
-            }
-            Data::GroupMsg(_) => {
-                // todo think about how to deal with group message,
-                // shall we need to query members id from database?
-                // or is there another better way?
-                self.send_group(&vec![msg.receiver_id.clone()], &msg).await;
-            }
-            // ignore server response type
-            _ => {}
-        }
-    }
     pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {
         for id in obj_ids {
             if let Some(clients) = self.hub.get(id) {
@@ -145,12 +125,12 @@ impl Manager {
                         error!("send message error: {:?}", response.err);
                     }
                     message.server_id = response.server_id.clone();
-                    message.data = Some(Data::Response(response));
+                    message.content = response.err.into_bytes();
                 }
                 Err(err) => {
                     error!("send message error: {:?}", err);
                     let response = MsgResponse::from(err);
-                    message.data = Some(Data::Response(response));
+                    message.content = response.err.into_bytes();
                 }
             }
 

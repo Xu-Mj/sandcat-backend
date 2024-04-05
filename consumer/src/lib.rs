@@ -1,23 +1,24 @@
+use std::sync::Arc;
+
+use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
+use rdkafka::{ClientConfig, Message};
+use tonic::transport::Channel;
+use tracing::{debug, error, warn};
+
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
-use abi::message::msg::Data;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgToDb, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
+    GroupMembersIdRequest, Msg, MsgType, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
-use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
-use rdkafka::{ClientConfig, Message};
-use std::sync::Arc;
-use tonic::transport::Channel;
-use tracing::{debug, error, warn};
+
 /// message type: single, group, other
 #[derive(Debug, Clone)]
-enum MsgType {
+enum MsgType2 {
     Single,
     Group,
-    Other,
 }
 
 pub struct ConsumerService {
@@ -102,40 +103,39 @@ impl ConsumerService {
         }
     }
 
-    async fn classify_msg_type(&self, msg: &Msg) -> (MsgType, bool) {
-        let mut msg_type = MsgType::Other;
-        let mut need_increase_seq = false;
-        // increase seq
-        if msg.data.is_some() {
-            match msg.data.as_ref().unwrap() {
-                Data::Single(_)
-                | Data::SingleCallInviteNotAnswer(_)
-                | Data::SingleCallInviteCancel(_)
-                | Data::Hangup(_)
-                | Data::AgreeSingleCall(_) => {
-                    // single message and need to increase seq
-                    msg_type = MsgType::Single;
-                    need_increase_seq = true;
-                }
-                Data::GroupInvitation(_)
-                | Data::GroupMemberExit(_)
-                | Data::GroupDismiss(_)
-                | Data::GroupUpdate(_) => {
-                    // group message and need to increase seq
-                    msg_type = MsgType::Group;
-                    need_increase_seq = true;
-                }
+    async fn classify_msg_type(&self, mt: MsgType) -> (MsgType2, bool) {
+        let msg_type;
+        let mut need_increase_seq = true;
 
-                // single call data exchange and don't need to increase seq
-                _ => {
-                    msg_type = MsgType::Single;
-                    need_increase_seq = false;
-                }
+        match mt {
+            MsgType::SingleMsg
+            | MsgType::SingleCallInviteNotAnswer
+            | MsgType::SingleCallInviteCancel
+            | MsgType::Hangup
+            | MsgType::AgreeSingleCall => {
+                // single message and need to increase seq
+                msg_type = MsgType2::Single;
+            }
+            MsgType::GroupInvitation
+            | MsgType::GroupMemberExit
+            | MsgType::GroupDismiss
+            | MsgType::GroupUpdate => {
+                // group message and need to increase seq
+                msg_type = MsgType2::Group;
+            }
+
+            // single call data exchange and don't need to increase seq
+            _ => {
+                msg_type = MsgType2::Single;
+                need_increase_seq = false;
             }
         }
+
         (msg_type, need_increase_seq)
     }
 
+    /// all single and group message need to increase seq,
+    /// because we use the same message receive box
     async fn increase_seq(&self, user_id: &str) -> Result<i64, Error> {
         match self.cache.get_seq(user_id).await {
             Ok(seq) => Ok(seq),
@@ -153,7 +153,9 @@ impl ConsumerService {
         // send to db rpc server
         let mut db_rpc = self.db_rpc.clone();
         let mut msg: Msg = serde_json::from_str(payload)?;
-        let (msg_type, need_increase_seq) = self.classify_msg_type(&msg).await;
+        let msg_type =
+            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let (msg_type, need_increase_seq) = self.classify_msg_type(msg_type).await;
         if need_increase_seq {
             msg.seq = self.increase_seq(&msg.receiver_id).await?;
         }
@@ -173,12 +175,12 @@ impl ConsumerService {
         let mut db = self.db_rpc.clone();
         let to_pusher = tokio::spawn(async move {
             match msg_type {
-                MsgType::Single => {
+                MsgType2::Single => {
                     if let Err(e) = Self::send_single_to_pusher(&mut pusher, msg).await {
                         error!("failed to send message to pusher, error: {:?}", e);
                     }
                 }
-                MsgType::Group => {
+                MsgType2::Group => {
                     // query group members id from the cache
                     let members = match cache.query_group_members_id(&msg.receiver_id).await {
                         Ok(list) if !list.is_empty() => list,
@@ -205,7 +207,6 @@ impl ConsumerService {
                         error!("failed to send message to pusher, error: {:?}", e);
                     }
                 }
-                MsgType::Other => {}
             }
         });
 
@@ -220,22 +221,22 @@ impl ConsumerService {
     async fn send_to_db(
         db_rpc: &mut DbServiceClient<Channel>,
         msg: Msg,
-        msg_type: MsgType,
+        msg_type: MsgType2,
     ) -> Result<(), Error> {
         // don't send it if data type is call xxx
         let mut send_flag = true;
-        if msg.data.is_some() {
-            // only skip the single call protocol data for db
-            match msg.data.as_ref().unwrap() {
-                Data::AgreeSingleCall(_)
-                | Data::Candidate(_)
-                | Data::SingleCallOffer(_)
-                | Data::SingleCallInvite(_)
-                | Data::SingleCallInviteAnswer(_) => {
-                    send_flag = false;
-                }
-                _ => {}
+        let msg_type2 =
+            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+        // only skip the single call protocol data for db
+        match msg_type2 {
+            MsgType::AgreeSingleCall
+            | MsgType::Candidate
+            | MsgType::SingleCallOffer
+            | MsgType::SingleCallInvite
+            | MsgType::SingleCallInviteAnswer => {
+                send_flag = false;
             }
+            _ => {}
         }
 
         if !send_flag {
@@ -243,24 +244,21 @@ impl ConsumerService {
         }
 
         // match the message type to procedure the different method
-        let request = SaveMessageRequest {
-            message: Some(MsgToDb::from(msg)),
-        };
+        let request = SaveMessageRequest { message: Some(msg) };
 
         match msg_type {
-            MsgType::Single => {
+            MsgType2::Single => {
                 db_rpc
                     .save_message(request)
                     .await
                     .map_err(|e| Error::InternalServer(e.to_string()))?;
             }
-            MsgType::Group => {
+            MsgType2::Group => {
                 db_rpc
                     .save_group_message(request)
                     .await
                     .map_err(|e| Error::InternalServer(e.to_string()))?;
             }
-            MsgType::Other => {}
         }
 
         Ok(())

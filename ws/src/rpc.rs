@@ -85,14 +85,10 @@ impl MsgService for MsgRpcService {
         request: Request<SendMsgRequest>,
     ) -> Result<Response<SendMsgResponse>, Status> {
         println!("Got a request: {:?}", request);
-        let msg = request.into_inner().message;
-        if msg.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
-        let msg = msg.unwrap();
-        if msg.data.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
+        let msg = request
+            .into_inner()
+            .message
+            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
         self.manager.broadcast(msg).await?;
         let response = Response::new(SendMsgResponse {});
         Ok(response)
@@ -108,11 +104,8 @@ impl MsgService for MsgRpcService {
             .into_inner()
             .message
             .ok_or_else(|| Status::invalid_argument("message is empty"))?;
-        if msg.data.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
         debug!("send message to user: {:?}", msg);
-        self.manager.send_msg(msg).await;
+        self.manager.send_single_msg(&msg.receiver_id, &msg).await;
         let response = Response::new(SendMsgResponse {});
         Ok(response)
     }
@@ -122,11 +115,9 @@ impl MsgService for MsgRpcService {
         request: Request<SendGroupMsgRequest>,
     ) -> Result<Response<SendMsgResponse>, Status> {
         let req = request.into_inner();
-        let msg = req.message;
-        if msg.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
-        let msg = msg.unwrap();
+        let msg = req
+            .message
+            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
         let members_id = req.members_id;
         self.manager.send_group(&members_id, &msg).await;
         let response = Response::new(SendMsgResponse {});

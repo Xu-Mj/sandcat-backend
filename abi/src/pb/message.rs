@@ -1,13 +1,15 @@
-/// / message wrapper
-/// / because of the protobuf syntax limited
+/// / decode message content by content type
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Msg {
+    /// must have
     #[prost(string, tag = "1")]
     pub send_id: ::prost::alloc::string::String,
+    /// must have
     #[prost(string, tag = "2")]
     pub receiver_id: ::prost::alloc::string::String,
+    /// must have
     #[prost(string, tag = "3")]
     pub local_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
@@ -17,65 +19,17 @@ pub struct Msg {
     pub send_time: i64,
     #[prost(int64, tag = "6")]
     pub seq: i64,
-    #[prost(
-        oneof = "msg::Data",
-        tags = "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26"
-    )]
-    pub data: ::core::option::Option<msg::Data>,
-}
-/// Nested message and enum types in `Msg`.
-pub mod msg {
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Data {
-        /// single message
-        #[prost(message, tag = "7")]
-        Single(super::Single),
-        /// response, indicates that the server received the message
-        #[prost(message, tag = "8")]
-        Response(super::MsgResponse),
-        /// group message related
-        #[prost(message, tag = "9")]
-        GroupMsg(super::Single),
-        #[prost(message, tag = "10")]
-        GroupInvitation(super::GroupInvitation),
-        #[prost(message, tag = "11")]
-        GroupMemberExit(super::UserAndGroupId),
-        #[prost(string, tag = "12")]
-        GroupDismiss(::prost::alloc::string::String),
-        #[prost(message, tag = "13")]
-        GroupUpdate(super::GroupInfo),
-        #[prost(message, tag = "14")]
-        GroupDismissOrExitReceived(super::UserAndGroupId),
-        #[prost(message, tag = "15")]
-        GroupInvitationReceived(super::UserAndGroupId),
-        /// / friendship related
-        #[prost(message, tag = "16")]
-        RecRelationShip(super::FriendshipWithUser),
-        #[prost(message, tag = "17")]
-        RelationShipResp(super::Friend),
-        /// / single call related
-        #[prost(message, tag = "18")]
-        SingleCallInvite(super::SingleCallInvite),
-        #[prost(message, tag = "19")]
-        SingleCallInviteAnswer(super::SingleCallInviteAnswer),
-        #[prost(message, tag = "20")]
-        SingleCallInviteNotAnswer(super::SingleCallInviteNotAnswer),
-        #[prost(message, tag = "21")]
-        SingleCallInviteCancel(super::SingleCallInviteCancel),
-        #[prost(message, tag = "22")]
-        SingleCallOffer(super::SingleCallOffer),
-        #[prost(message, tag = "23")]
-        Hangup(super::Hangup),
-        #[prost(message, tag = "24")]
-        AgreeSingleCall(super::AgreeSingleCall),
-        #[prost(message, tag = "25")]
-        Candidate(super::Candidate),
-        /// message read, maybe don't need
-        #[prost(message, tag = "26")]
-        MessageRead(super::MsgRead),
-    }
+    #[prost(string, tag = "7")]
+    pub group_id: ::prost::alloc::string::String,
+    /// is there necessary to cary the user's avatar and nickname?
+    #[prost(enumeration = "MsgType", tag = "8")]
+    pub msg_type: i32,
+    #[prost(enumeration = "ContentType", tag = "9")]
+    pub content_type: i32,
+    #[prost(bytes = "vec", tag = "10")]
+    pub content: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bool, tag = "11")]
+    pub is_read: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -151,28 +105,6 @@ pub struct Hangup {
     pub invite_type: i32,
     #[prost(int64, tag = "2")]
     pub sustain: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgToDb {
-    #[prost(string, tag = "1")]
-    pub send_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub receiver_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub local_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub server_id: ::prost::alloc::string::String,
-    /// timestamp
-    #[prost(int64, tag = "5")]
-    pub send_time: i64,
-    #[prost(enumeration = "ContentType", tag = "6")]
-    pub content_type: i32,
-    #[prost(string, tag = "7")]
-    pub content: ::prost::alloc::string::String,
-    #[prost(int64, tag = "8")]
-    pub seq: i64,
 }
 /// / use to send single message or group message;
 /// / message ws is used to connect the client by websocket;
@@ -254,6 +186,10 @@ pub struct GroupMember {
     pub region: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "9")]
     pub gender: ::prost::alloc::string::String,
+    #[prost(bool, tag = "10")]
+    pub is_friend: bool,
+    #[prost(string, optional, tag = "11")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// / create group object
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -700,7 +636,7 @@ pub struct MsgResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMessageRequest {
     #[prost(message, optional, tag = "1")]
-    pub message: ::core::option::Option<MsgToDb>,
+    pub message: ::core::option::Option<Msg>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -815,6 +751,92 @@ impl FriendshipStatus {
             "Blacked" => Some(Self::Blacked),
             "Canceled" => Some(Self::Canceled),
             "Deleted" => Some(Self::Deleted),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum MsgType {
+    SingleMsg = 0,
+    GroupMsg = 1,
+    GroupInvitation = 2,
+    GroupMemberExit = 3,
+    GroupDismiss = 4,
+    GroupDismissOrExitReceived = 5,
+    GroupInvitationReceived = 6,
+    GroupUpdate = 7,
+    FriendApplyReq = 8,
+    FriendApplyResp = 9,
+    SingleCallInvite = 10,
+    SingleCallInviteAnswer = 11,
+    SingleCallInviteNotAnswer = 12,
+    SingleCallInviteCancel = 13,
+    SingleCallOffer = 14,
+    Hangup = 15,
+    AgreeSingleCall = 16,
+    Candidate = 17,
+    Read = 18,
+    MsgRecResp = 19,
+    Notification = 20,
+    Service = 21,
+}
+impl MsgType {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            MsgType::SingleMsg => "MsgTypeSingleMsg",
+            MsgType::GroupMsg => "MsgTypeGroupMsg",
+            MsgType::GroupInvitation => "MsgTypeGroupInvitation",
+            MsgType::GroupMemberExit => "MsgTypeGroupMemberExit",
+            MsgType::GroupDismiss => "MsgTypeGroupDismiss",
+            MsgType::GroupDismissOrExitReceived => "MsgTypeGroupDismissOrExitReceived",
+            MsgType::GroupInvitationReceived => "MsgTypeGroupInvitationReceived",
+            MsgType::GroupUpdate => "MsgTypeGroupUpdate",
+            MsgType::FriendApplyReq => "MsgTypeFriendApplyReq",
+            MsgType::FriendApplyResp => "MsgTypeFriendApplyResp",
+            MsgType::SingleCallInvite => "MsgTypeSingleCallInvite",
+            MsgType::SingleCallInviteAnswer => "MsgTypeSingleCallInviteAnswer",
+            MsgType::SingleCallInviteNotAnswer => "MsgTypeSingleCallInviteNotAnswer",
+            MsgType::SingleCallInviteCancel => "MsgTypeSingleCallInviteCancel",
+            MsgType::SingleCallOffer => "MsgTypeSingleCallOffer",
+            MsgType::Hangup => "MsgTypeHangup",
+            MsgType::AgreeSingleCall => "MsgTypeAgreeSingleCall",
+            MsgType::Candidate => "MsgTypeCandidate",
+            MsgType::Read => "MsgTypeRead",
+            MsgType::MsgRecResp => "MsgTypeMsgRecResp",
+            MsgType::Notification => "MsgTypeNotification",
+            MsgType::Service => "MsgTypeService",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "MsgTypeSingleMsg" => Some(Self::SingleMsg),
+            "MsgTypeGroupMsg" => Some(Self::GroupMsg),
+            "MsgTypeGroupInvitation" => Some(Self::GroupInvitation),
+            "MsgTypeGroupMemberExit" => Some(Self::GroupMemberExit),
+            "MsgTypeGroupDismiss" => Some(Self::GroupDismiss),
+            "MsgTypeGroupDismissOrExitReceived" => Some(Self::GroupDismissOrExitReceived),
+            "MsgTypeGroupInvitationReceived" => Some(Self::GroupInvitationReceived),
+            "MsgTypeGroupUpdate" => Some(Self::GroupUpdate),
+            "MsgTypeFriendApplyReq" => Some(Self::FriendApplyReq),
+            "MsgTypeFriendApplyResp" => Some(Self::FriendApplyResp),
+            "MsgTypeSingleCallInvite" => Some(Self::SingleCallInvite),
+            "MsgTypeSingleCallInviteAnswer" => Some(Self::SingleCallInviteAnswer),
+            "MsgTypeSingleCallInviteNotAnswer" => Some(Self::SingleCallInviteNotAnswer),
+            "MsgTypeSingleCallInviteCancel" => Some(Self::SingleCallInviteCancel),
+            "MsgTypeSingleCallOffer" => Some(Self::SingleCallOffer),
+            "MsgTypeHangup" => Some(Self::Hangup),
+            "MsgTypeAgreeSingleCall" => Some(Self::AgreeSingleCall),
+            "MsgTypeCandidate" => Some(Self::Candidate),
+            "MsgTypeRead" => Some(Self::Read),
+            "MsgTypeMsgRecResp" => Some(Self::MsgRecResp),
+            "MsgTypeNotification" => Some(Self::Notification),
+            "MsgTypeService" => Some(Self::Service),
             _ => None,
         }
     }
@@ -1177,6 +1199,7 @@ pub mod db_service_client {
             self
         }
         /// / save message to postgres and mongodb
+        /// / use same table and collection to save the single message and group message
         pub async fn save_message(
             &mut self,
             request: impl tonic::IntoRequest<super::SaveMessageRequest>,
@@ -1218,10 +1241,8 @@ pub mod db_service_client {
         pub async fn get_messages(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDbMsgRequest>,
-        ) -> std::result::Result<
-            tonic::Response<tonic::codec::Streaming<super::MsgToDb>>,
-            tonic::Status,
-        > {
+        ) -> std::result::Result<tonic::Response<tonic::codec::Streaming<super::Msg>>, tonic::Status>
+        {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -2088,6 +2109,7 @@ pub mod db_service_server {
     #[async_trait]
     pub trait DbService: Send + Sync + 'static {
         /// / save message to postgres and mongodb
+        /// / use same table and collection to save the single message and group message
         async fn save_message(
             &self,
             request: tonic::Request<super::SaveMessageRequest>,
@@ -2099,7 +2121,7 @@ pub mod db_service_server {
         ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
         /// Server streaming response type for the GetMessages method.
         type GetMessagesStream: tonic::codegen::tokio_stream::Stream<
-                Item = std::result::Result<super::MsgToDb, tonic::Status>,
+                Item = std::result::Result<super::Msg, tonic::Status>,
             > + Send
             + 'static;
         /// / query message from mongodb by start seq to end seq
@@ -2346,7 +2368,7 @@ pub mod db_service_server {
                     impl<T: DbService> tonic::server::ServerStreamingService<super::GetDbMsgRequest>
                         for GetMessagesSvc<T>
                     {
-                        type Response = super::MsgToDb;
+                        type Response = super::Msg;
                         type ResponseStream = T::GetMessagesStream;
                         type Future =
                             BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;

@@ -20,7 +20,7 @@ pub struct DbRepo {
     pub msg: Box<dyn MsgStoreRepo>,
     pub group: Box<dyn GroupStoreRepo>,
     pub user: Box<dyn UserRepo>,
-    pub _friend: Box<dyn FriendRepo>,
+    pub friend: Box<dyn FriendRepo>,
 }
 
 impl DbRepo {
@@ -29,14 +29,14 @@ impl DbRepo {
 
         let msg = Box::new(postgres::PostgresMessage::new(pool.clone()));
         let user = Box::new(postgres::PostgresUser::new(pool.clone()));
-        let _friend = Box::new(postgres::PostgresFriend::new(pool.clone()));
+        let friend = Box::new(postgres::PostgresFriend::new(pool.clone()));
         let group = Box::new(postgres::PostgresGroup::new(pool));
 
         Self {
             msg,
             group,
             user,
-            _friend,
+            friend,
         }
     }
 }

@@ -39,10 +39,12 @@ impl FromRow<'_, PgRow> for GroupMember {
             group_id: row.try_get("group_id")?,
             avatar: row.try_get("avatar")?,
             gender: row.try_get("gender")?,
+            is_friend: false,
             age: row.try_get("age")?,
             region: row.try_get("region")?,
             group_name: row.try_get("group_name")?,
             joined_at: row.try_get("joined_at")?,
+            remark: None,
         })
     }
 }

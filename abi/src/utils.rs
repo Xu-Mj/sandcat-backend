@@ -1,4 +1,5 @@
 /// 格式化时间
+#[allow(dead_code)]
 pub fn format_milliseconds(millis: i64) -> String {
     let duration = chrono::Duration::try_milliseconds(millis).unwrap_or_default();
 

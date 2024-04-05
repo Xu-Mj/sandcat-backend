@@ -1,8 +1,10 @@
-use crate::database::message::MsgStoreRepo;
-use abi::errors::Error;
-use abi::message::MsgToDb;
 use async_trait::async_trait;
 use sqlx::PgPool;
+
+use abi::errors::Error;
+use abi::message::Msg;
+
+use crate::database::message::MsgStoreRepo;
 
 pub struct PostgresMessage {
     pool: PgPool,
@@ -16,7 +18,7 @@ impl PostgresMessage {
 
 #[async_trait]
 impl MsgStoreRepo for PostgresMessage {
-    async fn save_message(&self, message: MsgToDb) -> Result<(), Error> {
+    async fn save_message(&self, message: Msg) -> Result<(), Error> {
         sqlx::query("INSERT INTO messages (local_id, server_id, content, send_id, receiver_id, content_type, send_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
             .bind(&message.local_id)
             .bind(&message.server_id)

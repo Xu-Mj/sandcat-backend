@@ -29,47 +29,92 @@ enum FriendshipStatus {
 
 /// message wrapper
 /// because of the protobuf syntax limited
+//message Msg {
+//  string send_id = 1;
+//  string receiver_id = 2;
+//  string local_id = 3;
+//  string server_id = 4;
+//  // timestamp
+//  int64 send_time = 5;
+//  int64 seq = 6;
+//  oneof data {
+//    // single message
+//    Single single = 7;
+//
+//    // response, indicates that the server received the message
+//    MsgResponse response = 8;
+//
+//    // group message related
+//    Single group_msg = 9;
+//    GroupInvitation group_invitation = 10;
+//    UserAndGroupID group_member_exit = 11;
+//    string group_dismiss = 12;
+//    GroupInfo group_update = 13;
+//    UserAndGroupID group_dismiss_or_exit_received = 14;
+//    UserAndGroupID group_invitation_received = 15;
+//
+//    /// friendship related
+//    FriendshipWithUser rec_relation_ship = 16;
+//    Friend relation_ship_resp = 17;
+//    /// single call related
+//    SingleCallInvite single_call_invite = 18;
+//    SingleCallInviteAnswer single_call_invite_answer = 19;
+//    SingleCallInviteNotAnswer single_call_invite_not_answer = 20;
+//    SingleCallInviteCancel single_call_invite_cancel = 21;
+//    SingleCallOffer single_call_offer = 22;
+//    Hangup hangup = 23;
+//    AgreeSingleCall agree_single_call = 24;
+//    Candidate candidate = 25;
+//
+//    // message read, maybe don't need
+//    MsgRead message_read = 26;
+//
+//  }
+//}
+
+enum MsgType{
+  MsgTypeSingleMsg = 0;
+  MsgTypeGroupMsg = 1;
+  MsgTypeGroupInvitation = 2;
+  MsgTypeGroupMemberExit = 3;
+  MsgTypeGroupDismiss = 4;
+  MsgTypeGroupDismissOrExitReceived = 5;
+  MsgTypeGroupInvitationReceived = 6;
+  MsgTypeGroupUpdate = 7;
+  MsgTypeFriendApplyReq = 8;
+  MsgTypeFriendApplyResp = 9;
+  MsgTypeSingleCallInvite = 10;
+  MsgTypeSingleCallInviteAnswer = 11;
+  MsgTypeSingleCallInviteNotAnswer = 12;
+  MsgTypeSingleCallInviteCancel = 13;
+  MsgTypeSingleCallOffer = 14;
+  MsgTypeHangup = 15;
+  MsgTypeAgreeSingleCall = 16;
+  MsgTypeCandidate = 17;
+  MsgTypeRead = 18;
+  MsgTypeMsgRecResp = 19;
+  MsgTypeNotification = 20;
+  MsgTypeService = 21;
+}
+
+/// decode message content by content type
 message Msg {
+  // must have
   string send_id = 1;
+  // must have
   string receiver_id = 2;
+  // must have
   string local_id = 3;
   string server_id = 4;
   // timestamp
   int64 send_time = 5;
   int64 seq = 6;
-  oneof data {
-    // single message
-    Single single = 7;
-
-    // response, indicates that the server received the message
-    MsgResponse response = 8;
-
-    // group message related
-    Single group_msg = 9;
-    GroupInvitation group_invitation = 10;
-    UserAndGroupID group_member_exit = 11;
-    string group_dismiss = 12;
-    GroupInfo group_update = 13;
-    UserAndGroupID group_dismiss_or_exit_received = 14;
-    UserAndGroupID group_invitation_received = 15;
-
-    /// friendship related
-    FriendshipWithUser rec_relation_ship = 16;
-    Friend relation_ship_resp = 17;
-    /// single call related
-    SingleCallInvite single_call_invite = 18;
-    SingleCallInviteAnswer single_call_invite_answer = 19;
-    SingleCallInviteNotAnswer single_call_invite_not_answer = 20;
-    SingleCallInviteCancel single_call_invite_cancel = 21;
-    SingleCallOffer single_call_offer = 22;
-    Hangup hangup = 23;
-    AgreeSingleCall agree_single_call = 24;
-    Candidate candidate = 25;
-
-    // message read, maybe don't need
-    MsgRead message_read = 26;
-
-  }
+  string group_id = 7;
+  // is there necessary to cary the user's avatar and nickname?
+  MsgType msg_type = 8;
+  ContentType content_type = 9;
+  bytes content = 10;
+  bool is_read = 11;
 }
 
 message MsgRead{
@@ -119,17 +164,17 @@ message Hangup {
   int64 sustain = 2;
 }
 
-message MsgToDb {
-  string send_id = 1;
-  string receiver_id = 2;
-  string local_id = 3;
-  string server_id = 4;
-  // timestamp
-  int64 send_time = 5;
-  ContentType content_type = 6;
-  string content = 7;
-  int64 seq = 8;
-}
+//message MsgToDb {
+//  string send_id = 1;
+//  string receiver_id = 2;
+//  string local_id = 3;
+//  string server_id = 4;
+//  // timestamp
+//  int64 send_time = 5;
+//  ContentType content_type = 6;
+//  string content = 7;
+//  int64 seq = 8;
+//}
 
 /// use to send single message or group message;
 /// message ws is used to connect the client by websocket;
@@ -192,6 +237,8 @@ message GroupMember {
   int64 joined_at = 7;
   optional string region = 8;
   string gender = 9;
+  bool is_friend = 10;
+  optional string remark = 11;
 }
 
 /// create group object
@@ -375,12 +422,12 @@ message GroupDeleteRequest {
 }
 
 message GroupDeleteResponse {
-//  repeated string members_id = 1;
+  //  repeated string members_id = 1;
   GroupInfo group = 1;
 }
 
 message GroupMemberExitResponse {
-//  repeated string members_id = 1;
+  //  repeated string members_id = 1;
 }
 
 message GroupMembersIdRequest {
@@ -453,7 +500,7 @@ message MsgResponse {
 }
 
 message SaveMessageRequest {
-  MsgToDb message = 1;
+  Msg message = 1;
 }
 
 message SaveMessageResponse {}
@@ -490,11 +537,12 @@ service ChatService {
 /// db interface think about if it is necessary to put api interface together.
 service DbService {
   /// save message to postgres and mongodb
+  /// use same table and collection to save the single message and group message
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// save group message to postgres and mongodb
   rpc SaveGroupMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// query message from mongodb by start seq to end seq
-  rpc GetMessages(GetDbMsgRequest) returns (stream MsgToDb);
+  rpc GetMessages(GetDbMsgRequest) returns (stream Msg);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// update group

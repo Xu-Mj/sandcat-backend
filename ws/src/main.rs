@@ -11,11 +11,10 @@ async fn main() {
 }
 #[cfg(test)]
 mod tests {
-    use abi::message::{Msg, Single};
+    use abi::message::Msg;
     #[test]
     fn test_load() {
-        let mut msg = Msg::default();
-        msg.data = Some(abi::message::msg::Data::Single(Single::default()));
+        let msg = Msg::default();
         println!("{}", serde_json::to_string(&msg).unwrap())
     }
 }

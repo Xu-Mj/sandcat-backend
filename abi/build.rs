@@ -51,8 +51,13 @@ fn main() {
     tonic_build::configure()
         .out_dir("src/pb")
         .field_attribute("User.password", "#[serde(skip_serializing)]")
+        .field_attribute(
+            "Msg2.group_id",
+            "#[serde(default, skip_serializing_if = \"String::is_empty\")]",
+        )
         .with_serde(&[
             "Msg",
+            "Msg2",
             "MsgRead",
             "MsgToDb",
             "Msg.data",
@@ -95,5 +100,5 @@ fn main() {
     // execute cargo fmt command
     Command::new("cargo").arg("fmt").output().unwrap();
 
-    println!("cargo: rerun-if-changed=protos/messages.proto");
+    println!("cargo: rerun-if-changed=abi/protos/messages.proto");
 }
