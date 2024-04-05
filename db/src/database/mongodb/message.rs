@@ -7,7 +7,7 @@ use tonic::codegen::tokio_stream::StreamExt;
 
 use abi::config::Config;
 use abi::errors::Error;
-use abi::message::{GroupInvitation, Msg};
+use abi::message::Msg;
 
 use crate::database::message::MsgRecBoxRepo;
 use crate::database::mongodb::utils::to_doc;
@@ -17,35 +17,18 @@ use crate::database::mongodb::utils::to_doc;
 /// like: group message, single message, system message, service message, third party message etc.
 /// or we set everyone a collection,
 pub struct MsgBox {
-    // db: Database,
-    /// for single message box
-    sb: Collection<Document>,
-    /// for group message box
-    _gb: Collection<Document>,
-    /// for group user
-    _gu: Collection<Document>,
+    /// for message box
+    mb: Collection<Document>,
 }
 
 /// for all users single message receive box
 const COLL_SINGLE_BOX: &str = "single_msg_box";
 
-/// group message box
-const COLL_GROUP_BOX: &str = "group_box";
-
-/// every user last read message id for each group
-const COLL_GROUP_USER: &str = "group_user";
-
 #[allow(dead_code)]
 impl MsgBox {
     pub async fn new(db: Database) -> Self {
         let sb = db.collection(COLL_SINGLE_BOX);
-        let gb = db.collection(COLL_GROUP_BOX);
-        let gu = db.collection(COLL_GROUP_USER);
-        Self {
-            sb,
-            _gb: gb,
-            _gu: gu,
-        }
+        Self { mb: sb }
     }
     pub async fn from_config(config: &Config) -> Self {
         let db = Client::with_uri_str(config.db.mongodb.url())
@@ -53,53 +36,45 @@ impl MsgBox {
             .unwrap()
             .database(&config.db.mongodb.database);
         let sb = db.collection(COLL_SINGLE_BOX);
-        let gb = db.collection(COLL_GROUP_BOX);
-        let gu = db.collection(COLL_GROUP_USER);
-        Self {
-            sb,
-            _gb: gb,
-            _gu: gu,
-        }
+        Self { mb: sb }
     }
 }
 
 #[async_trait]
 impl MsgRecBoxRepo for MsgBox {
     async fn save_message(&self, message: &Msg) -> Result<(), Error> {
-        self.sb.insert_one(to_doc(message)?, None).await?;
+        self.mb.insert_one(to_doc(message)?, None).await?;
 
         Ok(())
     }
 
     async fn save_group_msg(&self, mut message: Msg, members: Vec<String>) -> Result<(), Error> {
+        let mut messages = Vec::with_capacity(members.len());
         // modify message receiver id
         for id in members {
             message.receiver_id = id;
-            self.save_message(&message).await?;
+            messages.push(to_doc(&message)?);
         }
-        Ok(())
-    }
-
-    async fn save_group_invitation(&self, _group_invitation: GroupInvitation) -> Result<(), Error> {
+        self.mb.insert_many(messages, None).await?;
         Ok(())
     }
 
     async fn delete_message(&self, message_id: &str) -> Result<(), Error> {
         let query = doc! {"server_id": message_id};
-        self.sb.delete_one(query, None).await?;
+        self.mb.delete_one(query, None).await?;
         Ok(())
     }
 
     async fn delete_messages(&self, message_ids: Vec<String>) -> Result<(), Error> {
         let query = doc! {"server_id": {"$in": message_ids}};
-        self.sb.delete_many(query, None).await?;
+        self.mb.delete_many(query, None).await?;
 
         Ok(())
     }
 
     async fn get_message(&self, message_id: &str) -> Result<Option<Msg>, Error> {
         let doc = self
-            .sb
+            .mb
             .find_one(doc! {"server_id": message_id}, None)
             .await?;
         match doc {
@@ -126,7 +101,7 @@ impl MsgRecBoxRepo for MsgBox {
         let option = FindOptions::builder().sort(Some(doc! {"seq": 1})).build();
 
         // query
-        let mut cursor = self.sb.find(query, Some(option)).await?;
+        let mut cursor = self.mb.find(query, Some(option)).await?;
         let (tx, rx) = mpsc::channel(100);
         while let Some(result) = cursor.next().await {
             match result {
