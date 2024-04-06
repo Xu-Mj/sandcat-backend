@@ -11,6 +11,6 @@ create table friendships
     res_remark   VARCHAR,
     source       VARCHAR,
     create_time  BIGINT                NOT NULL,
-    accept_time  BIGINT                NOT NULL,
+    accept_time  BIGINT,
     Unique (user_id, friend_id)
 )

@@ -14,4 +14,4 @@ CREATE TABLE messages
     content      BYTEA,
     is_read      BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (send_id, server_id, send_time)
-) PARTITION BY RANGE (send_time);;
+) /*PARTITION BY RANGE (send_time)*/;

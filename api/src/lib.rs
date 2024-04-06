@@ -44,14 +44,11 @@ impl AppState {
     }
 
     async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
-        let channel = utils::get_rpc_channel_by_name(
-            config,
-            &config.rpc.pusher.name,
-            &config.rpc.pusher.protocol,
-        )
-        .await?;
-        let push_rpc = MsgServiceClient::new(channel);
-        Ok(push_rpc)
+        let channel =
+            utils::get_rpc_channel_by_name(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
+                .await?;
+        let ws_rpc = MsgServiceClient::new(channel);
+        Ok(ws_rpc)
     }
 }
 

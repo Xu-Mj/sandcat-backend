@@ -61,15 +61,16 @@ impl UserRepo for PostgresUser {
         pattern: &str,
     ) -> Result<Vec<UserWithMatchType>, Error> {
         let users: Vec<UserWithMatchType> = sqlx::query_as(
-            "SELECT id, name, account, avatar, gender, age, phone, email, address, region, birthday, signature,
+            "SELECT id, name, account, avatar, gender, age, email, region, birthday, signature,
              CASE
-                WHEN name LIKE '%$2%' THEN 'name'
+                WHEN name LIKE $2 THEN 'name'
                 WHEN phone = $2 THEN 'phone'
                 ELSE null
              END AS match_type
-             FROM users WHERE id <> $1 AND (name LIKE '%$2%' OR phone = $2)",
+             FROM users WHERE id <> $1 AND (name LIKE $2 OR phone = $3)",
         )
         .bind(user_id)
+        .bind(&format!("%{}%", pattern))
         .bind(pattern)
         .fetch_all(&self.pool)
         .await?;

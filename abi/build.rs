@@ -95,6 +95,7 @@ fn main() {
             "AgreeSingleCall",
             "Candidate",
         ])
+        .with_sqlx_type(&["FriendshipStatus"])
         .compile(&["protos/messages.proto"], &["protos"])
         .unwrap();
 

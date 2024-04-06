@@ -225,13 +225,11 @@ message UserWithMatchType{
   string avatar = 4;
   string gender = 5;
   int32 age = 6;
-  optional string phone = 7;
-  optional string email = 8;
-  optional string address = 9;
-  optional string region = 10;
-  optional int64 birthday = 11;
-  optional string match_type = 12;
-  string signature = 13;
+  optional string email = 7;
+  optional string region = 8;
+  optional int64 birthday = 9;
+  optional string match_type = 10;
+  string signature = 11;
 }
 
 message Friendship{
@@ -286,10 +284,9 @@ message FsCreateRequest {
 message FsCreate {
   string user_id = 1;
   string friend_id = 2;
-  FriendshipStatus status = 3;
-  optional string apply_msg = 4;
-  optional string req_remark = 5;
-  string source = 6;
+  optional string apply_msg = 3;
+  optional string req_remark = 4;
+  string source = 5;
 }
 
 message FsCreateResponse{

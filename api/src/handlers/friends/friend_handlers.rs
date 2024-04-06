@@ -73,24 +73,7 @@ pub async fn create_friendship(
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     Ok(Json(fs_req))
 }
-/*
-pub fn get_friend_from_friend_req(friend: FriendShipRequest) -> FriendShipDb {
-    FriendShipDb {
-        id: nanoid!(),
-        user_id: friend.user_id,
-        friend_id: friend.friend_id,
-        status: friend.status,
-        apply_msg: friend.apply_msg,
-        req_remark: friend.remark,
-        response_msg: None,
-        res_remark: None,
-        source: friend.source,
-        is_delivered: false,
-        create_time: chrono::Local::now().naive_local(),
-        update_time: chrono::Local::now().naive_local(),
-    }
-}
-*/
+
 // 同意好友请求， 需要friend db参数
 pub async fn agree(
     State(app_state): State<AppState>,

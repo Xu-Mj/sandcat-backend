@@ -32,7 +32,7 @@ impl FriendRepo for PostgresFriend {
             "INSERT INTO friendships
                 (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time)
              VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8)
+                ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8)
              ON CONFLICT (user_id, friend_id) DO UPDATE
              SET apply_msg = EXCLUDED.apply_msg, req_remark = EXCLUDED.req_remark
              RETURNING id",
@@ -48,12 +48,11 @@ impl FriendRepo for PostgresFriend {
         .fetch_one(&self.pool)
         .await?;
         // select user information
-        let mut users: Vec<User> =
-            sqlx::query_as("SELECT * FROM friendships WHERE id = $1 OR id = $2")
-                .bind(&fs.user_id)
-                .bind(&fs.friend_id)
-                .fetch_all(&self.pool)
-                .await?;
+        let mut users: Vec<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1 OR id = $2")
+            .bind(&fs.user_id)
+            .bind(&fs.friend_id)
+            .fetch_all(&self.pool)
+            .await?;
         transaction.commit().await?;
         let user1 = users.remove(0);
         let (user, friend) = if user1.id == user_id {

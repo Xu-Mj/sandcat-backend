@@ -302,18 +302,14 @@ pub struct UserWithMatchType {
     #[prost(int32, tag = "6")]
     pub age: i32,
     #[prost(string, optional, tag = "7")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
+    #[prost(string, optional, tag = "8")]
     pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "11")]
+    #[prost(int64, optional, tag = "9")]
     pub birthday: ::core::option::Option<i64>,
-    #[prost(string, optional, tag = "12")]
+    #[prost(string, optional, tag = "10")]
     pub match_type: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "13")]
+    #[prost(string, tag = "11")]
     pub signature: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -417,13 +413,11 @@ pub struct FsCreate {
     pub user_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub friend_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "3")]
-    pub status: i32,
-    #[prost(string, optional, tag = "4")]
+    #[prost(string, optional, tag = "3")]
     pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "5")]
+    #[prost(string, optional, tag = "4")]
     pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "6")]
+    #[prost(string, tag = "5")]
     pub source: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -747,7 +741,9 @@ impl ContentType {
     }
 }
 /// / friendship status
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[derive(
+    sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+)]
 #[repr(i32)]
 pub enum FriendshipStatus {
     /// / default status
