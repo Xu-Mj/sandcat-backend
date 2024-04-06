@@ -21,11 +21,12 @@ impl PostgresUser {
 #[async_trait]
 impl UserRepo for PostgresUser {
     async fn create_user(&self, user: User) -> Result<User, Error> {
+        let now = chrono::Local::now().timestamp_millis();
         let result = sqlx::query_as(
             "INSERT INTO users
-            (id, name, account, password, avatar, gender, age, phone, email, address, region, birthday, salt, signature)
+            (id, name, account, password, avatar, gender, age, phone, email, address, region, salt, signature, create_time, update_time)
             VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
             .bind(&user.id)
             .bind(&user.name)
             .bind(&user.account)
@@ -37,9 +38,10 @@ impl UserRepo for PostgresUser {
             .bind(&user.email)
             .bind(&user.address)
             .bind(&user.region)
-            .bind(user.birthday)
             .bind(&user.salt)
             .bind(&user.signature)
+            .bind(now)
+            .bind(now)
             .fetch_one(&self.pool)
             .await?;
         Ok(result)
@@ -87,6 +89,7 @@ impl UserRepo for PostgresUser {
             region = COALESCE(NULLIF($9, ''), region),
             birthday = COALESCE(NULLIF($10, 0), birthday),
             signature = COALESCE(NULLIF($11, ''), signature),
+            update_time = $12
             WHERE id = $1",
         )
         .bind(&user.id)
@@ -100,6 +103,7 @@ impl UserRepo for PostgresUser {
         .bind(&user.region)
         .bind(user.birthday)
         .bind(&user.signature)
+        .bind(chrono::Local::now().timestamp_millis())
         .fetch_one(&self.pool)
         .await?;
         Ok(user)

@@ -66,8 +66,16 @@ impl Manager {
 
     async fn send_msg_to_clients(&self, clients: &DashMap<PlatformID, Client>, msg: &Msg) {
         for client in clients.iter() {
-            let content = serde_json::to_string(&msg).expect("序列化出错");
-            if let Err(e) = client.value().send_text(content).await {
+            // let content = serde_json::to_string(&msg).expect("序列化出错");
+            // if let Err(e) = client.value().send_text(content).await {
+            let content = match bincode::serialize(msg) {
+                Ok(res) => res,
+                Err(_) => {
+                    error!("msg serialize error");
+                    return;
+                }
+            };
+            if let Err(e) = client.value().send_binary(content).await {
                 error!("msg send error: {:?}", e);
             } else {
                 // debug!("消息发送成功--{:?}", client.id.clone());

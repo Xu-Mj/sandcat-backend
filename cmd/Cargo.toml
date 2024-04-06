@@ -16,3 +16,4 @@ ws = { version = "0.1.0", path = "../ws" }
 log = "0.4.20"
 tracing-subscriber = "0.3.18"
 tracing = "0.1.40"
+api = { version = "0.1.0", path = "../api" }

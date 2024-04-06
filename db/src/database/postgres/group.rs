@@ -29,12 +29,16 @@ impl GroupStoreRepo for PostgresGroup {
         let mut invitation = GroupInvitation::default();
         // create group
         let info: GroupInfo = sqlx::query_as(
-            "INSERT INTO groups (id, owner, name, avatar) VALUES ($1, $2, $3, $4, $5)",
+            "INSERT INTO groups
+                (id, owner, name, avatar, create_time, update_time)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)",
         )
         .bind(&group.id)
         .bind(&group.owner)
         .bind(&group.group_name)
         .bind(&group.avatar)
+        .bind(now)
+        .bind(now)
         .fetch_one(&mut *tx)
         .await?;
         invitation.info = Some(info);
@@ -127,7 +131,7 @@ impl GroupStoreRepo for PostgresGroup {
     }
 
     async fn update_group(&self, group: &GroupUpdate) -> Result<GroupInfo, Error> {
-        let now = chrono::Local::now().naive_local();
+        let now = chrono::Local::now().timestamp_millis();
         let group = sqlx::query_as(
             "UPDATE groups SET
              name = COALESCE(NULLIF($1, ''), name),

@@ -10,7 +10,7 @@ create table friendships
     response_msg VARCHAR,
     res_remark   VARCHAR,
     source       VARCHAR,
-    create_time  timestamp             NOT NULL DEFAULT now(),
-    accept_time  timestamp             NOT NULL DEFAULT now(),
+    create_time  BIGINT                NOT NULL,
+    accept_time  BIGINT                NOT NULL,
     Unique (user_id, friend_id)
 )

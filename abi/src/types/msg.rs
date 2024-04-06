@@ -23,6 +23,7 @@ impl TryFrom<Document> for Msg {
         Ok(Self {
             local_id: value.get_str("local_id")?.to_string(),
             server_id: value.get_str("server_id")?.to_string(),
+            create_time: 0,
             send_time: value.get_i64("send_time")?,
             content_type: value.get_i32("content_type")?,
             content: value.get_binary_generic("content")?.to_vec(),
@@ -36,6 +37,7 @@ impl TryFrom<Document> for Msg {
             sdp: None,
             sdp_mid: None,
             sdp_m_index: None,
+            call_agree: false,
         })
     }
 }

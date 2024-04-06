@@ -8,7 +8,7 @@ CREATE TABLE groups
     avatar       TEXT         NOT NULL,
     description  TEXT         NOT NULL DEFAULT '',
     announcement TEXT         NOT NULL DEFAULT '',
-    create_time  TIMESTAMP    NOT NULL DEFAULT NOW(),
-    update_time  TIMESTAMP    NOT NULL DEFAULT NOW()
+    create_time  BIGINT    NOT NULL,
+    update_time  BIGINT    NOT NULL
 --     FOREIGN KEY (owner) REFERENCES users (id)
 );

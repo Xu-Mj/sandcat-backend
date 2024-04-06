@@ -157,9 +157,7 @@ impl From<Error> for tonic::Status {
             Error::ConfigReadError | Error::ConfigParseError(_) => {
                 tonic::Status::internal(e.to_string())
             }
-            Error::NotFound => {
-                tonic::Status::not_found("No reservation found by the given condition")
-            }
+            Error::NotFound => tonic::Status::not_found("Not found by the given condition"),
             Error::InternalServer(msg) => tonic::Status::internal(msg),
             Error::BodyParsing(_, _) => tonic::Status::invalid_argument(e.to_string()),
             Error::PathParsing(_, _) => tonic::Status::invalid_argument(e.to_string()),
@@ -214,21 +212,53 @@ impl IntoResponse for Error {
                 format!("Bad Request errors: {{ message: {}, path: {}}}", msg, path),
             ),
             Error::NotFound => (StatusCode::NOT_FOUND, "NOT FOUND".to_string()),
-            Error::DbError(_)
-            | Error::ConfigReadError
-            | Error::ConfigParseError(_)
-            | Error::ParseError(_)
-            | Error::TonicError(_)
-            | Error::MongoDbValueAccessError(_)
-            | Error::MongoDbOperateError(_)
-            | Error::MongoDbBsonSerError(_)
-            | Error::RedisError(_)
-            | Error::ReqwestError(_)
-            | Error::IOError(_)
-            | Error::ServiceNotFound(_)
-            | Error::InternalServer(_) => (
+            Error::DbError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {:?}", e),
+            ),
+            Error::ParseError(_) | Error::ConfigReadError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL SERVER ERROR ".to_string(),
+            ),
+            Error::ConfigParseError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::TonicError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::MongoDbValueAccessError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {:?}", e),
+            ),
+            Error::MongoDbOperateError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::MongoDbBsonSerError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::RedisError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {:?}", e),
+            ),
+            Error::ReqwestError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::IOError(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::ServiceNotFound(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
+            ),
+            Error::InternalServer(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("INTERNAL SERVER ERROR {e}"),
             ),
             Error::BroadCastError => (
                 StatusCode::INTERNAL_SERVER_ERROR,

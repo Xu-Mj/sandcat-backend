@@ -46,6 +46,12 @@ async fn main() {
         PusherRpcService::start(&cloned_config).await.unwrap();
     });
 
+    // start api server
+    let cloned_config = config.clone();
+    let api_server = tokio::spawn(async move {
+        api::start(cloned_config).await;
+    });
+
     // start consumer rpc server
     let consumer_server = tokio::spawn(async move {
         let mut consumer = ConsumerService::new(&config).await;
@@ -66,6 +72,7 @@ async fn main() {
         _ = ws_server => {},
         _ = db_server => {},
         _ = pusher_server => {},
+        _ = api_server => {},
         _ = consumer_server => {},
     }
 }

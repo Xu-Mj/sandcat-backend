@@ -47,7 +47,7 @@ impl WsServer {
         // 直接启动axum server
         let router = Router::new()
             .route(
-                "/:user_id/conn/:token/:pointer_id",
+                "/ws/:user_id/conn/:token/:pointer_id",
                 get(Self::websocket_handler),
             )
             .with_state(app_state);
@@ -166,7 +166,17 @@ impl WsServer {
                         // }
                         break;
                     }
-                    Message::Binary(_) => {}
+                    Message::Binary(b) => {
+                        let result = bincode::deserialize(&b);
+                        if result.is_err() {
+                            error!("反序列化错误: {:?}； source: {:?}", result.err(), b);
+                            continue;
+                        }
+                        if cloned_hub.broadcast(result.unwrap()).await.is_err() {
+                            // 如果广播出错，那么服务端服务不可用
+                            break;
+                        }
+                    }
                 }
             }
         });

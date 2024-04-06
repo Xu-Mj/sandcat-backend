@@ -192,6 +192,7 @@ impl DbService for DbRpcService {
         &self,
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
+        debug!("receive create user request: {:?}", request);
         let mut user = request
             .into_inner()
             .user

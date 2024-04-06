@@ -1,12 +1,12 @@
 CREATE TABLE group_members
 (
     id           BIGSERIAL PRIMARY KEY,
-    group_id     VARCHAR   NOT NULL,
-    user_id      VARCHAR   NOT NULL,
+    group_id     VARCHAR NOT NULL,
+    user_id      VARCHAR NOT NULL,
     group_name   VARCHAR(128),
     group_remark VARCHAR(128),
-    delivered    bool      NOT NULL DEFAULT FALSE,
-    joined_at    timestamp NOT NULL DEFAULT now()
+    delivered    bool    NOT NULL DEFAULT FALSE,
+    joined_at    BIGINT  NOT NULL
 --     FOREIGN KEY (user_id) REFERENCES users (id),
     -- when group deleted, all members which belong to that group will be deleted
 --     FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE

@@ -16,26 +16,31 @@ pub struct Msg {
     pub server_id: ::prost::alloc::string::String,
     /// timestamp
     #[prost(int64, tag = "5")]
-    pub send_time: i64,
+    pub create_time: i64,
     #[prost(int64, tag = "6")]
+    pub send_time: i64,
+    #[prost(int64, tag = "7")]
     pub seq: i64,
-    #[prost(string, tag = "7")]
+    #[prost(string, tag = "8")]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub group_id: ::prost::alloc::string::String,
     /// is there necessary to cary the user's avatar and nickname?
-    #[prost(enumeration = "MsgType", tag = "8")]
+    #[prost(enumeration = "MsgType", tag = "9")]
     pub msg_type: i32,
-    #[prost(enumeration = "ContentType", tag = "9")]
+    #[prost(enumeration = "ContentType", tag = "10")]
     pub content_type: i32,
-    #[prost(bytes = "vec", tag = "10")]
+    #[prost(bytes = "vec", tag = "11")]
     pub content: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bool, tag = "11")]
+    #[prost(bool, tag = "12")]
     pub is_read: bool,
-    #[prost(string, optional, tag = "12")]
-    pub sdp: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "13")]
+    pub sdp: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "14")]
     pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int32, optional, tag = "14")]
+    #[prost(int32, optional, tag = "15")]
     pub sdp_m_index: ::core::option::Option<i32>,
+    #[prost(bool, tag = "16")]
+    pub call_agree: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -275,6 +280,7 @@ pub struct User {
     #[prost(int64, tag = "14")]
     pub update_time: i64,
     #[prost(string, tag = "15")]
+    #[serde(skip_serializing)]
     pub salt: ::prost::alloc::string::String,
     #[prost(string, tag = "16")]
     pub signature: ::prost::alloc::string::String,

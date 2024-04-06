@@ -234,6 +234,9 @@ impl ServerConfig {
     pub fn url(&self, https: bool) -> String {
         url(https, &self.host, self.port)
     }
+    pub fn server_url(&self) -> String {
+        format!("{}:{}", &self.host, self.port)
+    }
 
     pub fn with_port(&self, port: u16) -> ServerConfig {
         ServerConfig {

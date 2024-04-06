@@ -51,13 +51,13 @@ fn main() {
     tonic_build::configure()
         .out_dir("src/pb")
         .field_attribute("User.password", "#[serde(skip_serializing)]")
+        .field_attribute("User.salt", "#[serde(skip_serializing)]")
         .field_attribute(
-            "Msg2.group_id",
+            "Msg.group_id",
             "#[serde(default, skip_serializing_if = \"String::is_empty\")]",
         )
         .with_serde(&[
             "Msg",
-            "Msg2",
             "MsgRead",
             "MsgToDb",
             "Msg.data",

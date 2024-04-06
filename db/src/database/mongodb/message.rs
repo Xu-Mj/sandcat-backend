@@ -191,6 +191,7 @@ mod tests {
         Msg {
             local_id: "123".to_string(),
             server_id: msg_id,
+            create_time: 0,
             send_time: chrono::Local::now().timestamp(),
             content_type: 0,
             content: "test".to_string().into_bytes(),
@@ -203,6 +204,7 @@ mod tests {
             sdp: None,
             sdp_mid: None,
             sdp_m_index: None,
+            call_agree: false,
         }
     }
     #[tokio::test]

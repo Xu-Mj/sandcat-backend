@@ -7,6 +7,7 @@ use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 use abi::errors::Error;
 use abi::message::{
@@ -28,13 +29,6 @@ pub async fn create_user(
         .await?
         .filter(|code| *code == new_user.code)
         .ok_or_else(|| Error::InvalidRegisterCode)?;
-    // if let Some(code) = result {
-    //     if code != new_user.code {
-    //         return Err(Error::Register);
-    //     }
-    // } else {
-    //     return Err(Error::Register);
-    // }
 
     // encode the password
     let salt = utils::generate_salt();
@@ -57,10 +51,10 @@ pub async fn create_user(
         user: Some(user2db),
     };
     let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc
-        .create_user(request)
-        .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?;
+    let response = db_rpc.create_user(request).await.map_err(|err| {
+        error!("create user error: {:?}", err);
+        Error::InternalServer(err.message().to_string())
+    })?;
 
     let user = response
         .into_inner()
@@ -83,7 +77,7 @@ pub async fn get_user_by_id(
     let user = db_rpc
         .get_user(request)
         .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?
+        .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
         .user
         .ok_or_else(|| Error::NotFound)?;
@@ -99,7 +93,7 @@ pub async fn search_user(
     let users = db_rpc
         .search_user(request)
         .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?
+        .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
         .users;
     Ok(Json(users))
@@ -127,7 +121,7 @@ pub async fn login(
             password: login.password,
         })
         .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?
+        .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
         .user
         .ok_or_else(|| Error::AccountOrPassword)?;
@@ -143,7 +137,7 @@ pub async fn login(
     .map_err(|err| Error::InternalServer(err.to_string()))?;
     app_state.cache.user_login(&user.account).await?;
     // todo get websocket address
-    let ws_addr = "".to_string();
+    let ws_addr = "ws://127.0.0.1:50000/ws".to_string();
     Ok(Json(Token {
         id: user.account.clone(),
         user,
