@@ -54,7 +54,9 @@ impl GroupStoreRepo for PostgresGroup {
                     WHERE u.id = ANY($3)
                     RETURNING t.id, user_id, group_id, joined_at
                 )
-                SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name, usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender
+                SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name,
+                        usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender,
+                        usr.signature AS signature
                 FROM inserted AS ins
                 JOIN users AS usr ON ins.user_id = usr.id;
                 ")

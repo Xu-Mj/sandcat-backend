@@ -16,14 +16,39 @@ impl Display for FriendshipStatus {
         }
     }
 }
+#[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[sqlx(type_name = "friend_request_status")]
+pub enum FsStatus {
+    Pending,
+    Accepted,
+    Rejected,
+    /// / blacklist
+    Blacked,
+    Canceled,
+    Deleted,
+}
 
+impl From<FsStatus> for FriendshipStatus {
+    fn from(value: FsStatus) -> Self {
+        match value {
+            FsStatus::Pending => Self::Pending,
+            FsStatus::Accepted => Self::Accepted,
+            FsStatus::Rejected => Self::Rejected,
+            FsStatus::Blacked => Self::Blacked,
+            FsStatus::Canceled => Self::Canceled,
+            FsStatus::Deleted => Self::Deleted,
+        }
+    }
+}
 impl FromRow<'_, PgRow> for Friendship {
     fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+        let status: FsStatus = row.try_get("status")?;
+        let status = FriendshipStatus::from(status);
         Ok(Self {
             id: row.try_get("id")?,
             user_id: row.try_get("user_id")?,
             friend_id: row.try_get("friend_id")?,
-            status: row.try_get("status")?,
+            status: status as i32,
             apply_msg: row.try_get("apply_msg")?,
             req_remark: row.try_get("req_remark")?,
             resp_msg: row.try_get("resp_msg")?,
@@ -37,19 +62,24 @@ impl FromRow<'_, PgRow> for Friendship {
 
 impl FromRow<'_, PgRow> for Friend {
     fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+        let status: FsStatus = row.try_get("status")?;
+        let status = FriendshipStatus::from(status);
         Ok(Self {
-            id: row.try_get("id")?,
+            fs_id: row.try_get("fs_id")?,
+            friend_id: row.try_get("friend_id")?,
             name: row.try_get("name")?,
             account: row.try_get("account")?,
             avatar: row.try_get("avatar")?,
             gender: row.try_get("gender")?,
             age: row.try_get("age")?,
             region: row.try_get("region")?,
-            status: row.try_get("status")?,
+            status: status as i32,
             hello: row.try_get("hello")?,
             remark: row.try_get("remark")?,
             source: row.try_get("source")?,
             accept_time: row.try_get("accept_time")?,
+            signature: row.try_get("signature")?,
+            create_time: row.try_get("create_time")?,
         })
     }
 }
@@ -91,7 +121,8 @@ impl FromRow<'_, PgRow> for FriendshipWithUser {
 impl From<User> for Friend {
     fn from(value: User) -> Self {
         Self {
-            id: value.id,
+            fs_id: String::new(),
+            friend_id: value.id,
             name: value.name,
             account: value.account,
             avatar: value.avatar,
@@ -103,6 +134,8 @@ impl From<User> for Friend {
             remark: None,
             source: "".to_string(),
             accept_time: 0,
+            signature: value.signature,
+            create_time: 0,
         }
     }
 }

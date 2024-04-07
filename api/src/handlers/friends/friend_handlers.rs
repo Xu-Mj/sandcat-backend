@@ -101,7 +101,7 @@ pub async fn agree(
     let mut ws_rpc = app_state.ws_rpc.clone();
     ws_rpc
         .send_message(SendMsgRequest::new_with_friend_ship_resp(
-            req.id.clone(),
+            req.friend_id.clone(),
             friend,
         ))
         .await

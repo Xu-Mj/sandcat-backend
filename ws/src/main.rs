@@ -15,6 +15,6 @@ mod tests {
     #[test]
     fn test_load() {
         let msg = Msg::default();
-        println!("{}", serde_json::to_string(&msg).unwrap())
+        println!("{}", serde_json::to_string(&msg).unwrap());
     }
 }

@@ -7,11 +7,12 @@ enum ContentType {
   Text = 1;
   Image = 2;
   Video = 3;
-  File = 4;
-  Emoji = 5;
-  Audio = 6;
+  Audio = 4;
+  File = 5;
+  Emoji = 6;
   VideoCall = 7;
   AudioCall = 8;
+  Error = 9;
 }
 
 /// friendship status
@@ -173,6 +174,7 @@ message GroupMember {
   string gender = 9;
   bool is_friend = 10;
   optional string remark = 11;
+  string signature = 12;
 }
 
 /// create group object
@@ -262,8 +264,7 @@ message FriendshipWithUser{
 }
 
 message Friend{
-  /// friendship related user's id
-  string id = 1;
+  string fs_id = 1;
   string name = 2;
   string avatar = 3;
   string gender = 4;
@@ -275,6 +276,9 @@ message Friend{
   string source = 10;
   int64 accept_time = 11;
   string account = 12;
+  string friend_id = 13;
+  string signature = 14;
+  int64 create_time = 15;
 }
 
 message FsCreateRequest {
@@ -313,7 +317,7 @@ message UpdateRemarkResponse{
 }
 
 message AgreeReply {
-  string id = 1;
+  string fs_id = 1;
   optional string resp_msg = 2;
   optional  string resp_remark = 3;
 }

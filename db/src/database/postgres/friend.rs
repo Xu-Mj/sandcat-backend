@@ -191,13 +191,14 @@ impl FriendRepo for PostgresFriend {
 
     async fn get_friend_list(&self, user_id: &str) -> Result<Vec<Friend>, Error> {
         let list = sqlx::query_as(
-            "SELECT u.id, u.name, u.account, u.avatar, u.gender, u.age, u.region, f.status, f.source, f.accept_time,
+            "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
+                        f.id as fs_id, f.status, f.source, f.create_time, f.accept_time,
               CASE
-                WHEN f.user_id = $1 THEN f.response_msg
+                WHEN f.user_id = $1 THEN f.resp_msg
                 ELSE f.apply_msg
               END AS hello,
               CASE
-                WHEN f.user_id = $1 THEN f.res_remark
+                WHEN f.user_id = $1 THEN f.resp_remark
                 ELSE f.req_remark
               END AS remark
             FROM friendships AS f
@@ -231,13 +232,13 @@ impl FriendRepo for PostgresFriend {
                 status = 'Accepted',
                 accept_time = $1,
                 resp_msg = $2,
-                resp_remark = $3,
+                resp_remark = $3
             WHERE id = $4 RETURNING *",
         )
         .bind(now)
         .bind(&fs.resp_msg)
         .bind(&fs.resp_remark)
-        .bind(fs.id)
+        .bind(fs.fs_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -257,7 +258,8 @@ impl FriendRepo for PostgresFriend {
 
         // pack the friendship with user information
         let req = Friend {
-            id: friendship.user_id,
+            fs_id: friendship.id.clone(),
+            friend_id: friendship.user_id,
             name: user.name,
             avatar: user.avatar,
             gender: user.gender,
@@ -269,12 +271,14 @@ impl FriendRepo for PostgresFriend {
             source: friendship.source.clone(),
             accept_time: now,
             account: user.account,
+            signature: user.signature,
+            create_time: friendship.accept_time,
         };
         let send = Friend {
-            id: friendship.friend_id,
+            fs_id: friendship.id,
+            friend_id: friendship.friend_id,
             name: friend.name,
             avatar: friend.avatar,
-
             gender: friend.gender,
             age: friend.age,
             region: friend.region,
@@ -284,6 +288,8 @@ impl FriendRepo for PostgresFriend {
             source: friendship.source,
             accept_time: now,
             account: friend.account,
+            signature: friend.signature,
+            create_time: friendship.accept_time,
         };
         Ok((req, send))
     }

@@ -22,7 +22,6 @@ pub struct Msg {
     #[prost(int64, tag = "7")]
     pub seq: i64,
     #[prost(string, tag = "8")]
-    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub group_id: ::prost::alloc::string::String,
     /// is there necessary to cary the user's avatar and nickname?
     #[prost(enumeration = "MsgType", tag = "9")]
@@ -201,6 +200,8 @@ pub struct GroupMember {
     pub is_friend: bool,
     #[prost(string, optional, tag = "11")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "12")]
+    pub signature: ::prost::alloc::string::String,
 }
 /// / create group object
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -372,9 +373,8 @@ pub struct FriendshipWithUser {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Friend {
-    /// / friendship related user's id
     #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    pub fs_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -397,6 +397,12 @@ pub struct Friend {
     pub accept_time: i64,
     #[prost(string, tag = "12")]
     pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "13")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "14")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(int64, tag = "15")]
+    pub create_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -461,7 +467,7 @@ pub struct UpdateRemarkResponse {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AgreeReply {
     #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    pub fs_id: ::prost::alloc::string::String,
     #[prost(string, optional, tag = "2")]
     pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "3")]
@@ -700,11 +706,12 @@ pub enum ContentType {
     Text = 1,
     Image = 2,
     Video = 3,
-    File = 4,
-    Emoji = 5,
-    Audio = 6,
+    Audio = 4,
+    File = 5,
+    Emoji = 6,
     VideoCall = 7,
     AudioCall = 8,
+    Error = 9,
 }
 impl ContentType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -717,11 +724,12 @@ impl ContentType {
             ContentType::Text => "Text",
             ContentType::Image => "Image",
             ContentType::Video => "Video",
+            ContentType::Audio => "Audio",
             ContentType::File => "File",
             ContentType::Emoji => "Emoji",
-            ContentType::Audio => "Audio",
             ContentType::VideoCall => "VideoCall",
             ContentType::AudioCall => "AudioCall",
+            ContentType::Error => "Error",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -731,11 +739,12 @@ impl ContentType {
             "Text" => Some(Self::Text),
             "Image" => Some(Self::Image),
             "Video" => Some(Self::Video),
+            "Audio" => Some(Self::Audio),
             "File" => Some(Self::File),
             "Emoji" => Some(Self::Emoji),
-            "Audio" => Some(Self::Audio),
             "VideoCall" => Some(Self::VideoCall),
             "AudioCall" => Some(Self::AudioCall),
+            "Error" => Some(Self::Error),
             _ => None,
         }
     }

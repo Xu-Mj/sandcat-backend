@@ -2,7 +2,7 @@ use crate::client::Client;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::{Msg, MsgResponse, MsgType, SendMsgRequest};
+use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -131,6 +131,7 @@ impl Manager {
                         debug!("send message success");
                     } else {
                         error!("send message error: {:?}", response.err);
+                        message.content_type = ContentType::Error as i32;
                     }
                     message.msg_type = MsgType::MsgRecResp as i32;
                     message.server_id = response.server_id.clone();

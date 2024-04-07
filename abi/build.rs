@@ -52,10 +52,6 @@ fn main() {
         .out_dir("src/pb")
         .field_attribute("User.password", "#[serde(skip_serializing)]")
         .field_attribute("User.salt", "#[serde(skip_serializing)]")
-        .field_attribute(
-            "Msg.group_id",
-            "#[serde(default, skip_serializing_if = \"String::is_empty\")]",
-        )
         .with_serde(&[
             "Msg",
             "MsgRead",
