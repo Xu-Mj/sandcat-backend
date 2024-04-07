@@ -4,6 +4,7 @@ use mongodb::options::FindOptions;
 use mongodb::{Client, Collection, Database};
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
+use tracing::error;
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -83,7 +84,7 @@ impl MsgRecBoxRepo for MsgBox {
         }
     }
 
-    async fn get_messages(
+    async fn get_messages_stream(
         &self,
         user_id: &str,
         start: i64,
@@ -118,6 +119,36 @@ impl MsgRecBoxRepo for MsgBox {
             }
         }
         Ok(rx)
+    }
+
+    async fn get_messages(&self, user_id: &str, start: i64, end: i64) -> Result<Vec<Msg>, Error> {
+        let query = doc! {
+            "receiver_id": user_id,
+            "seq": {
+                "$gte": start,
+                "$lte": end
+            }
+        };
+
+        // sort by seq
+        let option = FindOptions::builder().sort(Some(doc! {"seq": 1})).build();
+
+        // query
+        let mut cursor = self.mb.find(query, Some(option)).await?;
+        let mut messages = Vec::with_capacity((end - start) as usize);
+        while let Some(result) = cursor.next().await {
+            match result {
+                Ok(doc) => {
+                    let msg = Msg::try_from(doc)?;
+                    messages.push(msg)
+                }
+                Err(e) => {
+                    error!("{:?}", e);
+                    return Err(Error::MongoDbOperateError(e));
+                }
+            }
+        }
+        Ok(messages)
     }
 }
 

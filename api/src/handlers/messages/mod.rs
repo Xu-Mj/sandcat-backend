@@ -1,1 +1,1 @@
-mod msg_handlers;
+pub(crate) mod msg_handlers;

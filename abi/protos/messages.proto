@@ -460,6 +460,10 @@ message GetDbMsgRequest {
   int64 end = 3;
 }
 
+message GetMsgResp{
+  repeated Msg messages = 1;
+}
+
 message GroupCreateRequest {
   GroupCreate group = 1;
 }
@@ -491,7 +495,8 @@ service DbService {
   /// save group message to postgres and mongodb
   rpc SaveGroupMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// query message from mongodb by start seq to end seq
-  rpc GetMessages(GetDbMsgRequest) returns (stream Msg);
+  rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
+  rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member

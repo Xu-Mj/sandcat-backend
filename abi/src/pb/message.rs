@@ -676,6 +676,7 @@ pub struct SaveMessageRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMessageResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDbMsgRequest {
@@ -685,6 +686,12 @@ pub struct GetDbMsgRequest {
     pub start: i64,
     #[prost(int64, tag = "3")]
     pub end: i64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetMsgResp {
+    #[prost(message, repeated, tag = "1")]
+    pub messages: ::prost::alloc::vec::Vec<Msg>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1281,7 +1288,7 @@ pub mod db_service_client {
             self.inner.unary(req, path, codec).await
         }
         /// / query message from mongodb by start seq to end seq
-        pub async fn get_messages(
+        pub async fn get_msg_stream(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDbMsgRequest>,
         ) -> std::result::Result<tonic::Response<tonic::codec::Streaming<super::Msg>>, tonic::Status>
@@ -1293,11 +1300,28 @@ pub mod db_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetMsgStream");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetMsgStream"));
+            self.inner.server_streaming(req, path, codec).await
+        }
+        pub async fn get_messages(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDbMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetMsgResp>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/message.DbService/GetMessages");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "GetMessages"));
-            self.inner.server_streaming(req, path, codec).await
+            self.inner.unary(req, path, codec).await
         }
         /// / create group
         pub async fn group_create(
@@ -2181,16 +2205,20 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::SaveMessageRequest>,
         ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
-        /// Server streaming response type for the GetMessages method.
-        type GetMessagesStream: tonic::codegen::tokio_stream::Stream<
+        /// Server streaming response type for the GetMsgStream method.
+        type GetMsgStreamStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::Msg, tonic::Status>,
             > + Send
             + 'static;
         /// / query message from mongodb by start seq to end seq
+        async fn get_msg_stream(
+            &self,
+            request: tonic::Request<super::GetDbMsgRequest>,
+        ) -> std::result::Result<tonic::Response<Self::GetMsgStreamStream>, tonic::Status>;
         async fn get_messages(
             &self,
             request: tonic::Request<super::GetDbMsgRequest>,
-        ) -> std::result::Result<tonic::Response<Self::GetMessagesStream>, tonic::Status>;
+        ) -> std::result::Result<tonic::Response<super::GetMsgResp>, tonic::Status>;
         /// / create group
         async fn group_create(
             &self,
@@ -2429,16 +2457,56 @@ pub mod db_service_server {
                     };
                     Box::pin(fut)
                 }
+                "/message.DbService/GetMsgStream" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetMsgStreamSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::ServerStreamingService<super::GetDbMsgRequest>
+                        for GetMsgStreamSvc<T>
+                    {
+                        type Response = super::Msg;
+                        type ResponseStream = T::GetMsgStreamStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetDbMsgRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_msg_stream(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetMsgStreamSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/message.DbService/GetMessages" => {
                     #[allow(non_camel_case_types)]
                     struct GetMessagesSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::ServerStreamingService<super::GetDbMsgRequest>
-                        for GetMessagesSvc<T>
-                    {
-                        type Response = super::Msg;
-                        type ResponseStream = T::GetMessagesStream;
-                        type Future =
-                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                    impl<T: DbService> tonic::server::UnaryService<super::GetDbMsgRequest> for GetMessagesSvc<T> {
+                        type Response = super::GetMsgResp;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetDbMsgRequest>,
@@ -2468,7 +2536,7 @@ pub mod db_service_server {
                                 max_decoding_message_size,
                                 max_encoding_message_size,
                             );
-                        let res = grpc.server_streaming(method, req).await;
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

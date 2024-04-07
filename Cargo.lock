@@ -104,6 +104,7 @@ dependencies = [
  "chrono",
  "db",
  "futures",
+ "hyper 0.14.28",
  "jsonwebtoken",
  "lettre",
  "nanoid",

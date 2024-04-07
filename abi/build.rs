@@ -57,6 +57,7 @@ fn main() {
             "MsgRead",
             "MsgToDb",
             "Msg.data",
+            "GetDbMsgRequest",
             "UserAndGroupID",
             "User",
             "UserWithMatchType",

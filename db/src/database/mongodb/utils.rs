@@ -6,6 +6,7 @@ pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
     let document = doc! {
         "local_id": &msg.local_id,
         "server_id": &msg.server_id,
+        "create_time": msg.create_time,
         "send_time": msg.send_time,
         "content_type": msg.content_type,
         "content": bson::Binary { subtype: bson::spec::BinarySubtype::Generic, bytes: msg.content.clone() },

@@ -31,10 +31,12 @@ pub trait MsgRecBoxRepo: Sync + Send {
 
     /// need to think about how to get message from receive box,
     /// use stream? or use pagination? prefer stream
-    async fn get_messages(
+    async fn get_messages_stream(
         &self,
         user_id: &str,
         start: i64,
         end: i64,
     ) -> Result<mpsc::Receiver<Result<Msg, Error>>, Error>;
+
+    async fn get_messages(&self, user_id: &str, start: i64, end: i64) -> Result<Vec<Msg>, Error>;
 }

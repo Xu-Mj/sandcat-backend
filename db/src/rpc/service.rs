@@ -12,12 +12,12 @@ use abi::message::db_service_server::DbService;
 use abi::message::{
     CreateUserRequest, CreateUserResponse, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMsgRequest, GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse,
-    GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp,
-    GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest,
-    GroupUpdateResponse, Msg, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
-    SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
-    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    GetDbMsgRequest, GetMsgResp, GetUserRequest, GetUserResponse, GroupCreateRequest,
+    GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
+    GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
+    GroupUpdateRequest, GroupUpdateResponse, Msg, SaveMessageRequest, SaveMessageResponse,
+    SearchUserRequest, SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse,
+    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -47,20 +47,31 @@ impl DbService for DbRpcService {
         todo!()
     }
 
-    type GetMessagesStream = Pin<Box<dyn Stream<Item = Result<Msg, Status>> + Send>>;
-
     async fn get_messages(
         &self,
         request: Request<GetDbMsgRequest>,
-    ) -> Result<Response<Self::GetMessagesStream>, Status> {
+    ) -> Result<Response<GetMsgResp>, Status> {
         let req = request.into_inner();
         let result = self
             .msg_rec_box
             .get_messages(&req.user_id, req.start, req.end)
             .await?;
-        Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
+        Ok(Response::new(GetMsgResp { messages: result }))
     }
 
+    type GetMsgStreamStream = Pin<Box<dyn Stream<Item = Result<Msg, Status>> + Send>>;
+
+    async fn get_msg_stream(
+        &self,
+        request: Request<GetDbMsgRequest>,
+    ) -> Result<Response<Self::GetMsgStreamStream>, Status> {
+        let req = request.into_inner();
+        let result = self
+            .msg_rec_box
+            .get_messages_stream(&req.user_id, req.start, req.end)
+            .await?;
+        Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
+    }
     async fn group_create(
         &self,
         request: Request<GroupCreateRequest>,
