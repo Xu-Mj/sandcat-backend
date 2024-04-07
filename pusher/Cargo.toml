@@ -1,0 +1,16 @@
+[package]
+name = "pusher"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+abi = { version = "0.1.0", path = "../abi" }
+dashmap = "5.5.3"
+tokio = { version = "1.36.0", features = ["full"] }
+tonic = { version = "0.11.0", features = ["gzip"] }
+tonic-health = "0.11.0"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+utils = { version = "0.1.0", path = "../utils" }

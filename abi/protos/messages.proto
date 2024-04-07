@@ -1,0 +1,534 @@
+syntax = "proto3";
+package message;
+
+/// message content type
+enum ContentType {
+  Default = 0;
+  Text = 1;
+  Image = 2;
+  Video = 3;
+  Audio = 4;
+  File = 5;
+  Emoji = 6;
+  VideoCall = 7;
+  AudioCall = 8;
+  Error = 9;
+}
+
+/// friendship status
+enum FriendshipStatus {
+  /// default status
+  FriendshipStatusDefault = 0;
+  Pending = 1;
+  Accepted = 2;
+  Rejected = 3;
+  /// blacklist
+  Blacked = 4;
+  Canceled = 5;
+  Deleted = 6;
+}
+
+enum MsgType{
+  MsgTypeSingleMsg = 0;
+  MsgTypeGroupMsg = 1;
+  MsgTypeGroupInvitation = 2;
+  MsgTypeGroupInviteNew = 3;
+  MsgTypeGroupMemberExit = 4;
+  MsgTypeGroupDismiss = 5;
+  MsgTypeGroupDismissOrExitReceived = 6;
+  MsgTypeGroupInvitationReceived = 7;
+  MsgTypeGroupUpdate = 8;
+  MsgTypeFriendApplyReq = 9;
+  MsgTypeFriendApplyResp = 10;
+  MsgTypeSingleCallInvite = 11;
+  MsgTypeSingleCallInviteAnswer = 12;
+  MsgTypeSingleCallInviteNotAnswer = 13;
+  MsgTypeSingleCallInviteCancel = 14;
+  MsgTypeSingleCallOffer = 15;
+  MsgTypeHangup = 16;
+  MsgTypeAgreeSingleCall = 17;
+  MsgTypeCandidate = 18;
+  MsgTypeRead = 19;
+  MsgTypeMsgRecResp = 20;
+  MsgTypeNotification = 21;
+  MsgTypeService = 22;
+}
+
+/// decode message content by content type
+message Msg {
+  // must have
+  string send_id = 1;
+  // must have
+  string receiver_id = 2;
+  // must have
+  string local_id = 3;
+  string server_id = 4;
+  // timestamp
+  int64 create_time = 5;
+  int64 send_time = 6;
+  int64 seq = 7;
+  string group_id = 8;
+  // is there necessary to cary the user's avatar and nickname?
+  MsgType msg_type = 9;
+  ContentType content_type = 10;
+  bytes content = 11;
+  bool is_read = 12;
+  optional string sdp = 13;
+  optional string sdp_mid = 14;
+  optional int32 sdp_m_index = 15;
+  bool call_agree = 16;
+}
+
+message MsgRead{
+  string msg_id = 1;
+  string user_id = 2;
+  string seq = 3;
+}
+
+message Candidate{
+  string candidate = 1;
+  optional string sdp_mid = 2;
+  optional int32 sdp_m_index = 3;
+}
+
+enum SingleCallInviteType {
+  SingleAudio = 0;
+  SingleVideo = 1;
+}
+
+message AgreeSingleCall{
+  string sdp = 1;
+}
+
+message SingleCallInvite {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteAnswer {
+  bool agree = 1;
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallInviteNotAnswer {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteCancel {
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallOffer {
+  string sdp = 1;
+}
+
+message Hangup {
+  SingleCallInviteType invite_type = 1;
+  int64 sustain = 2;
+}
+
+/// use to send single message or group message;
+/// message ws is used to connect the client by websocket;
+/// and it receive message from clients; then send message to mq;
+/// so only provide the send message function for other rpc service;
+message Single {
+  // message content
+  string content = 2;
+  // message type
+  ContentType content_type = 3;
+}
+
+/// user and group id
+message UserAndGroupID{
+  string user_id = 1;
+  string group_id = 2;
+}
+
+/// group invitation include group information and group member information
+message GroupInvitation{
+  GroupInfo info = 1;
+  repeated GroupMember members = 2;
+}
+
+/// group information also related to database
+message GroupInfo {
+  string id = 1;
+  string owner = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  int64 create_time = 7;
+  int64 update_time = 8;
+}
+
+/// group member information also related to database table group_members
+message GroupMember {
+  int64 id = 1;
+  int32 age = 2;
+  string group_id = 3;
+  string user_id = 4;
+  string group_name = 5;
+  string avatar = 6;
+  int64 joined_at = 7;
+  optional string region = 8;
+  string gender = 9;
+  bool is_friend = 10;
+  optional string remark = 11;
+  string signature = 12;
+}
+
+/// create group object
+message GroupCreate{
+  string id = 1;
+  string owner = 2;
+  string avatar = 3;
+  string group_name = 4;
+  repeated string members_id = 5;
+}
+
+message GroupInviteNew{
+  string user_id = 1;
+  string group_id = 2;
+  repeated string members = 3;
+}
+
+message GroupUpdate{
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string description = 4;
+  string announcement = 5;
+  int64 update_time = 6;
+}
+
+message User{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string password = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string phone = 8;
+  optional string email = 9;
+  optional string address = 10;
+  optional string region = 11;
+  optional int64 birthday = 12;
+  int64 create_time = 13;
+  int64 update_time = 14;
+  string salt = 15;
+  string signature = 16;
+}
+
+message UserWithMatchType{
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string email = 7;
+  optional string region = 8;
+  optional int64 birthday = 9;
+  optional string match_type = 10;
+  string signature = 11;
+}
+
+message Friendship{
+  string id = 1;
+  string user_id = 2;
+  string friend_id = 3;
+  FriendshipStatus status = 4;
+  optional string apply_msg = 5;
+  optional string req_remark = 6;
+  optional string resp_msg = 7;
+  optional string resp_remark = 8;
+  string source = 9;
+  int64 create_time = 10;
+  int64 accept_time = 11;
+}
+
+message FriendshipWithUser{
+  string fs_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string region = 7;
+  FriendshipStatus status = 8;
+  optional string apply_msg = 9;
+  string source = 10;
+  int64 create_time = 11;
+  string account = 12;
+}
+
+message Friend{
+  string fs_id = 1;
+  string name = 2;
+  string avatar = 3;
+  string gender = 4;
+  int32 age = 5;
+  optional string region = 6;
+  FriendshipStatus status = 7;
+  optional string hello = 8;
+  optional string remark = 9;
+  string source = 10;
+  int64 accept_time = 11;
+  string account = 12;
+  string friend_id = 13;
+  string signature = 14;
+  int64 create_time = 15;
+}
+
+message FsCreateRequest {
+  FsCreate fs_create = 1;
+}
+
+message FsCreate {
+  string user_id = 1;
+  string friend_id = 2;
+  optional string apply_msg = 3;
+  optional string req_remark = 4;
+  string source = 5;
+}
+
+message FsCreateResponse{
+  FriendshipWithUser fs_req = 1;
+  FriendshipWithUser fs_send = 2;
+}
+
+message FsAgreeRequest {
+  AgreeReply fs_reply = 1;
+}
+
+message FsAgreeResponse {
+  Friend req = 1;
+  Friend send = 2;
+}
+
+message UpdateRemarkRequest{
+  string user_id = 1;
+  string friend_id = 2;
+  string remark = 3;
+}
+
+message UpdateRemarkResponse{
+}
+
+message AgreeReply {
+  string fs_id = 1;
+  optional string resp_msg = 2;
+  optional  string resp_remark = 3;
+}
+
+message FsListRequest {
+  string user_id = 1;
+}
+
+message FriendListRequest {
+  string user_id = 1;
+}
+
+/// only for update friend apply request
+message FsUpdate {
+  string id = 1;
+  string apply_msg = 2;
+  string req_remark = 3;
+}
+
+message FsUpdateRequest{
+  FsUpdate fs_update = 1;
+}
+
+message FsListResponse {
+  repeated FriendshipWithUser friendships = 1;
+}
+
+message FriendListResponse {
+  repeated Friend friends = 1;
+}
+
+message GroupInviteNewRequest{
+  GroupInviteNew group_invite = 1;
+}
+
+message GroupInviteNewResp{
+  repeated GroupMember members = 1;
+}
+
+message GroupUpdateRequest {
+  GroupUpdate group = 1;
+}
+
+message GroupUpdateResponse {
+  GroupInfo group = 1;
+}
+
+message GroupDeleteRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message GroupDeleteResponse {
+  //  repeated string members_id = 1;
+  GroupInfo group = 1;
+}
+
+message GroupMemberExitResponse {
+  //  repeated string members_id = 1;
+}
+
+message GroupMembersIdRequest {
+  string group_id = 1;
+}
+
+message GroupMembersIdResponse {
+  repeated string members_id = 1;
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  User user = 1;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message SearchUserRequest {
+  string user_id = 1;
+  string pattern = 2;
+}
+
+message SearchUserResponse {
+  repeated UserWithMatchType users = 1;
+}
+
+message VerifyPwdRequest {
+  /// could be account, email or phone number
+  string account = 1;
+  string password = 2;
+}
+
+message VerifyPwdResponse {
+  User user = 1;
+}
+
+message SendMsgRequest {
+  Msg message = 1;
+}
+
+message SendGroupMsgRequest {
+  Msg message = 1;
+  repeated string members_id = 2;
+}
+
+message SendMsgResponse {}
+
+message MsgResponse {
+  string local_id = 1;
+  string server_id = 2;
+  int64  send_time = 3;
+  string err = 4;
+}
+
+message SaveMessageRequest {
+  Msg message = 1;
+}
+
+message SaveMessageResponse {}
+
+message GetDbMsgRequest {
+  string user_id = 1;
+  int64 start = 2;
+  int64 end = 3;
+}
+
+message GroupCreateRequest {
+  GroupCreate group = 1;
+}
+
+message GroupCreateResponse {
+  GroupInvitation invitation = 1;
+}
+
+service MsgService {
+  // send message through rpc
+  rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+  // send single message to user by websocket
+  rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
+  // send group message to user by websocket
+  rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
+}
+
+/// chat service, receive message then generate message id and send message to mq;
+/// response operation result;
+service ChatService {
+  rpc SendMsg(SendMsgRequest) returns (MsgResponse);
+}
+
+/// db interface think about if it is necessary to put api interface together.
+service DbService {
+  /// save message to postgres and mongodb
+  /// use same table and collection to save the single message and group message
+  rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
+  /// save group message to postgres and mongodb
+  rpc SaveGroupMessage(SaveMessageRequest) returns (SaveMessageResponse);
+  /// query message from mongodb by start seq to end seq
+  rpc GetMessages(GetDbMsgRequest) returns (stream Msg);
+  /// create group
+  rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
+  /// member invites new member
+  rpc GroupInviteNew(GroupInviteNewRequest) returns (GroupInviteNewResp);
+  /// update group
+  rpc GroupUpdate(GroupUpdateRequest) returns (GroupUpdateResponse);
+  /// delete group
+  rpc GroupDelete(GroupDeleteRequest) returns (GroupDeleteResponse);
+  /// member exit
+  rpc GroupMemberExit(UserAndGroupID) returns (GroupMemberExitResponse);
+  /// query group members id
+  rpc GroupMembersId(GroupMembersIdRequest) returns (GroupMembersIdResponse);
+  /// create user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  /// get user by id
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  /// update user
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  /// search user
+  rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+  /// verify password
+  rpc VerifyPassword(VerifyPwdRequest) returns (VerifyPwdResponse);
+  /// create friendship
+  rpc CreateFriendship(FsCreateRequest) returns (FsCreateResponse);
+  /// reply friendship: agree, reject
+  rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
+  /// get friendship list
+  rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
+  rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
+  rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
+}
+
+service PushService {
+  /// push single message to message gateway
+  rpc PushSingleMsg(SendMsgRequest) returns (SendMsgResponse);
+  /// push group message to message gateway
+  rpc PushGroupMsg(SendGroupMsgRequest) returns (SendMsgResponse);
+  /// push other message to message gateway, need to think about it
+  rpc PushMsg(SendMsgRequest) returns (SendMsgResponse);
+}

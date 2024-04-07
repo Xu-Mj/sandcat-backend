@@ -1,0 +1,84 @@
+db:
+  postgres:
+    host: localhost
+    port: 5432
+    user: postgres
+    password: root
+    database: im2
+  mongodb:
+    host: localhost
+    port: 27017
+    user:
+    password:
+    database: im
+
+server:
+  host: 127.0.0.1
+  port: 50001
+  jwt_secret: xmj
+
+service_center:
+  host: 127.0.0.1
+  port: 8500
+  timeout: 5000
+  protocol: http
+
+websocket:
+  host: 127.0.0.1
+  port: 50000
+
+rpc:
+  ws:
+    protocol: http
+    host: 127.0.0.1
+    port: 50002
+    name: ws
+    tags:
+      - ws
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
+  chat:
+    protocol: http
+    host: 127.0.0.1
+    port: 50003
+    name: chat
+    tags:
+      - chat
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
+  db:
+    protocol: http
+    host: 127.0.0.1
+    port: 50004
+    name: db
+    tags:
+      - db
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
+  pusher:
+    protocol: http
+    host: 127.0.0.1
+    port: 50005
+    name: pusher
+    tags:
+      - pusher
+      - grpc
+    grpc_health_check:
+      grpc_use_tls: false
+      interval: 30000 # second
+
+redis:
+  host: localhost
+  port: 6379
+
+kafka:
+  hosts:
+    - localhost:9092
+  topic: xmj
+  group: chat

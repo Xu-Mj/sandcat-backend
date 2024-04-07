@@ -1,0 +1,28 @@
+[package]
+name = "ws"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.81"
+axum = { version = "0.7.4", features = ["ws"] }
+dashmap = "5.5.3"
+futures = "0.3.30"
+redis = "0.25.2"
+serde = "1.0.197"
+serde_json = "1.0.114"
+tokio = { version = "1.36.0", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+tonic = { version = "0.11.0", features = ["gzip"] }
+
+abi = { version = "0.1.0", path = "../abi" }
+utils = { version = "0.1.0", path = "../utils" }
+log = "0.4.20"
+nanoid = "0.4.0"
+tonic-health = "0.11.0"
+bincode = "1.3.3"
+#rdkafka = { version = "0.36.2", features = ["cmake-build"] }
