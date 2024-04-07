@@ -3,10 +3,11 @@ use axum::http::Response;
 use axum::Json;
 use futures::StreamExt;
 use hyper::Body;
+use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{GetDbMsgRequest, Msg};
-use utils::custom_extract::JsonWithAuthExtractor;
+use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 use crate::AppState;
 
@@ -60,4 +61,16 @@ pub async fn pull_offline_messages(
         ))
     })?;
     Ok(Json(response.into_inner().messages))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Seq {
+    pub seq: i64,
+}
+pub async fn get_seq(
+    State(state): State<AppState>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+) -> Result<Json<Seq>, Error> {
+    let seq = state.cache.get_seq(&user_id).await?;
+    Ok(Json(Seq { seq }))
 }

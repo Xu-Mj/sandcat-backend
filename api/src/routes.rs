@@ -9,7 +9,7 @@ use crate::handlers::friends::friend_handlers::{
 use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, invite_new_members, update_group_handler,
 };
-use crate::handlers::messages::msg_handlers::pull_offline_messages;
+use crate::handlers::messages::msg_handlers::{get_seq, pull_offline_messages};
 use crate::handlers::users::{create_user, get_user_by_id, login, logout, search_user, send_email};
 use crate::AppState;
 
@@ -64,5 +64,6 @@ fn file_routes(state: AppState) -> Router {
 fn msg_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(pull_offline_messages))
+        .route("/seq/:user_id", get(get_seq))
         .with_state(state)
 }
