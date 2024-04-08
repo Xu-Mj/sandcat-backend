@@ -672,10 +672,25 @@ pub struct MsgResponse {
 pub struct SaveMessageRequest {
     #[prost(message, optional, tag = "1")]
     pub message: ::core::option::Option<Msg>,
+    #[prost(bool, tag = "2")]
+    pub need_to_history: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMessageResponse {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SaveGroupMsgRequest {
+    #[prost(message, optional, tag = "1")]
+    pub message: ::core::option::Option<Msg>,
+    #[prost(bool, tag = "2")]
+    pub need_to_history: bool,
+    #[prost(string, repeated, tag = "3")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SaveGroupMsgResponse {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1271,8 +1286,8 @@ pub mod db_service_client {
         /// / save group message to postgres and mongodb
         pub async fn save_group_message(
             &mut self,
-            request: impl tonic::IntoRequest<super::SaveMessageRequest>,
-        ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>
+            request: impl tonic::IntoRequest<super::SaveGroupMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveGroupMsgResponse>, tonic::Status>
         {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
@@ -2203,8 +2218,8 @@ pub mod db_service_server {
         /// / save group message to postgres and mongodb
         async fn save_group_message(
             &self,
-            request: tonic::Request<super::SaveMessageRequest>,
-        ) -> std::result::Result<tonic::Response<super::SaveMessageResponse>, tonic::Status>;
+            request: tonic::Request<super::SaveGroupMsgRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveGroupMsgResponse>, tonic::Status>;
         /// Server streaming response type for the GetMsgStream method.
         type GetMsgStreamStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::Msg, tonic::Status>,
@@ -2418,14 +2433,14 @@ pub mod db_service_server {
                 "/message.DbService/SaveGroupMessage" => {
                     #[allow(non_camel_case_types)]
                     struct SaveGroupMessageSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::UnaryService<super::SaveMessageRequest>
+                    impl<T: DbService> tonic::server::UnaryService<super::SaveGroupMsgRequest>
                         for SaveGroupMessageSvc<T>
                     {
-                        type Response = super::SaveMessageResponse;
+                        type Response = super::SaveGroupMsgResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::SaveMessageRequest>,
+                            request: tonic::Request<super::SaveGroupMsgRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

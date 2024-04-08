@@ -67,6 +67,7 @@ pub async fn pull_offline_messages(
 pub struct Seq {
     pub seq: i64,
 }
+
 pub async fn get_seq(
     State(state): State<AppState>,
     PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,

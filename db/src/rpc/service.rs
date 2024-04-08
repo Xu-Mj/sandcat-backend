@@ -15,9 +15,10 @@ use abi::message::{
     GetDbMsgRequest, GetMsgResp, GetUserRequest, GetUserResponse, GroupCreateRequest,
     GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
     GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, Msg, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse,
-    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    GroupUpdateRequest, GroupUpdateResponse, Msg, SaveGroupMsgRequest, SaveGroupMsgResponse,
+    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
+    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
+    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -30,21 +31,30 @@ impl DbService for DbRpcService {
         &self,
         request: Request<SaveMessageRequest>,
     ) -> Result<Response<SaveMessageResponse>, Status> {
-        let message = request.into_inner().message;
-        if message.is_none() {
-            return Err(Status::invalid_argument("message is empty"));
-        }
-        let message = message.unwrap();
+        let inner = request.into_inner();
+        let message = inner
+            .message
+            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+        let need_to_history = inner.need_to_history;
         debug!("save message: {:?}", message);
-        self.handle_message(message).await?;
+        self.handle_message(message, need_to_history).await?;
         return Ok(Response::new(SaveMessageResponse {}));
     }
 
     async fn save_group_message(
         &self,
-        _request: Request<SaveMessageRequest>,
-    ) -> Result<Response<SaveMessageResponse>, Status> {
-        todo!()
+        request: Request<SaveGroupMsgRequest>,
+    ) -> Result<Response<SaveGroupMsgResponse>, Status> {
+        let inner = request.into_inner();
+        let message = inner
+            .message
+            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+        let need_to_history = inner.need_to_history;
+        let members_id = inner.members_id;
+        debug!("save group message: {:?}", message);
+        self.handle_group_message(message, need_to_history, members_id)
+            .await?;
+        return Ok(Response::new(SaveGroupMsgResponse {}));
     }
 
     async fn get_messages(

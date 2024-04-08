@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
+use abi::message::Msg;
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -13,7 +14,7 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
-use tracing::error;
+use tracing::{error, warn};
 use utils::custom_extract::path_extractor::PathExtractor;
 
 use crate::manager::Manager;
@@ -172,7 +173,12 @@ impl WsServer {
                             error!("反序列化错误: {:?}； source: {:?}", result.err(), b);
                             continue;
                         }
-                        if cloned_hub.broadcast(result.unwrap()).await.is_err() {
+                        let msg: Msg = result.unwrap();
+                        if msg.local_id.is_empty() {
+                            warn!("receive empty message");
+                            continue;
+                        }
+                        if cloned_hub.broadcast(msg).await.is_err() {
                             // 如果广播出错，那么服务端服务不可用
                             break;
                         }
