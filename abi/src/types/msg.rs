@@ -2,7 +2,7 @@ use mongodb::bson::Document;
 use tonic::Status;
 
 use crate::errors::Error;
-use crate::message::{Msg, MsgResponse, MsgType, SendMsgRequest, UserAndGroupId};
+use crate::message::{GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest, UserAndGroupId};
 
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
@@ -21,18 +21,20 @@ impl TryFrom<Document> for Msg {
 
     fn try_from(value: Document) -> Result<Self, Self::Error> {
         Ok(Self {
-            local_id: value.get_str("local_id")?.to_string(),
-            server_id: value.get_str("server_id")?.to_string(),
-            create_time: 0,
-            send_time: value.get_i64("send_time")?,
-            content_type: value.get_i32("content_type")?,
-            content: value.get_binary_generic("content")?.to_vec(),
-            send_id: value.get_str("send_id")?.to_string(),
-            receiver_id: value.get_str("receiver_id")?.to_string(),
-            seq: value.get_i64("seq")?,
-            group_id: value.get_str("group_id")?.to_string(),
-            msg_type: value.get_i32("msg_type")?,
-            is_read: value.get_bool("is_read")?,
+            local_id: value.get_str("local_id").unwrap_or_default().to_string(),
+            server_id: value.get_str("server_id").unwrap_or_default().to_string(),
+            create_time: value.get_i64("create_time").unwrap_or_default(),
+            send_time: value.get_i64("send_time").unwrap_or_default(),
+            content_type: value.get_i32("content_type").unwrap_or_default(),
+            content: value
+                .get_binary_generic("content")
+                .map_or(vec![], |v| v.to_vec()),
+            send_id: value.get_str("send_id").unwrap_or_default().to_string(),
+            receiver_id: value.get_str("receiver_id").unwrap_or_default().to_string(),
+            seq: value.get_i64("seq").unwrap_or_default(),
+            group_id: value.get_str("group_id").unwrap_or_default().to_string(),
+            msg_type: value.get_i32("msg_type").unwrap_or_default(),
+            is_read: value.get_bool("is_read").unwrap_or_default(),
             // those do not save to mongodb
             sdp: None,
             sdp_mid: None,
@@ -140,43 +142,20 @@ impl UserAndGroupId {
     }
 }
 
-/*
-
-impl SendGroupMsgRequest {
-    pub fn new(msg: Msg, members_id: Vec<String>) -> Self {
-        Self {
-            message: Some(msg),
-            members_id,
+impl GetDbMsgRequest {
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.user_id.is_empty() {
+            return Err(Error::BadRequest("user_id is empty".to_string()));
         }
-    }
-
-    pub fn new_with_group_invitation(
-        send_id: String,
-        msg: GroupInvitation,
-        members_id: Vec<String>,
-    ) -> Self {
-        Self {
-            message: Some(Msg {
-                send_id,
-                send_time: chrono::Local::now().timestamp_millis(),
-                data: Some(Data::GroupInvitation(msg)),
-                ..Default::default()
-            }),
-            members_id,
+        if self.start < 0 {
+            return Err(Error::BadRequest("start is invalid".to_string()));
         }
-    }
-
-    pub fn new_with_group_msg(msg: Data, members_id: Vec<String>) -> Self {
-        Self {
-            message: Some(Msg {
-                data: Some(msg),
-                ..Default::default()
-            }),
-            members_id,
+        if self.end < 0 {
+            return Err(Error::BadRequest("end is invalid".to_string()));
         }
+        if self.end < self.start {
+            return Err(Error::BadRequest("start is greater than end".to_string()));
+        }
+        Ok(())
     }
-
-
 }
-
-*/

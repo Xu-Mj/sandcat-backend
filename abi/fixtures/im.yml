@@ -79,6 +79,6 @@ redis:
 
 kafka:
   hosts:
-    - localhost:9092
+    - 127.0.0.1:9092
   topic: xmj
   group: chat

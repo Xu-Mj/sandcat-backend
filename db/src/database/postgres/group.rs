@@ -164,11 +164,18 @@ impl GroupStoreRepo for PostgresGroup {
     }
 
     async fn delete_group(&self, group_id: &str, owner: &str) -> Result<GroupInfo, Error> {
+        // delete group and group members
+        let mut tx = self.pool.begin().await?;
         let group = sqlx::query_as("DELETE FROM groups WHERE id = $1 and owner = $2 RETURNING *")
             .bind(group_id)
             .bind(owner)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
+        sqlx::query("DELETE FROM group_members WHERE group_id = $1")
+            .bind(group_id)
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
         Ok(group)
     }
 }

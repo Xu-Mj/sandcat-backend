@@ -27,7 +27,7 @@ impl FriendRepo for PostgresFriend {
     ) -> Result<(FriendshipWithUser, FriendshipWithUser), Error> {
         let user_id = fs.user_id.clone();
         let now = chrono::Local::now().timestamp_millis();
-        let transaction = self.pool.begin().await?;
+        let mut transaction = self.pool.begin().await?;
         let fs_id: (String,) = sqlx::query_as(
             "INSERT INTO friendships
                 (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time)
@@ -45,13 +45,13 @@ impl FriendRepo for PostgresFriend {
         .bind(&fs.req_remark)
         .bind(&fs.source)
         .bind(now)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *transaction)
         .await?;
         // select user information
         let mut users: Vec<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1 OR id = $2")
             .bind(&fs.user_id)
             .bind(&fs.friend_id)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *transaction)
             .await?;
         transaction.commit().await?;
         let user1 = users.remove(0);
@@ -225,7 +225,7 @@ impl FriendRepo for PostgresFriend {
 
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error> {
         let now = chrono::Local::now().timestamp_millis();
-        let transaction = self.pool.begin().await?;
+        let mut transaction = self.pool.begin().await?;
         let friendship: Friendship = sqlx::query_as(
             "UPDATE friendships
             SET
@@ -239,14 +239,14 @@ impl FriendRepo for PostgresFriend {
         .bind(&fs.resp_msg)
         .bind(&fs.resp_remark)
         .bind(fs.fs_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *transaction)
         .await?;
 
         // select user information
         let mut users: Vec<User> = sqlx::query_as("SELECT * from users WHERE id = $1 OR id = $2")
             .bind(&friendship.user_id)
             .bind(&friendship.friend_id)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *transaction)
             .await?;
         transaction.commit().await?;
         let user1 = users.remove(0);

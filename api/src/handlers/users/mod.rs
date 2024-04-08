@@ -20,10 +20,10 @@ pub struct UserRegister {
 
 #[derive(Serialize)]
 pub struct Token {
-    id: String,
     user: User,
     token: String,
     ws_addr: String,
+    seq: i64,
 }
 
 #[derive(Deserialize, Debug)]

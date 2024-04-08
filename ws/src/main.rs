@@ -1,5 +1,6 @@
-use abi::config::Config;
 use tracing::Level;
+
+use abi::config::Config;
 use ws::ws_server::WsServer;
 
 #[tokio::main]
@@ -12,6 +13,7 @@ async fn main() {
 #[cfg(test)]
 mod tests {
     use abi::message::Msg;
+
     #[test]
     fn test_load() {
         let msg = Msg::default();

@@ -88,11 +88,14 @@ impl DbRpcService {
     }
 
     /// todo need to handle group message
-    pub async fn handle_message(&self, message: Msg) -> Result<(), Error> {
+    pub async fn handle_message(&self, message: Msg, need_to_history: bool) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
         let cloned_msg = message.clone();
         let db_task = tokio::spawn(async move {
+            if !need_to_history {
+                return;
+            }
             if let Err(e) = db.msg.save_message(cloned_msg).await {
                 tracing::error!("<db> save message to db failed: {}", e);
             }
@@ -102,6 +105,36 @@ impl DbRpcService {
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
             if let Err(e) = msg_rec_box.save_message(&message).await {
+                tracing::error!("<db> save message to mongodb failed: {}", e);
+            }
+        });
+        tokio::try_join!(db_task, msg_rec_box_task)
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn handle_group_message(
+        &self,
+        message: Msg,
+        need_to_history: bool,
+        members_id: Vec<String>,
+    ) -> Result<(), Error> {
+        // task 1 save message to postgres
+        let db = self.db.clone();
+        let cloned_msg = message.clone();
+        let db_task = tokio::spawn(async move {
+            if !need_to_history {
+                return;
+            }
+            if let Err(e) = db.msg.save_message(cloned_msg).await {
+                tracing::error!("<db> save message to db failed: {}", e);
+            }
+        });
+
+        // task 2 save message to mongodb
+        let msg_rec_box = self.msg_rec_box.clone();
+        let msg_rec_box_task = tokio::spawn(async move {
+            if let Err(e) = msg_rec_box.save_group_msg(message, members_id).await {
                 tracing::error!("<db> save message to mongodb failed: {}", e);
             }
         });

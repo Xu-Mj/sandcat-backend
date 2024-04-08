@@ -132,7 +132,7 @@ impl ChatService for ChatRpcService {
         };
 
         return Ok(tonic::Response::new(MsgResponse {
-            local_id: msg.send_id,
+            local_id: msg.local_id,
             server_id: msg.server_id,
             send_time: msg.send_time,
             err,

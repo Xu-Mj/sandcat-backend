@@ -104,6 +104,7 @@ dependencies = [
  "chrono",
  "db",
  "futures",
+ "hyper 0.14.28",
  "jsonwebtoken",
  "lettre",
  "nanoid",
@@ -4404,10 +4405,13 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tokio-tungstenite",
  "tonic",
  "tonic-health",
  "tracing",
  "tracing-subscriber",
+ "tungstenite",
+ "url",
  "utils",
 ]
 

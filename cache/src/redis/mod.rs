@@ -38,11 +38,18 @@ impl Cache for RedisCache {
         let key = format!("seq:{}", user_id);
 
         // get seq from redis
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+
+        // increase seq
+        let seq: i64 = conn.get(&key).await.unwrap_or_default();
+        Ok(seq)
+    }
+    async fn increase_seq(&self, user_id: &str) -> Result<i64, Error> {
+        // generate key
+        let key = format!("seq:{}", user_id);
+
+        // get seq from redis
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         // increase seq
         let seq: i64 = conn.incr(&key, 1).await?;
@@ -54,11 +61,7 @@ impl Cache for RedisCache {
         // generate key
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         // query value from redis
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         let result: Vec<String> = conn.smembers(&key).await?;
         Ok(result)
@@ -70,11 +73,7 @@ impl Cache for RedisCache {
         members_id: Vec<String>,
     ) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
         // Add each member to the set for the group by redis pipe
         let mut pipe = redis::pipe();
         for member in members_id {
@@ -86,33 +85,21 @@ impl Cache for RedisCache {
 
     async fn add_group_member_id(&self, member_id: &str, group_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
         conn.sadd(&key, member_id).await?;
         Ok(())
     }
 
     async fn remove_group_member_id(&self, group_id: &str, member_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
         conn.srem(&key, member_id).await?;
         Ok(())
     }
 
     async fn del_group_members(&self, group_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
-        let mut conn = self
-            .client
-            .get_multiplexed_async_connection()
-            .await
-            .unwrap();
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
         conn.del(&key).await?;
         Ok(())
     }
@@ -213,10 +200,10 @@ mod tests {
         }
     }
     #[tokio::test]
-    async fn test_get_seq() {
+    async fn test_increase_seq() {
         let user_id = "test";
         let cache = TestRedis::new();
-        let seq = cache.get_seq(user_id).await.unwrap();
+        let seq = cache.increase_seq(user_id).await.unwrap();
         assert_eq!(seq, 1);
     }
 

@@ -450,14 +450,27 @@ message MsgResponse {
 
 message SaveMessageRequest {
   Msg message = 1;
+  bool need_to_history = 2;
 }
 
 message SaveMessageResponse {}
+
+message SaveGroupMsgRequest {
+  Msg message = 1;
+  bool need_to_history = 2;
+  repeated string members_id = 3;
+}
+
+message SaveGroupMsgResponse {}
 
 message GetDbMsgRequest {
   string user_id = 1;
   int64 start = 2;
   int64 end = 3;
+}
+
+message GetMsgResp{
+  repeated Msg messages = 1;
 }
 
 message GroupCreateRequest {
@@ -489,9 +502,10 @@ service DbService {
   /// use same table and collection to save the single message and group message
   rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
   /// save group message to postgres and mongodb
-  rpc SaveGroupMessage(SaveMessageRequest) returns (SaveMessageResponse);
+  rpc SaveGroupMessage(SaveGroupMsgRequest) returns (SaveGroupMsgResponse);
   /// query message from mongodb by start seq to end seq
-  rpc GetMessages(GetDbMsgRequest) returns (stream Msg);
+  rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
+  rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member
