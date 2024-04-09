@@ -57,18 +57,6 @@ impl DbService for DbRpcService {
         return Ok(Response::new(SaveGroupMsgResponse {}));
     }
 
-    async fn get_messages(
-        &self,
-        request: Request<GetDbMsgRequest>,
-    ) -> Result<Response<GetMsgResp>, Status> {
-        let req = request.into_inner();
-        let result = self
-            .msg_rec_box
-            .get_messages(&req.user_id, req.start, req.end)
-            .await?;
-        Ok(Response::new(GetMsgResp { messages: result }))
-    }
-
     type GetMsgStreamStream = Pin<Box<dyn Stream<Item = Result<Msg, Status>> + Send>>;
 
     async fn get_msg_stream(
@@ -81,6 +69,18 @@ impl DbService for DbRpcService {
             .get_messages_stream(&req.user_id, req.start, req.end)
             .await?;
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
+    }
+
+    async fn get_messages(
+        &self,
+        request: Request<GetDbMsgRequest>,
+    ) -> Result<Response<GetMsgResp>, Status> {
+        let req = request.into_inner();
+        let result = self
+            .msg_rec_box
+            .get_messages(&req.user_id, req.start, req.end)
+            .await?;
+        Ok(Response::new(GetMsgResp { messages: result }))
     }
     async fn group_create(
         &self,
