@@ -14,7 +14,7 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
-use tracing::{error, warn};
+use tracing::error;
 use utils::custom_extract::path_extractor::PathExtractor;
 
 use crate::manager::Manager;
@@ -174,10 +174,11 @@ impl WsServer {
                             continue;
                         }
                         let msg: Msg = result.unwrap();
-                        if msg.local_id.is_empty() {
-                            warn!("receive empty message");
-                            continue;
-                        }
+                        // todo need to judge the local id is empty by message type
+                        // if msg.local_id.is_empty() {
+                        //     warn!("receive empty message");
+                        //     continue;
+                        // }
                         if cloned_hub.broadcast(msg).await.is_err() {
                             // 如果广播出错，那么服务端服务不可用
                             break;
