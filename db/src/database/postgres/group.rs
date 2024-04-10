@@ -31,7 +31,8 @@ impl GroupStoreRepo for PostgresGroup {
         let info: GroupInfo = sqlx::query_as(
             "INSERT INTO groups
                 (id, owner, name, avatar, create_time, update_time)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING *",
         )
         .bind(&group.id)
         .bind(&group.owner)
@@ -42,9 +43,9 @@ impl GroupStoreRepo for PostgresGroup {
         .fetch_one(&mut *tx)
         .await?;
         invitation.info = Some(info);
+
         // create members
         // select user info by members id and then insert into group_members
-
         let members: Vec<GroupMember> =
             sqlx::query_as(
                 "WITH inserted AS (
@@ -52,9 +53,9 @@ impl GroupStoreRepo for PostgresGroup {
                     SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at
                     FROM users AS u
                     WHERE u.id = ANY($3)
-                    RETURNING t.id, user_id, group_id, joined_at
+                    RETURNING user_id, group_id, joined_at
                 )
-                SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name,
+                SELECT ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name,
                         usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender,
                         usr.signature AS signature
                 FROM inserted AS ins

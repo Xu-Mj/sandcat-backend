@@ -229,7 +229,6 @@ mod tests {
             send_id: "123".to_string(),
             receiver_id: "111".to_string(),
             seq: 0,
-            group_id: "".to_string(),
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
             sdp: None,

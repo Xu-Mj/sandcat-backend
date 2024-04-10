@@ -21,24 +21,22 @@ pub struct Msg {
     pub send_time: i64,
     #[prost(int64, tag = "7")]
     pub seq: i64,
-    #[prost(string, tag = "8")]
-    pub group_id: ::prost::alloc::string::String,
     /// is there necessary to cary the user's avatar and nickname?
-    #[prost(enumeration = "MsgType", tag = "9")]
+    #[prost(enumeration = "MsgType", tag = "8")]
     pub msg_type: i32,
-    #[prost(enumeration = "ContentType", tag = "10")]
+    #[prost(enumeration = "ContentType", tag = "9")]
     pub content_type: i32,
-    #[prost(bytes = "vec", tag = "11")]
+    #[prost(bytes = "vec", tag = "10")]
     pub content: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bool, tag = "12")]
+    #[prost(bool, tag = "11")]
     pub is_read: bool,
-    #[prost(string, optional, tag = "13")]
+    #[prost(string, optional, tag = "12")]
     pub sdp: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "14")]
+    #[prost(string, optional, tag = "13")]
     pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int32, optional, tag = "15")]
+    #[prost(int32, optional, tag = "14")]
     pub sdp_m_index: ::core::option::Option<i32>,
-    #[prost(bool, tag = "16")]
+    #[prost(bool, tag = "15")]
     pub call_agree: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -178,29 +176,27 @@ pub struct GroupInfo {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupMember {
-    #[prost(int64, tag = "1")]
-    pub id: i64,
-    #[prost(int32, tag = "2")]
+    #[prost(int32, tag = "1")]
     pub age: i32,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
+    #[prost(string, tag = "3")]
     pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
+    #[prost(string, tag = "4")]
     pub group_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
+    #[prost(string, tag = "5")]
     pub avatar: ::prost::alloc::string::String,
-    #[prost(int64, tag = "7")]
+    #[prost(int64, tag = "6")]
     pub joined_at: i64,
-    #[prost(string, optional, tag = "8")]
+    #[prost(string, optional, tag = "7")]
     pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "9")]
+    #[prost(string, tag = "8")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(bool, tag = "10")]
+    #[prost(bool, tag = "9")]
     pub is_friend: bool,
-    #[prost(string, optional, tag = "11")]
+    #[prost(string, optional, tag = "10")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "12")]
+    #[prost(string, tag = "11")]
     pub signature: ::prost::alloc::string::String,
 }
 /// / create group object

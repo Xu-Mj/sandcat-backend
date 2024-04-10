@@ -1,5 +1,6 @@
 use axum::extract::State;
 use axum::Json;
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -20,9 +21,10 @@ pub async fn create_group_handler(
     PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
     JsonWithAuthExtractor(mut new_group): JsonWithAuthExtractor<GroupCreate>,
 ) -> Result<Json<GroupInvitation>, Error> {
-    // use it to send message to other users except owner
-    // let cloned_ids = new_group.members_id.clone();
+    // filter the empty item
+    new_group.members_id.retain(|v| !v.is_empty());
 
+    new_group.id = nanoid!();
     // put the owner to the group members
     new_group.members_id.push(user_id.clone());
 

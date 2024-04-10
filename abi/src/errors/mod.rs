@@ -3,6 +3,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use mongodb::bson::document::ValueAccessError;
 use serde_json::json;
+use tracing::error;
 
 type Message = String;
 type Location = String;
@@ -276,6 +277,7 @@ impl IntoResponse for Error {
                 "INVALID ACCOUNT OR PASSWORD".to_string(),
             ),
         };
+        error!("http request api error: {:?}", msg);
         (status, Json(json!({"message":msg}))).into_response()
     }
 }

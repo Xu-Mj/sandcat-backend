@@ -34,7 +34,6 @@ impl GroupMembersIdRequest {
 impl FromRow<'_, PgRow> for GroupMember {
     fn from_row(row: &PgRow) -> Result<Self, Error> {
         Ok(Self {
-            id: row.try_get("id")?,
             user_id: row.try_get("user_id")?,
             group_id: row.try_get("group_id")?,
             avatar: row.try_get("avatar")?,
