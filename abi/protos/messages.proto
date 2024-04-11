@@ -41,17 +41,18 @@ enum MsgType{
   MsgTypeFriendApplyReq = 9;
   MsgTypeFriendApplyResp = 10;
   MsgTypeSingleCallInvite = 11;
-  MsgTypeSingleCallInviteAnswer = 12;
-  MsgTypeSingleCallInviteNotAnswer = 13;
-  MsgTypeSingleCallInviteCancel = 14;
-  MsgTypeSingleCallOffer = 15;
-  MsgTypeHangup = 16;
-  MsgTypeAgreeSingleCall = 17;
-  MsgTypeCandidate = 18;
-  MsgTypeRead = 19;
-  MsgTypeMsgRecResp = 20;
-  MsgTypeNotification = 21;
-  MsgTypeService = 22;
+  MsgTypeRejectSingleCall = 12;
+  MsgTypeAgreeSingleCall = 13;
+  MsgTypeSingleCallInviteNotAnswer = 14;
+  MsgTypeSingleCallInviteCancel = 15;
+  MsgTypeSingleCallOffer = 16;
+  MsgTypeHangup = 17;
+  MsgTypeConnectSingleCall = 18;
+  MsgTypeCandidate = 19;
+  MsgTypeRead = 20;
+  MsgTypeMsgRecResp = 21;
+  MsgTypeNotification = 22;
+  MsgTypeService = 23;
 }
 
 /// decode message content by content type
@@ -75,7 +76,6 @@ message Msg {
   optional string sdp = 12;
   optional string sdp_mid = 13;
   optional int32 sdp_m_index = 14;
-  bool call_agree = 15;
 }
 
 message MsgRead{

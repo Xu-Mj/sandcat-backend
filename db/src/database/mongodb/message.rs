@@ -234,7 +234,6 @@ mod tests {
             sdp: None,
             sdp_mid: None,
             sdp_m_index: None,
-            call_agree: false,
         }
     }
     #[tokio::test]

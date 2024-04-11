@@ -114,7 +114,8 @@ impl ConsumerService {
             | MsgType::SingleCallInviteNotAnswer
             | MsgType::SingleCallInviteCancel
             | MsgType::Hangup
-            | MsgType::AgreeSingleCall => {
+            | MsgType::ConnectSingleCall
+            | MsgType::RejectSingleCall => {
                 // single message and need to increase seq
                 msg_type = MsgType2::Single;
             }
@@ -160,9 +161,9 @@ impl ConsumerService {
         // send to db rpc server
         let mut db_rpc = self.db_rpc.clone();
         let mut msg: Msg = serde_json::from_str(payload)?;
-        let msg_type =
+        let mt =
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
-        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(msg_type).await;
+        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
         if need_increase_seq {
             msg.seq = self.increase_seq(&msg.receiver_id).await?;
         }
@@ -242,11 +243,11 @@ impl ConsumerService {
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         // only skip the single call protocol data for db
         match msg_type2 {
-            MsgType::AgreeSingleCall
+            MsgType::ConnectSingleCall
+            | MsgType::AgreeSingleCall
             | MsgType::Candidate
             | MsgType::SingleCallOffer
-            | MsgType::SingleCallInvite
-            | MsgType::SingleCallInviteAnswer => {
+            | MsgType::SingleCallInvite => {
                 send_flag = false;
             }
             _ => {}
