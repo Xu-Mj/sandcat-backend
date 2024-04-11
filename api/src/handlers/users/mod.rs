@@ -23,7 +23,6 @@ pub struct Token {
     user: User,
     token: String,
     ws_addr: String,
-    seq: i64,
 }
 
 #[derive(Deserialize, Debug)]

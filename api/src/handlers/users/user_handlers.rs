@@ -139,12 +139,11 @@ pub async fn login(
     // todo get websocket address
     let ws_addr = "ws://127.0.0.1:50000/ws".to_string();
 
-    let seq = app_state.cache.get_seq(&user.id).await?;
+    // let seq = app_state.cache.get_seq(&user.id).await?;
     Ok(Json(Token {
         user,
         token,
         ws_addr,
-        seq,
     }))
 }
 
