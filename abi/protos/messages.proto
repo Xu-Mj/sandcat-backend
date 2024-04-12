@@ -56,7 +56,6 @@ enum MsgType{
 }
 
 /// decode message content by content type
-/// the content is group id, when message type is dismiss or exit
 /// the content is candidate, when message type is Candidate
 /// the content is sustain, when message type is Hangup
 /// the content is String::to_vec(), when message type is SingleMsg/GroupMsg
@@ -81,6 +80,7 @@ message Msg {
   optional string sdp = 12;
   optional string sdp_mid = 13;
   optional int32 sdp_m_index = 14;
+  string group_id = 15;
 }
 
 message MsgRead{

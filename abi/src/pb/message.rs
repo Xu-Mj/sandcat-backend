@@ -1,5 +1,4 @@
 /// / decode message content by content type
-/// / the content is group id, when message type is dismiss or exit
 /// / the content is candidate, when message type is Candidate
 /// / the content is sustain, when message type is Hangup
 /// / the content is String::to_vec(), when message type is SingleMsg/GroupMsg
@@ -41,6 +40,8 @@ pub struct Msg {
     pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(int32, optional, tag = "14")]
     pub sdp_m_index: ::core::option::Option<i32>,
+    #[prost(string, tag = "15")]
+    pub group_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

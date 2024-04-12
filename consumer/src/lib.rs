@@ -204,13 +204,8 @@ impl ConsumerService {
             // we should delete the cache data if the type is group dismiss
             // update the cache if the type is group member exit
             if msg.msg_type == MsgType::GroupDismiss as i32 {
-                // set the message content to group id
-                msg.content = msg.receiver_id.clone().as_bytes().to_vec();
-
                 self.cache.del_group_members(&msg.receiver_id).await?;
             } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
-                msg.content = msg.receiver_id.clone().as_bytes().to_vec();
-
                 self.cache
                     .remove_group_member_id(&msg.receiver_id, &msg.send_id)
                     .await?;

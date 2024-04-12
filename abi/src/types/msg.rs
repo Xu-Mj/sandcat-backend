@@ -34,6 +34,7 @@ impl TryFrom<Document> for Msg {
             seq: value.get_i64("seq").unwrap_or_default(),
             msg_type: value.get_i32("msg_type").unwrap_or_default(),
             is_read: value.get_bool("is_read").unwrap_or_default(),
+            group_id: value.get_str("group_id").unwrap_or_default().to_string(),
             // those do not save to mongodb
             sdp: None,
             sdp_mid: None,
@@ -78,6 +79,7 @@ impl SendMsgRequest {
         Self {
             message: Some(Msg {
                 send_id,
+                group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: msg_type as i32,
@@ -94,6 +96,7 @@ impl SendMsgRequest {
         Self {
             message: Some(Msg {
                 send_id,
+                group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupInvitation as i32,
@@ -111,6 +114,7 @@ impl SendMsgRequest {
         Self {
             message: Some(Msg {
                 send_id,
+                group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupInviteNew as i32,
@@ -124,6 +128,7 @@ impl SendMsgRequest {
         Self {
             message: Some(Msg {
                 send_id,
+                group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupUpdate as i32,

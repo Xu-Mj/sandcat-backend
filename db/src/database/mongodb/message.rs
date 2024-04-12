@@ -241,6 +241,7 @@ mod tests {
             sdp: None,
             sdp_mid: None,
             sdp_m_index: None,
+            group_id: "".to_string(),
         }
     }
     #[tokio::test]

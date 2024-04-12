@@ -15,6 +15,7 @@ pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
         "seq": msg.seq,
         "msg_type": msg.msg_type,
         "is_read": msg.is_read,
+        "group_id": &msg.group_id,
     };
 
     Ok(document)
