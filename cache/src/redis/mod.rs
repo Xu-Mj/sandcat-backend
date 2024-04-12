@@ -15,7 +15,7 @@ const REGISTER_CODE_EXPIRE: i64 = 300;
 
 const USER_ONLINE_SET: &str = "user_online_set";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RedisCache {
     client: redis::Client,
 }
@@ -44,6 +44,7 @@ impl Cache for RedisCache {
         let seq: i64 = conn.get(&key).await.unwrap_or_default();
         Ok(seq)
     }
+
     async fn increase_seq(&self, user_id: &str) -> Result<i64, Error> {
         // generate key
         let key = format!("seq:{}", user_id);
@@ -54,6 +55,18 @@ impl Cache for RedisCache {
         // increase seq
         let seq: i64 = conn.incr(&key, 1).await?;
         Ok(seq)
+    }
+
+    async fn incr_group_seq(&self, members: &[String]) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // use pipe to increase the group members seq
+        let mut pipe = redis::pipe();
+        for member in members {
+            let key = format!("seq:{}", member);
+            pipe.incr(&key, 1);
+        }
+        pipe.query_async(&mut conn).await?;
+        Ok(())
     }
 
     /// the group members id in redis is a set, with group_members_id:group_id as key
@@ -144,6 +157,10 @@ impl Cache for RedisCache {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         let result: i64 = conn.scard(USER_ONLINE_SET).await?;
         Ok(result)
+    }
+
+    fn clone_box(&self) -> Box<dyn Cache> {
+        Box::new(self.clone())
     }
 }
 

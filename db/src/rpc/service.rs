@@ -166,8 +166,9 @@ impl DbService for DbRpcService {
 
         let group = self.db.group.delete_group(&group_id, &user_id).await?;
 
+        // WE CAN NOT DELETE THE CACHE HERE, CONSUMER NEED IT TO SEND MESSAGE TO USERS
         // delete from cache, and return the members id, this is performance than db
-        self.cache.del_group_members(&group_id).await?;
+        // self.cache.del_group_members(&group_id).await?;
 
         let response = GroupDeleteResponse { group: Some(group) };
         Ok(Response::new(response))

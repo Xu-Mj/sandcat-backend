@@ -4399,6 +4399,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.5",
  "bincode",
+ "cache",
  "dashmap",
  "futures",
  "log",

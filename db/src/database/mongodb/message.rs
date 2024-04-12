@@ -9,6 +9,7 @@ use tracing::error;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::Msg;
+use cache::Cache;
 
 use crate::database::message::MsgRecBoxRepo;
 use crate::database::mongodb::utils::to_doc;
@@ -20,6 +21,7 @@ use crate::database::mongodb::utils::to_doc;
 pub struct MsgBox {
     /// for message box
     mb: Collection<Document>,
+    cache: Box<dyn Cache>,
 }
 
 /// for all users single message receive box
@@ -27,17 +29,17 @@ const COLL_SINGLE_BOX: &str = "single_msg_box";
 
 #[allow(dead_code)]
 impl MsgBox {
-    pub async fn new(db: Database) -> Self {
-        let sb = db.collection(COLL_SINGLE_BOX);
-        Self { mb: sb }
+    pub async fn new(db: Database, cache: Box<dyn Cache>) -> Self {
+        let mb = db.collection(COLL_SINGLE_BOX);
+        Self { mb, cache }
     }
-    pub async fn from_config(config: &Config) -> Self {
+    pub async fn from_config(config: &Config, cache: Box<dyn Cache>) -> Self {
         let db = Client::with_uri_str(config.db.mongodb.url())
             .await
             .unwrap()
             .database(&config.db.mongodb.database);
-        let sb = db.collection(COLL_SINGLE_BOX);
-        Self { mb: sb }
+        let mb = db.collection(COLL_SINGLE_BOX);
+        Self { mb, cache }
     }
 }
 
@@ -53,7 +55,12 @@ impl MsgRecBoxRepo for MsgBox {
         let mut messages = Vec::with_capacity(members.len());
         // modify message receiver id
         for id in members {
+            // increase members sequence
+            let seq = self.cache.get_seq(&id).await?;
+            message.seq = seq;
+
             message.receiver_id = id;
+
             messages.push(to_doc(&message)?);
         }
         self.mb.insert_many(messages, None).await?;
@@ -183,7 +190,7 @@ mod tests {
                 &config.db.mongodb.password,
             )
             .await;
-            let msg_box = MsgBox::new(tdb.database().await).await;
+            let msg_box = MsgBox::new(tdb.database().await, cache::cache(&config)).await;
             Self {
                 box_: msg_box,
                 _tdb: tdb,

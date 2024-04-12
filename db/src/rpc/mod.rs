@@ -26,10 +26,11 @@ pub struct DbRpcService {
 
 impl DbRpcService {
     pub async fn new(config: &Config) -> Self {
+        let cache = cache::cache(config);
         Self {
             db: Arc::new(DbRepo::new(config).await),
-            msg_rec_box: Arc::new(database::msg_rec_box_repo(config).await),
-            cache: Arc::new(cache::cache(config)),
+            msg_rec_box: Arc::new(database::msg_rec_box_repo(config, cache.clone()).await),
+            cache: Arc::new(cache),
         }
     }
 

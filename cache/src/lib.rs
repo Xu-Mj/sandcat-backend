@@ -13,6 +13,9 @@ pub trait Cache: Sync + Send + Debug {
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
     async fn increase_seq(&self, user_id: &str) -> Result<i64, Error>;
 
+    /// INCREASE GROUP MEMBERS SEQUENCE
+    async fn incr_group_seq(&self, members: &[String]) -> Result<(), Error>;
+
     /// query group members id
     async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error>;
 
@@ -49,6 +52,14 @@ pub trait Cache: Sync + Send + Debug {
 
     /// online count
     async fn online_count(&self) -> Result<i64, Error>;
+
+    /// clone box
+    fn clone_box(&self) -> Box<dyn Cache>;
+}
+impl Clone for Box<dyn Cache> {
+    fn clone(&self) -> Box<dyn Cache> {
+        self.as_ref().clone_box() // as_ref调用将Box作为引用传递
+    }
 }
 
 pub fn cache(config: &Config) -> Box<dyn Cache> {

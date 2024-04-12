@@ -160,6 +160,7 @@ pub async fn delete_group_handler(
     } else {
         // exit group
         let req = UserAndGroupId::new(group.user_id.clone(), group.group_id.clone());
+        //todo if the group already dismissed, return success directly
         db_rpc.group_member_exit(req.clone()).await.map_err(|e| {
             Error::InternalServer(format!(
                 "procedure db rpc service error: group_member_exit {:?}",

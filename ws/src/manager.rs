@@ -3,6 +3,7 @@ use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
+use cache::Cache;
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -19,21 +20,21 @@ type Hub = Arc<DashMap<UserID, DashMap<PlatformID, Client>>>;
 pub struct Manager {
     tx: mpsc::Sender<Msg>,
     pub hub: Hub,
-    pub redis: redis::Client,
+    pub cache: Box<dyn Cache>,
     pub chat_rpc: ChatServiceClient<Channel>,
 }
 
 #[allow(dead_code)]
 impl Manager {
     pub async fn new(tx: mpsc::Sender<Msg>, config: &Config) -> Self {
-        let redis = redis::Client::open(config.redis.url()).expect("redis can't open");
+        let cache = cache::cache(config);
         let chat_rpc = Self::get_chat_rpc_client(config)
             .await
             .expect("chat rpc can't open");
         Manager {
             tx,
             hub: Arc::new(DashMap::new()),
-            redis,
+            cache,
             chat_rpc,
         }
     }
@@ -50,10 +51,19 @@ impl Manager {
         Ok(chat_rpc)
     }
 
-    pub async fn send_group(&self, obj_ids: &Vec<String>, msg: &Msg) {
+    pub async fn send_group(&self, obj_ids: &Vec<String>, mut msg: Msg) {
         for id in obj_ids {
             if let Some(clients) = self.hub.get(id) {
-                self.send_msg_to_clients(&clients, msg).await;
+                // need to query the users seq
+                let seq = match self.cache.get_seq(id).await {
+                    Ok(seq) => seq,
+                    Err(e) => {
+                        error!("get seq error: {:?}", e);
+                        continue;
+                    }
+                };
+                msg.seq = seq;
+                self.send_msg_to_clients(&clients, &msg).await;
             }
         }
     }

@@ -106,7 +106,7 @@ impl ConsumerService {
 
     async fn classify_msg_type(&self, mt: MsgType) -> (MsgType2, bool, bool) {
         let msg_type;
-        let mut need_increase_seq = true;
+        let mut need_increase_seq = false;
         let mut need_history = true;
 
         match mt {
@@ -118,9 +118,11 @@ impl ConsumerService {
             | MsgType::RejectSingleCall => {
                 // single message and need to increase seq
                 msg_type = MsgType2::Single;
+                need_increase_seq = true;
             }
             MsgType::GroupMsg => {
                 // group message and need to increase seq
+                // but not here, need to increase everyone's seq
                 msg_type = MsgType2::Group;
             }
             MsgType::GroupInvitation
@@ -134,7 +136,6 @@ impl ConsumerService {
             // single call data exchange and don't need to increase seq
             _ => {
                 msg_type = MsgType2::Single;
-                need_increase_seq = false;
                 need_history = false;
             }
         }
@@ -169,9 +170,10 @@ impl ConsumerService {
         }
 
         // query members id from cache if the message type is group
-        let members = if msg_type == MsgType2::Group {
+        let mut members = vec![];
+        if msg_type == MsgType2::Group {
             // query group members id from the cache
-            match self.cache.query_group_members_id(&msg.receiver_id).await {
+            members = match self.cache.query_group_members_id(&msg.receiver_id).await {
                 Ok(list) if !list.is_empty() => list,
                 Ok(_) => {
                     warn!("group members id is empty from cache");
@@ -183,10 +185,26 @@ impl ConsumerService {
                     error!("failed to query group members id from cache: {:?}", err);
                     return Err(err);
                 }
+            };
+
+            // retain the members id
+            members.retain(|id| id != &msg.send_id);
+
+            // increase the members seq
+            self.cache.incr_group_seq(&members).await?;
+
+            // judge the message type;
+            // we should delete the cache data if the type is group dismiss
+            // update the cache if the type is group member exit
+            if msg.msg_type == MsgType::GroupDismiss as i32 {
+                self.cache.del_group_members(&msg.receiver_id).await?;
+            } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
+                self.cache
+                    .remove_group_member_id(&msg.receiver_id, &msg.send_id)
+                    .await?;
             }
-        } else {
-            vec![]
-        };
+        }
+
         // send to db
         let cloned_msg = msg.clone();
         let cloned_type = msg_type.clone();

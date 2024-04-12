@@ -7,6 +7,7 @@ mod user;
 
 use crate::database::friend::FriendRepo;
 use abi::config::Config;
+use cache::Cache;
 use sqlx::PgPool;
 // use sqlx::PgPool;
 
@@ -41,8 +42,8 @@ impl DbRepo {
     }
 }
 
-pub async fn msg_rec_box_repo(config: &Config) -> Box<dyn MsgRecBoxRepo> {
-    Box::new(mongodb::MsgBox::from_config(config).await)
+pub async fn msg_rec_box_repo(config: &Config, cache: Box<dyn Cache>) -> Box<dyn MsgRecBoxRepo> {
+    Box::new(mongodb::MsgBox::from_config(config, cache).await)
 }
 //
 // pub async fn msg_store_repo(config: &Config) -> Box<dyn MsgStoreRepo> {
