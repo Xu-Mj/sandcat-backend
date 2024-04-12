@@ -56,6 +56,11 @@ enum MsgType{
 }
 
 /// decode message content by content type
+/// the content is group id, when message type is dismiss or exit
+/// the content is candidate, when message type is Candidate
+/// the content is sustain, when message type is Hangup
+/// the content is String::to_vec(), when message type is SingleMsg/GroupMsg
+/// other message type, the content is bincode::serialize(&T)
 message Msg {
   // must have
   string send_id = 1;

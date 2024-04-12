@@ -155,13 +155,32 @@ impl ConsumerService {
         }
     }
 
+    /// query members id from cache
+    /// if not found, query from db
+    async fn get_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
+        match self.cache.query_group_members_id(group_id).await {
+            Ok(list) if !list.is_empty() => Ok(list),
+            Ok(_) => {
+                warn!("group members id is empty from cache");
+                // query from db
+                self.query_group_members_id_from_db(group_id).await
+            }
+            Err(err) => {
+                error!("failed to query group members id from cache: {:?}", err);
+                Err(err)
+            }
+        }
+    }
+
     /// todo we need to handle the errors, like: should we use something like transaction?
     async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
         debug!("Received message: {:#?}", payload);
 
         // send to db rpc server
         let mut db_rpc = self.db_rpc.clone();
+
         let mut msg: Msg = serde_json::from_str(payload)?;
+
         let mt =
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
@@ -173,19 +192,7 @@ impl ConsumerService {
         let mut members = vec![];
         if msg_type == MsgType2::Group {
             // query group members id from the cache
-            members = match self.cache.query_group_members_id(&msg.receiver_id).await {
-                Ok(list) if !list.is_empty() => list,
-                Ok(_) => {
-                    warn!("group members id is empty from cache");
-                    // query from db
-                    self.query_group_members_id_from_db(&msg.receiver_id)
-                        .await?
-                }
-                Err(err) => {
-                    error!("failed to query group members id from cache: {:?}", err);
-                    return Err(err);
-                }
-            };
+            members = self.get_members_id(&msg.receiver_id).await?;
 
             // retain the members id
             members.retain(|id| id != &msg.send_id);
@@ -197,8 +204,13 @@ impl ConsumerService {
             // we should delete the cache data if the type is group dismiss
             // update the cache if the type is group member exit
             if msg.msg_type == MsgType::GroupDismiss as i32 {
+                // set the message content to group id
+                msg.content = msg.receiver_id.clone().as_bytes().to_vec();
+
                 self.cache.del_group_members(&msg.receiver_id).await?;
             } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
+                msg.content = msg.receiver_id.clone().as_bytes().to_vec();
+
                 self.cache
                     .remove_group_member_id(&msg.receiver_id, &msg.send_id)
                     .await?;
@@ -330,6 +342,8 @@ impl ConsumerService {
         Ok(())
     }
 
+    /// query members id from database
+    /// and set it to cache
     async fn query_group_members_id_from_db(&self, group_id: &str) -> Result<Vec<String>, Error> {
         let request = GroupMembersIdRequest {
             group_id: group_id.to_string(),

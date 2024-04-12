@@ -1,4 +1,9 @@
 /// / decode message content by content type
+/// / the content is group id, when message type is dismiss or exit
+/// / the content is candidate, when message type is Candidate
+/// / the content is sustain, when message type is Hangup
+/// / the content is String::to_vec(), when message type is SingleMsg/GroupMsg
+/// / other message type, the content is bincode::serialize(&T)
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
