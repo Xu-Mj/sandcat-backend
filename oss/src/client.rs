@@ -16,7 +16,6 @@ pub(crate) struct S3Client {
 
 impl S3Client {
     pub async fn new(config: &Config) -> Self {
-        // 创建Credentials实例
         let credentials = Credentials::new(
             &config.oss.access_key,
             &config.oss.secret_key,
@@ -43,6 +42,7 @@ impl S3Client {
         self_.create_bucket().await.unwrap();
         self_
     }
+
     async fn check_bucket_exists(&self) -> Result<bool, Error> {
         match self.client.head_bucket().bucket(&self.bucket).send().await {
             Ok(_response) => Ok(true),
@@ -61,6 +61,7 @@ impl S3Client {
             }
         }
     }
+
     async fn create_bucket(&self) -> Result<(), Error> {
         let is_exist = self.check_bucket_exists().await?;
         if is_exist {
@@ -99,7 +100,7 @@ impl Oss for S3Client {
             Err(_) => Ok(false),
         }
     }
-    // 上传文件
+
     async fn upload_file(&self, key: &str, content: Vec<u8>) -> Result<(), Error> {
         self.client
             .put_object()
@@ -113,7 +114,6 @@ impl Oss for S3Client {
         Ok(())
     }
 
-    // 下载文件
     async fn download_file(&self, key: &str) -> Result<Bytes, Error> {
         let resp = self
             .client
@@ -133,7 +133,6 @@ impl Oss for S3Client {
         Ok(data.into_bytes())
     }
 
-    // 删除文件
     async fn delete_file(&self, key: &str) -> Result<(), Error> {
         self.client
             .delete_object()
