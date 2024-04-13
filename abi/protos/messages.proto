@@ -53,6 +53,7 @@ enum MsgType{
   MsgTypeMsgRecResp = 21;
   MsgTypeNotification = 22;
   MsgTypeService = 23;
+  MsgTypeFriendshipReceived = 24;
 }
 
 /// decode message content by content type

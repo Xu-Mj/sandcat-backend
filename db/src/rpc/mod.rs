@@ -7,7 +7,7 @@ use tracing::info;
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::db_service_server::DbServiceServer;
-use abi::message::Msg;
+use abi::message::{Msg, MsgType};
 use cache::Cache;
 use utils::typos::{GrpcHealthCheck, Registration};
 
@@ -105,6 +105,16 @@ impl DbRpcService {
         // task 2 save message to mongodb
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
+            // if the message type is friendship/group-operation delivery, we should delete it from mongodb
+            if message.msg_type == MsgType::GroupDismissOrExitReceived as i32
+                || message.msg_type == MsgType::GroupInvitationReceived as i32
+                || message.msg_type == MsgType::FriendshipReceived as i32
+            {
+                if let Err(e) = msg_rec_box.delete_message(&message.server_id).await {
+                    tracing::error!("<db> delete message from mongodb failed: {}", e);
+                }
+                return;
+            }
             if let Err(e) = msg_rec_box.save_message(&message).await {
                 tracing::error!("<db> save message to mongodb failed: {}", e);
             }
