@@ -1,5 +1,5 @@
 [workspace]
-members = ["abi", "api", "cache", "chat", "cmd", "consumer", "db", "pusher", "rpc", "utils", "ws"]
+members = ["abi", "api", "cache", "chat", "cmd", "consumer", "db", "oss", "pusher", "rpc", "utils", "ws"]
 resolver = "2"
 
 [profile.dev]

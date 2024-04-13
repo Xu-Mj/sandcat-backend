@@ -53,6 +53,8 @@ Why should we *not* do this?
 - partition table for message have not been implemented yet.
 - GROUP MESSAGE SEQUENCE: WE INCREASE THE SEQUENCE AT CONSUMER MODULE, AND NEED TO GET SEQUENCE AT WS/MONGODB MODULE. IS
   THERE ANY EFFECTIVE WAY TO PERFORMANT?
+- timestamp issue: we use the time millis(i64) as the timestamp in database, but we should use the TimeStamp in the
+  future.
 
 ## Future possibilities
 
