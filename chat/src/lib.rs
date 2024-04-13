@@ -7,6 +7,9 @@ use abi::message::chat_service_server::{ChatService, ChatServiceServer};
 use abi::message::{MsgResponse, SendMsgRequest};
 use axum::async_trait;
 use nanoid::nanoid;
+use rdkafka::admin::{AdminClient, AdminOptions, NewTopic, TopicReplication};
+use rdkafka::client::DefaultClientContext;
+use rdkafka::error::KafkaError;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
 use tokio::sync::Mutex;
@@ -28,11 +31,16 @@ impl ChatRpcService {
         }
     }
     pub async fn start(config: &Config) -> Result<(), Error> {
+        let broker = config.kafka.hosts.join(",");
         let producer: FutureProducer = ClientConfig::new()
-            .set("bootstrap.servers", config.kafka.hosts.join(","))
+            .set("bootstrap.servers", &broker)
             .set("message.timeout.ms", "5000")
             .create()
             .expect("Producer creation error");
+
+        Self::ensure_topic_exists(&config.kafka.topic, &broker)
+            .await
+            .expect("Topic creation error");
 
         // register service
         Self::register_service(config).await?;
@@ -85,6 +93,39 @@ impl ChatRpcService {
         };
         center.register(registration).await?;
         Ok(())
+    }
+
+    async fn ensure_topic_exists(topic_name: &str, brokers: &str) -> Result<(), KafkaError> {
+        // Create Kafka AdminClient
+        let admin_client: AdminClient<DefaultClientContext> = ClientConfig::new()
+            .set("bootstrap.servers", brokers)
+            .create()?;
+
+        // create topic
+        let new_topics = [NewTopic {
+            name: topic_name,
+            num_partitions: 1,
+            replication: TopicReplication::Fixed(1),
+            config: vec![],
+        }];
+
+        // fixme not find the way to check topic exist
+        // so just create it and judge the error,
+        // but don't find the error type for topic exist
+        // and this way below can work well.
+        let options = AdminOptions::new();
+        admin_client.create_topics(&new_topics, &options).await?;
+        match admin_client.create_topics(&new_topics, &options).await {
+            Ok(_) => {
+                info!("Topic not exist; create '{}' ", topic_name);
+                Ok(())
+            }
+            Err(KafkaError::AdminOpCreation(_)) => {
+                println!("Topic '{}' already exists.", topic_name);
+                Ok(())
+            }
+            Err(err) => Err(err),
+        }
     }
 }
 
