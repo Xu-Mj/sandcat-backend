@@ -7,7 +7,7 @@ use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{debug, error};
 
 use abi::errors::Error;
 use abi::message::{
@@ -160,21 +160,21 @@ pub async fn send_email(
     if email.email.is_empty() {
         return Err(Error::BadRequest("parameter is none".to_string()));
     }
-    // 生成随机数（验证码）
+    // generate random number(validate code)
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000..1_000_000);
-    // 将随机数存入redis--五分钟有效
+    // save it to redis; expire time 5 minutes
     let msg = Message::builder()
         .from(
             "653609824@qq.com"
                 .parse()
-                .map_err(|_| Error::InternalServer("邮箱parse失败".to_string()))?,
+                .map_err(|_| Error::InternalServer("email parse failed".to_string()))?,
         )
         .to(email
             .email
             .parse()
-            .map_err(|_| Error::InternalServer("邮箱parse失败".to_string()))?)
-        .subject("验证登录")
+            .map_err(|_| Error::InternalServer("user email parse failed".to_string()))?)
+        .subject("Verify Login Code")
         .header(ContentType::TEXT_PLAIN)
         .body(num.to_string())
         .map_err(|err| Error::InternalServer(err.to_string()))?;
@@ -197,9 +197,9 @@ pub async fn send_email(
             .save_register_code(&email.email, &num.to_string())
             .await
         {
-            tracing::error!("{:?}", e);
+            error!("{:?}", e);
         }
-        tracing::debug!("验证码：{:?}, 邮箱: {:?}", num, &email.email);
+        debug!("verification code：{:?}, email: {:?}", num, &email.email);
     });
     Ok(())
 }

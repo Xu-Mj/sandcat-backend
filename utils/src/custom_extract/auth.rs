@@ -16,8 +16,12 @@ pub struct JsonWithAuthExtractor<T>(pub T);
 const AUTHORIZATION_HEADER: &str = "Authorization";
 const BEARER: &str = "Bearer";
 
-// 这里的鉴权采用浏览器指纹加过用户标识，否则如果一个用户永久开着电脑到达过期时间的话直接强制下线是不合理的
-// 在用户关闭网页、应用时记录用户关闭时间，下次打开时判断时间间隔，超过七天则需要重新登录
+// The AUTHENTICATION here uses the browser fingerprint plus the user ID,
+// otherwise it is not reasonable to force a user to log off if the computer
+// is permanently on before the expiration date
+// When the user closes the page/app, record the user's closing time.
+// The next time the app opens, determine the time interval.
+// If it is more than seven days, you need to log in again
 #[async_trait]
 impl<S, T> FromRequest<S> for JsonWithAuthExtractor<T>
 where
@@ -35,7 +39,7 @@ where
             .ok()
             .unwrap_or(String::new());
         if let Some(header) = parts.headers.get(AUTHORIZATION_HEADER) {
-            // 解析请求头
+            // analyze the header
             let header = header.to_str().unwrap_or("");
             if !header.starts_with(BEARER) {
                 return Err((
@@ -63,7 +67,7 @@ where
             //         }
             //     },
             // };
-            // // 判断签名是否过期
+            // // if the token is expired
             // if chrono::Local::now().timestamp_millis() as u64 - claim.claims.iat
             //     > claim.claims.update
             // {

@@ -84,7 +84,7 @@ impl MsgService for MsgRpcService {
         &self,
         request: Request<SendMsgRequest>,
     ) -> Result<Response<SendMsgResponse>, Status> {
-        println!("Got a request: {:?}", request);
+        debug!("Got a request: {:?}", request);
         let msg = request
             .into_inner()
             .message

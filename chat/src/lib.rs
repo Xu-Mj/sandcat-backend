@@ -1,11 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use abi::config::Config;
-use abi::errors::Error;
-use abi::message::chat_service_server::{ChatService, ChatServiceServer};
-use abi::message::{MsgResponse, SendMsgRequest};
-use axum::async_trait;
+use async_trait::async_trait;
 use nanoid::nanoid;
 use rdkafka::admin::{AdminClient, AdminOptions, NewTopic, TopicReplication};
 use rdkafka::client::DefaultClientContext;
@@ -16,6 +12,11 @@ use tokio::sync::Mutex;
 use tonic::server::NamedService;
 use tonic::transport::Server;
 use tracing::{error, info};
+
+use abi::config::Config;
+use abi::errors::Error;
+use abi::message::chat_service_server::{ChatService, ChatServiceServer};
+use abi::message::{MsgResponse, SendMsgRequest};
 use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct ChatRpcService {

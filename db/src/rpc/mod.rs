@@ -88,7 +88,6 @@ impl DbRpcService {
         Ok(())
     }
 
-    /// todo need to handle group message
     pub async fn handle_message(&self, message: Msg, need_to_history: bool) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
@@ -98,7 +97,7 @@ impl DbRpcService {
                 return;
             }
             if let Err(e) = db.msg.save_message(cloned_msg).await {
-                tracing::error!("<db> save message to db failed: {}", e);
+                tracing::error!("save message to db failed: {}", e);
             }
         });
 
@@ -111,12 +110,12 @@ impl DbRpcService {
                 || message.msg_type == MsgType::FriendshipReceived as i32
             {
                 if let Err(e) = msg_rec_box.delete_message(&message.server_id).await {
-                    tracing::error!("<db> delete message from mongodb failed: {}", e);
+                    tracing::error!("delete message from mongodb failed: {}", e);
                 }
                 return;
             }
             if let Err(e) = msg_rec_box.save_message(&message).await {
-                tracing::error!("<db> save message to mongodb failed: {}", e);
+                tracing::error!("save message to mongodb failed: {}", e);
             }
         });
         tokio::try_join!(db_task, msg_rec_box_task)
@@ -138,7 +137,7 @@ impl DbRpcService {
                 return;
             }
             if let Err(e) = db.msg.save_message(cloned_msg).await {
-                tracing::error!("<db> save message to db failed: {}", e);
+                tracing::error!("save message to db failed: {}", e);
             }
         });
 
@@ -146,7 +145,7 @@ impl DbRpcService {
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
             if let Err(e) = msg_rec_box.save_group_msg(message, members_id).await {
-                tracing::error!("<db> save message to mongodb failed: {}", e);
+                tracing::error!("save message to mongodb failed: {}", e);
             }
         });
         tokio::try_join!(db_task, msg_rec_box_task)

@@ -45,17 +45,3 @@ impl DbRepo {
 pub async fn msg_rec_box_repo(config: &Config, cache: Box<dyn Cache>) -> Box<dyn MsgRecBoxRepo> {
     Box::new(mongodb::MsgBox::from_config(config, cache).await)
 }
-//
-// pub async fn msg_store_repo(config: &Config) -> Box<dyn MsgStoreRepo> {
-//     Box::new(postgres::PostgresMessage::from_config(config).await)
-// }
-//
-// pub async fn group_repo(config: &Config) -> Box<dyn GroupStoreRepo> {
-//     Box::new(postgres::PostgresGroup::from_config(config).await)
-// }
-//
-// pub async fn user_repo(config: &Config) -> Box<dyn UserRepo> {
-//     let pool = PgPool::connect(&config.db.postgres.url()).await.unwrap();
-//
-//     Box::new(postgres::PostgresUser::new(pool).await)
-// }

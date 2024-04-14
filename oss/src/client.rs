@@ -90,7 +90,7 @@ impl Oss for S3Client {
         {
             Ok(resp) => {
                 if let Some(etag) = resp.e_tag() {
-                    // 移除可能的引号字符
+                    // remove the double quotes
                     let etag = etag.trim_matches('"');
                     Ok(etag == local_md5)
                 } else {

@@ -6,41 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#kafka = "0.10.0"
+abi = { version = "0.1.0", path = "../abi" }
+utils = { version = "0.1.0", path = "../utils" }
 tonic = { version = "0.11.0", features = ["gzip"] }
-axum = { version = "0.7", features = ["ws", "multipart"] }
-#axum-macros = "0.3"
-futures = "0.3"
 tokio = { version = "1", features = ["full"] }
-tokio-stream = "0.1.14"
-tower = { version = "0.4", features = ["util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tower-http = { version = "0.5.0", features = ["cors"] }
-dotenvy = "0.15.7"
 chrono = { version = "0.4.31", features = ["serde"] }
-diesel = { version = "2", features = ["postgres", "chrono", "serde_json"] }
-deadpool-diesel = { version = "0.4.0", features = ["postgres"] }
-deadpool="0.10"
 nanoid = "0.4.0"
-jsonwebtoken = "9"
-redis = { version = "0.24.0", features = ["tokio-comp"] }
-hyper = "1.1"
-mime = "0.3.17"
-headers="0.4"
-lettre = "0.11"
-rand = "0.8.5"
-sqlx = { version = "0.7", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "chrono",
-    "uuid",
-] }
-thiserror = "1.0.57"
-abi = { version = "0.1.0", path = "../abi" }
-uuid = { version = "1.7.0", features = ["v4"] }
 rdkafka = { version = "0.36.2", features = ["dynamic-linking"] }
-utils = { version = "0.1.0", path = "../utils" }
 tonic-health = "0.11.0"
+async-trait = "0.1.80"
