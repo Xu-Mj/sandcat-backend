@@ -16,6 +16,16 @@ pub struct Config {
     pub rpc: RpcConfig,
     pub websocket: WsServerConfig,
     pub service_center: ServiceCenterConfig,
+    pub oss: OssConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct OssConfig {
+    pub endpoint: String,
+    pub access_key: String,
+    pub secret_key: String,
+    pub bucket: String,
+    pub region: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

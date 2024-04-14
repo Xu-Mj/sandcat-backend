@@ -82,3 +82,10 @@ kafka:
     - 127.0.0.1:9092
   topic: xmj
   group: chat
+
+oss:
+    endpoint: http://127.0.0.1:9000
+    access_key: minioadmin
+    secret_key: minioadmin
+    bucket: xmj
+    region: us-east-1
