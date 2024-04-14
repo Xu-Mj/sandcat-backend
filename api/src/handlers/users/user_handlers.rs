@@ -35,7 +35,7 @@ pub async fn create_user(
     let password = utils::hash_password(new_user.password.as_bytes(), &salt)?;
 
     let id = nanoid!();
-    // 结构体转换
+    // convert user to db user
     let user2db = User {
         id: id.clone(),
         name: new_user.name,
@@ -64,7 +64,6 @@ pub async fn create_user(
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
 
-    // 结果返回
     Ok(Json(user))
 }
 
@@ -126,7 +125,7 @@ pub async fn login(
         .user
         .ok_or_else(|| Error::AccountOrPassword)?;
 
-    // 生成token
+    // generate token
     let claims = Claims::new(user.name.clone());
 
     let token = encode(
@@ -137,9 +136,11 @@ pub async fn login(
     .map_err(|err| Error::InternalServer(err.to_string()))?;
     app_state.cache.user_login(&user.account).await?;
     // todo get websocket address
-    let ws_addr = "ws://127.0.0.1:50000/ws".to_string();
+    let ws_addr = format!(
+        "ws://{}:{}/ws",
+        &app_state.ws_config.host, &app_state.ws_config.port
+    );
 
-    // let seq = app_state.cache.get_seq(&user.id).await?;
     Ok(Json(Token {
         user,
         token,
