@@ -17,6 +17,16 @@ pub struct Config {
     pub websocket: WsServerConfig,
     pub service_center: ServiceCenterConfig,
     pub oss: OssConfig,
+    pub mail: MailConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct MailConfig {
+    pub server: String,
+    pub account: String,
+    pub password: String,
+    pub temp_path: String,
+    pub temp_file: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
