@@ -1,3 +1,4 @@
+use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
@@ -54,9 +55,13 @@ fn group_routes(state: AppState) -> Router {
         .with_state(state)
 }
 
+const MAX_FILE_UPLOAD_SIZE: usize = 1024 * 1024 * 50;
 fn file_routes(state: AppState) -> Router {
     Router::new()
-        .route("/upload", post(upload))
+        .route(
+            "/upload",
+            post(upload).layer(DefaultBodyLimit::max(MAX_FILE_UPLOAD_SIZE)),
+        )
         .route("/get/:filename", get(get_file_by_name))
         .with_state(state)
 }

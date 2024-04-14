@@ -9,7 +9,7 @@ A im application backend.
 
 ## Motivation
 
-first property: study rust.
+first purpose: study rust.
 
 ## Guide-level explanation
 
@@ -43,7 +43,8 @@ Why should we *not* do this?
 
 ## Unresolved questions
 
-- save the message sequence to redis: we don't know if the seq is correct, we just increase it now
+- save the message sequence to redis: we don't know if the seq is correct, we just increase it now.
+- how to handle the message sequence when the message is sent to the database module failed.
 - tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
   list in the interval time.
 - need to design a websocket register center, to achieve the load balance.
@@ -57,21 +58,3 @@ Why should we *not* do this?
   future.
 
 ## Future possibilities
-
-Think about what the natural extension and evolution of your proposal would
-be and how it would affect the language and project as a whole in a holistic
-way. Try to use this section as a tool to more fully consider all possible
-interactions with the project and language in your proposal.
-Also consider how this all fits into the roadmap for the project
-and of the relevant sub-team.
-
-This is also a good place to "dump ideas", if they are out of scope for the
-RFC you are writing but otherwise related.
-
-If you have tried and cannot think of any future possibilities,
-you may simply state that you cannot think of anything.
-
-Note that having something written down in the future-possibilities section
-is not a reason to accept the current or a future RFC; such notes should be
-in the section on motivation or rationale in this or subsequent RFCs.
-The section merely provides additional information.
