@@ -2,11 +2,13 @@ use axum::extract::State;
 use axum::Json;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use lettre::message::header::ContentType;
+use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use tera::{Context, Tera};
 use tracing::{debug, error};
 
 use abi::errors::Error;
@@ -47,6 +49,7 @@ pub async fn create_user(
         ..Default::default()
     };
 
+    // todo need to check the email is registered already
     let request = CreateUserRequest {
         user: Some(user2db),
     };
@@ -160,9 +163,21 @@ pub async fn send_email(
     if email.email.is_empty() {
         return Err(Error::BadRequest("parameter is none".to_string()));
     }
+
+    // get email template engine tera
+    let tera = Tera::new("./api/fixtures/templates/*")
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
     // generate random number(validate code)
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000..1_000_000);
+
+    // render email template
+    let mut context = Context::new();
+    context.insert("numbers", &num.to_string());
+    let content = tera
+        .render("email_temp.html", &context)
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+
     // save it to redis; expire time 5 minutes
     let msg = Message::builder()
         .from(
@@ -176,7 +191,13 @@ pub async fn send_email(
             .map_err(|_| Error::InternalServer("user email parse failed".to_string()))?)
         .subject("Verify Login Code")
         .header(ContentType::TEXT_PLAIN)
-        .body(num.to_string())
+        .multipart(
+            MultiPart::alternative().singlepart(
+                SinglePart::builder()
+                    .header(ContentType::TEXT_HTML)
+                    .body(content),
+            ),
+        )
         .map_err(|err| Error::InternalServer(err.to_string()))?;
 
     let creds = Credentials::new("653609824@qq.com".to_owned(), "rxkhmcpjgigsbegi".to_owned());
@@ -202,4 +223,21 @@ pub async fn send_email(
         debug!("verification code：{:?}, email: {:?}", num, &email.email);
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use rand::Rng;
+    use tera::{Context, Tera};
+
+    #[test]
+    fn test_template() {
+        let tera = Tera::new("fixtures/templates/*").unwrap();
+        let mut rng = rand::thread_rng();
+        let num: u32 = rng.gen_range(100_000..1_000_000);
+        let mut context = Context::new();
+        context.insert("numbers", &num.to_string());
+        let string = tera.render("email_temp.html", &context).unwrap();
+        println!("{}", string);
+    }
 }
