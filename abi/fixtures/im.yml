@@ -89,3 +89,5 @@ oss:
     secret_key: minioadmin
     bucket: xmj
     region: us-east-1
+
+mail:
