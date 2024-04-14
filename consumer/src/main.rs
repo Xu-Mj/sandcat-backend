@@ -1,6 +1,7 @@
-use abi::config::Config;
 use consumer::ConsumerService;
 use tracing::{info, Level};
+
+use abi::config::Config;
 
 #[tokio::main]
 async fn main() {

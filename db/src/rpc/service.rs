@@ -103,7 +103,8 @@ impl DbService for DbRpcService {
         );
         // todo save the information to message receive box
 
-        //todo save the information to cache
+        //todo save the information to cache, is it necessary to save the group info to cache?
+
         // save members id
         self.cache
             .save_group_members_id(&group_id, members_id)
@@ -148,7 +149,8 @@ impl DbService for DbRpcService {
         // update db
         let group = self.db.group.update_group(&group).await?;
 
-        // todo update cache
+        // todo update cache, is it necessary to update the group info in cache?
+
         let response = GroupUpdateResponse { group: Some(group) };
         Ok(Response::new(response))
     }

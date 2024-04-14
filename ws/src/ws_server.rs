@@ -76,7 +76,7 @@ impl WsServer {
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
-        // 验证token
+        // validate token
         tracing::debug!("token is {}", token);
         ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, socket, state))
     }
@@ -87,7 +87,6 @@ impl WsServer {
         ws: WebSocket,
         app_state: AppState,
     ) {
-        // 注册客户端
         tracing::debug!(
             "client {} connected, user id : {}",
             user_id.clone(),
@@ -103,7 +102,7 @@ impl WsServer {
         };
         hub.register(user_id.clone(), client).await;
 
-        // 开启任务发送心跳,这里直接回发即可
+        // send ping message to client
         let cloned_tx = shared_tx.clone();
         let mut ping_task = tokio::spawn(async move {
             loop {
@@ -113,11 +112,9 @@ impl WsServer {
                     .send(Message::Ping(Vec::new()))
                     .await
                 {
-                    error!("心跳发送失败：{:?}", e);
+                    error!("send ping error：{:?}", e);
                     // break this task, it will end this conn
                     break;
-                } else {
-                    // tracing::debug!("心跳发送成功");
                 }
                 tokio::time::sleep(Duration::from_secs(HEART_BEAT_INTERVAL)).await;
             }
@@ -126,7 +123,7 @@ impl WsServer {
         // spawn a new task to receive message
         let cloned_hub = hub.clone();
         let shared_tx = shared_tx.clone();
-        // 读取收到的消息
+        // receive message from client
         let mut rec_task = tokio::spawn(async move {
             while let Some(Ok(msg)) = ws_rx.next().await {
                 // 处理消息
@@ -134,12 +131,12 @@ impl WsServer {
                     Message::Text(text) => {
                         let result = serde_json::from_str(&text);
                         if result.is_err() {
-                            error!("反序列化错误: {:?}； source: {text}", result.err());
+                            error!("deserialize error: {:?}； source: {text}", result.err());
                             continue;
                         }
 
                         if cloned_hub.broadcast(result.unwrap()).await.is_err() {
-                            // 如果广播出错，那么服务端服务不可用
+                            // if broadcast not available, close the connection
                             break;
                         }
                     }
@@ -150,27 +147,23 @@ impl WsServer {
                             .send(Message::Pong(Vec::new()))
                             .await
                         {
-                            error!("心跳回复失败 : {:?}", e);
+                            error!("reply ping error : {:?}", e);
                             break;
                         }
                     }
                     Message::Pong(_) => {
-                        // tracing::debug!("收到心跳回复消息");
+                        // tracing::debug!("received pong message");
                     }
                     Message::Close(info) => {
                         if let Some(info) = info {
                             tracing::warn!("client closed {}", info.reason);
                         }
-                        // todo mark client offline
-                        // if let Err(e) = update_online(&state.pg_pool, &cloned_user_id, false).await {
-                        //     tracing::error!("更新用户在线状态失败: {}", e);
-                        // }
                         break;
                     }
                     Message::Binary(b) => {
                         let result = bincode::deserialize(&b);
                         if result.is_err() {
-                            error!("反序列化错误: {:?}； source: {:?}", result.err(), b);
+                            error!("deserialize error: {:?}； source: {:?}", result.err(), b);
                             continue;
                         }
                         let msg: Msg = result.unwrap();
@@ -180,7 +173,6 @@ impl WsServer {
                         //     continue;
                         // }
                         if cloned_hub.broadcast(msg).await.is_err() {
-                            // 如果广播出错，那么服务端服务不可用
                             break;
                         }
                     }
@@ -192,7 +184,8 @@ impl WsServer {
             _ = (&mut ping_task) => rec_task.abort(),
             _ = (&mut rec_task) => ping_task.abort(),
         }
-        tracing::debug!("client thread exit");
+
+        // lost the connection, remove the client from hub
         hub.unregister(user_id, pointer_id).await;
         tracing::debug!("client thread exit {}", hub.hub.iter().count());
     }

@@ -1,4 +1,3 @@
-// 定义一个提取器，主要作用是用来处理错误，将axum抛出的错误转为我们自定义的错误
 use abi::errors::Error;
 use axum::{
     async_trait,
