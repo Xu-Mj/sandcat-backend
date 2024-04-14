@@ -91,3 +91,8 @@ oss:
     region: us-east-1
 
 mail:
+  server: smtp.qq.com
+  account: 653609824@qq.com
+  password: rxkhmcpjgigsbegi
+  temp_path: ./api/fixtures/templates/*
+  temp_file: email_temp.html

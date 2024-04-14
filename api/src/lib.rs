@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tonic::transport::Channel;
 
-use abi::config::{Config, WsServerConfig};
+use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg_service_client::MsgServiceClient;
@@ -18,6 +18,7 @@ pub struct AppState {
     pub cache: Arc<Box<dyn Cache>>,
     pub oss: Arc<Box<dyn Oss>>,
     pub ws_config: WsServerConfig,
+    pub mail_config: MailConfig,
     pub jwt_secret: String,
 }
 
@@ -32,12 +33,16 @@ impl AppState {
         let oss = Arc::new(oss::oss(config).await);
 
         let ws_config = config.websocket.clone();
+
+        let mail_config = config.mail.clone();
+
         Self {
             ws_rpc,
             db_rpc,
             cache,
             oss,
             ws_config,
+            mail_config,
             jwt_secret: config.server.jwt_secret.clone(),
         }
     }

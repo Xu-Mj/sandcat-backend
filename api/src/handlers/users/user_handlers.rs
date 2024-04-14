@@ -165,7 +165,7 @@ pub async fn send_email(
     }
 
     // get email template engine tera
-    let tera = Tera::new("./api/fixtures/templates/*")
+    let tera = Tera::new(&state.mail_config.temp_path)
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     // generate random number(validate code)
     let mut rng = rand::thread_rng();
@@ -175,13 +175,15 @@ pub async fn send_email(
     let mut context = Context::new();
     context.insert("numbers", &num.to_string());
     let content = tera
-        .render("email_temp.html", &context)
+        .render(&state.mail_config.temp_file, &context)
         .map_err(|e| Error::InternalServer(e.to_string()))?;
 
     // save it to redis; expire time 5 minutes
     let msg = Message::builder()
         .from(
-            "653609824@qq.com"
+            state
+                .mail_config
+                .account
                 .parse()
                 .map_err(|_| Error::InternalServer("email parse failed".to_string()))?,
         )
@@ -200,10 +202,10 @@ pub async fn send_email(
         )
         .map_err(|err| Error::InternalServer(err.to_string()))?;
 
-    let creds = Credentials::new("653609824@qq.com".to_owned(), "rxkhmcpjgigsbegi".to_owned());
+    let creds = Credentials::new(state.mail_config.account, state.mail_config.password);
 
     // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.qq.com")
+    let mailer = SmtpTransport::relay(&state.mail_config.server)
         .map_err(|err| Error::InternalServer(err.to_string()))?
         .credentials(creds)
         .build();
