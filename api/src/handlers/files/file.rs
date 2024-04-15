@@ -1,6 +1,8 @@
 use axum::extract::{Multipart, State};
 use axum::http::HeaderMap;
 use nanoid::nanoid;
+use std::ffi::OsStr;
+use std::path::Path;
 
 use crate::AppState;
 use abi::errors::Error;
@@ -17,8 +19,11 @@ pub async fn upload(
         .map_err(|err| Error::InternalServer(err.to_string()))?
     {
         filename = field.file_name().unwrap_or_default().to_string();
-
-        filename = format!("{}-{}", nanoid!(), filename);
+        let extension = Path::new(&filename).extension().and_then(OsStr::to_str);
+        filename = match extension {
+            None => nanoid!(),
+            Some(e) => format!("{}.{}", nanoid!(), e),
+        };
 
         let data = field
             .bytes()
