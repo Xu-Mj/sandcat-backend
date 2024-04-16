@@ -11,7 +11,9 @@ use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, invite_new_members, update_group_handler,
 };
 use crate::handlers::messages::msg_handlers::{get_seq, pull_offline_messages};
-use crate::handlers::users::{create_user, get_user_by_id, login, logout, search_user, send_email};
+use crate::handlers::users::{
+    create_user, get_user_by_id, login, logout, search_user, send_email, update_user,
+};
 use crate::AppState;
 
 pub(crate) fn app_routes(state: AppState) -> Router {
@@ -38,6 +40,7 @@ fn friend_routes(state: AppState) -> Router {
 fn user_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_user))
+        .route("/", put(update_user))
         .route("/:id", get(get_user_by_id))
         .route("/:user_id/search/:pattern", get(search_user))
         .route("/login", post(login))

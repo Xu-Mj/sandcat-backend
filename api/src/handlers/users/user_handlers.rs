@@ -13,7 +13,8 @@ use tracing::{debug, error};
 
 use abi::errors::Error;
 use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, User, UserWithMatchType, VerifyPwdRequest,
+    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User,
+    UserWithMatchType, VerifyPwdRequest,
 };
 use utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 
@@ -66,6 +67,26 @@ pub async fn create_user(
 
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
+
+    Ok(Json(user))
+}
+
+pub async fn update_user(
+    State(app_state): State<AppState>,
+    JsonExtractor(user): JsonExtractor<User>,
+) -> Result<Json<User>, Error> {
+    // todo need to check the email is registered already
+    let request = UpdateUserRequest { user: Some(user) };
+    let mut db_rpc = app_state.db_rpc.clone();
+    let response = db_rpc.update_user(request).await.map_err(|err| {
+        error!("create user error: {:?}", err);
+        Error::InternalServer(err.message().to_string())
+    })?;
+
+    let user = response
+        .into_inner()
+        .user
+        .ok_or_else(|| Error::InternalServer("Unknown Error".to_string()))?;
 
     Ok(Json(user))
 }
