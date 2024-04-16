@@ -10,15 +10,15 @@ use tracing::debug;
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
-    CreateUserRequest, CreateUserResponse, FriendListRequest, FriendListResponse, FsAgreeRequest,
-    FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMsgRequest, GetMsgResp, GetUserRequest, GetUserResponse, GroupCreateRequest,
-    GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
-    GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, Msg, SaveGroupMsgRequest, SaveGroupMsgResponse,
-    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
-    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
-    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    CreateUserRequest, CreateUserResponse, DeleteFriendRequest, DeleteFriendResponse,
+    FriendListRequest, FriendListResponse, FsAgreeRequest, FsAgreeResponse, FsCreateRequest,
+    FsCreateResponse, FsListRequest, FsListResponse, GetDbMsgRequest, GetMsgResp, GetUserRequest,
+    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
+    GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
+    GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
+    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMessageRequest, SaveMessageResponse,
+    SearchUserRequest, SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse,
+    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -345,6 +345,18 @@ impl DbService for DbRpcService {
             .update_friend_remark(&req.user_id, &req.friend_id, &req.remark)
             .await?;
         Ok(Response::new(UpdateRemarkResponse {}))
+    }
+
+    async fn delete_friend(
+        &self,
+        request: Request<DeleteFriendRequest>,
+    ) -> Result<Response<DeleteFriendResponse>, Status> {
+        let inner = request.into_inner();
+        self.db
+            .friend
+            .delete_friend(&inner.user_id, &inner.friend_id)
+            .await?;
+        Ok(Response::new(DeleteFriendResponse {}))
     }
 }
 

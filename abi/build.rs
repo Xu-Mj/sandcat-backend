@@ -72,6 +72,7 @@ fn main() {
             "FsUpdate",
             "FsUpdateRequest",
             "UpdateRemarkRequest",
+            "DeleteFriendRequest",
             "AgreeReply",
             "Single",
             "MsgResponse",

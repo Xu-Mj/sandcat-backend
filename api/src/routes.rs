@@ -4,8 +4,8 @@ use axum::Router;
 
 use crate::handlers::files::file::{get_file_by_name, upload};
 use crate::handlers::friends::friend_handlers::{
-    agree, create_friendship, get_apply_list_by_user_id, get_friends_list_by_user_id,
-    update_friend_remark,
+    agree, create_friendship, delete_friend, get_apply_list_by_user_id,
+    get_friends_list_by_user_id, update_friend_remark,
 };
 use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, invite_new_members, update_group_handler,
@@ -29,7 +29,7 @@ fn friend_routes(state: AppState) -> Router {
         .route("/:id", get(get_friends_list_by_user_id))
         .route("/:id/apply", get(get_apply_list_by_user_id))
         .route("/agree", put(agree))
-        // .route("/blacklist", put(black_list))
+        .route("/", delete(delete_friend))
         .route("/remark", put(update_friend_remark))
         // .route("/:user_id/deny/:friend_id", post(deny))
         .with_state(state)

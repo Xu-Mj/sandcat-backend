@@ -465,6 +465,18 @@ pub struct UpdateRemarkResponse {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFriendRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFriendResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AgreeReply {
     #[prost(string, tag = "1")]
     pub fs_id: ::prost::alloc::string::String,
@@ -1642,6 +1654,24 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "UpdateFriendRemark"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn delete_friend(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteFriendRequest>,
+        ) -> std::result::Result<tonic::Response<super::DeleteFriendResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/DeleteFriend");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "DeleteFriend"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated client implementations.
@@ -2318,6 +2348,10 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::UpdateRemarkRequest>,
         ) -> std::result::Result<tonic::Response<super::UpdateRemarkResponse>, tonic::Status>;
+        async fn delete_friend(
+            &self,
+            request: tonic::Request<super::DeleteFriendRequest>,
+        ) -> std::result::Result<tonic::Response<super::DeleteFriendResponse>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -3189,6 +3223,46 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = UpdateFriendRemarkSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/DeleteFriend" => {
+                    #[allow(non_camel_case_types)]
+                    struct DeleteFriendSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::DeleteFriendRequest> for DeleteFriendSvc<T> {
+                        type Response = super::DeleteFriendResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DeleteFriendRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::delete_friend(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = DeleteFriendSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

@@ -320,6 +320,14 @@ message UpdateRemarkRequest{
 message UpdateRemarkResponse{
 }
 
+message DeleteFriendRequest{
+  string user_id = 1;
+  string friend_id = 2;
+}
+
+message DeleteFriendResponse{
+}
+
 message AgreeReply {
   string fs_id = 1;
   optional string resp_msg = 2;
@@ -540,6 +548,7 @@ service DbService {
   rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
   rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
   rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
+  rpc DeleteFriend(DeleteFriendRequest) returns (DeleteFriendResponse);
 }
 
 service PushService {

@@ -3,8 +3,8 @@ use axum::Json;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, Friend, FriendListRequest, FriendshipWithUser, FsAgreeRequest, FsCreate,
-    FsCreateRequest, FsListRequest, SendMsgRequest, UpdateRemarkRequest,
+    AgreeReply, DeleteFriendRequest, Friend, FriendListRequest, FriendshipWithUser, FsAgreeRequest,
+    FsCreate, FsCreateRequest, FsListRequest, SendMsgRequest, UpdateRemarkRequest,
 };
 use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
@@ -124,6 +124,25 @@ pub async fn agree(
 //     .map_err(|err| FriendError::InternalServerError(err.to_string()))?;
 //     Ok(())
 // }
+
+pub async fn delete_friend(
+    State(app_state): State<AppState>,
+    JsonWithAuthExtractor(req): JsonWithAuthExtractor<DeleteFriendRequest>,
+) -> Result<(), Error> {
+    if req.user_id.is_empty() {
+        return Err(Error::BadRequest(String::from("user id is none")));
+    }
+    if req.friend_id.is_empty() {
+        return Err(Error::BadRequest(String::from("friend id is none")));
+    }
+
+    let mut db_rpc = app_state.db_rpc.clone();
+    db_rpc
+        .delete_friend(req)
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    Ok(())
+}
 
 pub async fn update_friend_remark(
     State(app_state): State<AppState>,

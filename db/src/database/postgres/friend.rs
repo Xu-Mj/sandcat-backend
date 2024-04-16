@@ -293,4 +293,17 @@ impl FriendRepo for PostgresFriend {
         };
         Ok((req, send))
     }
+
+    async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error> {
+        sqlx::query(
+            "UPDATE friendships
+                SET status = 'Deleted'
+            WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)",
+        )
+        .bind(user_id)
+        .bind(friend_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }
