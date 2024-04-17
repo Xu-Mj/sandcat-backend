@@ -44,6 +44,18 @@ impl TryFrom<Document> for Msg {
 }
 
 impl SendMsgRequest {
+    pub fn new_with_friend_del(send_id: String, receiver_id: String) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id,
+                receiver_id,
+                send_time: chrono::Local::now().timestamp_millis(),
+                msg_type: MsgType::FriendDelete as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
     pub fn new_with_friend_ship_req(send_id: String, receiver_id: String, fs: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {

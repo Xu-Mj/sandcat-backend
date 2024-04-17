@@ -30,7 +30,10 @@ enum FriendshipStatus {
 
 enum MsgType{
   MsgTypeSingleMsg = 0;
+
   MsgTypeGroupMsg = 1;
+
+  /// group operation
   MsgTypeGroupInvitation = 2;
   MsgTypeGroupInviteNew = 3;
   MsgTypeGroupMemberExit = 4;
@@ -38,8 +41,12 @@ enum MsgType{
   MsgTypeGroupDismissOrExitReceived = 6;
   MsgTypeGroupInvitationReceived = 7;
   MsgTypeGroupUpdate = 8;
+
+  /// friend operation
   MsgTypeFriendApplyReq = 9;
   MsgTypeFriendApplyResp = 10;
+
+  /// single call operation
   MsgTypeSingleCallInvite = 11;
   MsgTypeRejectSingleCall = 12;
   MsgTypeAgreeSingleCall = 13;
@@ -49,11 +56,15 @@ enum MsgType{
   MsgTypeHangup = 17;
   MsgTypeConnectSingleCall = 18;
   MsgTypeCandidate = 19;
+
   MsgTypeRead = 20;
   MsgTypeMsgRecResp = 21;
   MsgTypeNotification = 22;
   MsgTypeService = 23;
   MsgTypeFriendshipReceived = 24;
+
+  /// friend delete
+  MsgTypeFriendDelete = 25;
 }
 
 /// decode message content by content type
@@ -278,6 +289,7 @@ message FriendshipWithUser{
   string source = 10;
   int64 create_time = 11;
   string account = 12;
+  optional string remark = 13;
 }
 
 message Friend{

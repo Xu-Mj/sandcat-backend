@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use nanoid::nanoid;
 use sqlx::PgPool;
+use tracing::debug;
 
 use abi::errors::Error;
 use abi::message::{
@@ -28,13 +29,16 @@ impl FriendRepo for PostgresFriend {
         let user_id = fs.user_id.clone();
         let now = chrono::Local::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
+        debug!("create_fs: {:?}", &fs);
         let fs_id: (String,) = sqlx::query_as(
             "INSERT INTO friendships
                 (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time)
              VALUES
                 ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8)
-             ON CONFLICT (user_id, friend_id) DO UPDATE
-             SET apply_msg = EXCLUDED.apply_msg, req_remark = EXCLUDED.req_remark
+             ON CONFLICT (user_id, friend_id)
+             DO UPDATE
+                SET apply_msg = EXCLUDED.apply_msg, req_remark = EXCLUDED.req_remark,
+                source = EXCLUDED.source, create_time = EXCLUDED.create_time, status = EXCLUDED.status
              RETURNING id",
         )
         .bind(&nanoid!())
@@ -47,6 +51,7 @@ impl FriendRepo for PostgresFriend {
         .bind(now)
         .fetch_one(&mut *transaction)
         .await?;
+
         // select user information
         let mut users: Vec<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1 OR id = $2")
             .bind(&fs.user_id)
@@ -54,17 +59,21 @@ impl FriendRepo for PostgresFriend {
             .fetch_all(&mut *transaction)
             .await?;
         transaction.commit().await?;
+
         let user1 = users.remove(0);
         let (user, friend) = if user1.id == user_id {
             (user1, users.remove(0))
         } else {
             (users.remove(0), user1)
         };
+
         let mut fs_req = FriendshipWithUser::from(friend);
         fs_req.fs_id = fs_id.0.clone();
         fs_req.status = FriendshipStatus::Pending as i32;
         fs_req.source = fs.source.clone();
         fs_req.create_time = now;
+        fs_req.remark = fs.req_remark;
+
         let fs_send = FriendshipWithUser {
             fs_id: fs_id.0,
             user_id,
@@ -78,6 +87,7 @@ impl FriendRepo for PostgresFriend {
             source: fs.source,
             create_time: now,
             account: user.account,
+            remark: None,
         };
         Ok((fs_req, fs_send))
     }

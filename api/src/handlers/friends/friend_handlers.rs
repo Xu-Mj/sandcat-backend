@@ -42,7 +42,6 @@ pub async fn create_friendship(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(new_friend): JsonWithAuthExtractor<FsCreate>,
 ) -> Result<Json<FriendshipWithUser>, Error> {
-    // 需要根据目标用户id查找是否在线，如果在线直接发送消息过去
     tracing::debug!("{:?}", &new_friend);
     let receiver_id = new_friend.friend_id.clone();
     let mut db_rpc = app_state.db_rpc.clone();
@@ -136,9 +135,20 @@ pub async fn delete_friend(
         return Err(Error::BadRequest(String::from("friend id is none")));
     }
 
+    let user_id = req.user_id.clone();
+    let friend_id = req.friend_id.clone();
+
     let mut db_rpc = app_state.db_rpc.clone();
     db_rpc
         .delete_friend(req)
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    // send message to friend
+    let msg = SendMsgRequest::new_with_friend_del(user_id, friend_id);
+    let mut ws_rpc = app_state.ws_rpc.clone();
+    ws_rpc
+        .send_message(msg)
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     Ok(())

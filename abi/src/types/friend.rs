@@ -114,6 +114,7 @@ impl FromRow<'_, PgRow> for FriendshipWithUser {
             apply_msg: row.try_get("apply_msg")?,
             source: row.try_get("source")?,
             create_time: row.try_get("create_time")?,
+            remark: None,
         })
     }
 }
