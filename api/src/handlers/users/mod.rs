@@ -52,7 +52,7 @@ pub struct Claims {
     pub iat: u64,
 }
 
-const EXPIRES: u64 = 3_600_000;
+const EXPIRES: u64 = 3_600_000 * 48;
 
 impl Claims {
     pub fn new(sub: String) -> Self {
