@@ -45,7 +45,7 @@ impl PusherRpcService {
         let service = PushServiceServer::new(pusher_rpc);
         info!(
             "<pusher> rpc service started at {}",
-            config.rpc.chat.rpc_server_url()
+            config.rpc.pusher.rpc_server_url()
         );
 
         Server::builder()
