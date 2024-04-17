@@ -16,8 +16,8 @@ use abi::message::{
     CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User, UserUpdate,
     UserWithMatchType, VerifyPwdRequest,
 };
-use utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 
+use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 

@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{GetDbMsgRequest, Msg};
-use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 
 // message handler, offer the ability to pull offline message

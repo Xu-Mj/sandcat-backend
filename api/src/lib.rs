@@ -9,8 +9,10 @@ use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
 use oss::Oss;
 
+mod api_utils;
 pub(crate) mod handlers;
 pub(crate) mod routes;
+
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub db_rpc: DbServiceClient<Channel>,

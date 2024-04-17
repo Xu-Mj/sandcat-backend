@@ -5,7 +5,7 @@ use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
 use abi::message::Msg;
-use axum::extract::{State, WebSocketUpgrade};
+use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{
@@ -15,7 +15,6 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
 use tracing::error;
-use utils::custom_extract::path_extractor::PathExtractor;
 
 use crate::manager::Manager;
 
@@ -72,7 +71,7 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        PathExtractor((user_id, token, pointer_id)): PathExtractor<(String, String, String)>,
+        Path((user_id, token, pointer_id)): Path<(String, String, String)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {

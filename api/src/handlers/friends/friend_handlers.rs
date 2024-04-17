@@ -6,8 +6,8 @@ use abi::message::{
     AgreeReply, DeleteFriendRequest, Friend, FriendListRequest, FriendshipWithUser, FsAgreeRequest,
     FsCreate, FsCreateRequest, FsListRequest, SendMsgRequest, UpdateRemarkRequest,
 };
-use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 
 pub async fn get_friends_list_by_user_id(

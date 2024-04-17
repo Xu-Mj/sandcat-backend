@@ -10,8 +10,8 @@ use abi::message::{
     GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate, GroupUpdateRequest, MsgType,
     SendMsgRequest, UserAndGroupId,
 };
-use utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 
 ///  use the send_message, need to store the notification message

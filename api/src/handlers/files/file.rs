@@ -4,9 +4,10 @@ use nanoid::nanoid;
 use std::ffi::OsStr;
 use std::path::Path;
 
-use crate::AppState;
 use abi::errors::Error;
-use utils::custom_extract::PathExtractor;
+
+use crate::api_utils::custom_extract::PathExtractor;
+use crate::AppState;
 
 pub async fn upload(
     State(state): State<AppState>,
