@@ -1,6 +1,6 @@
 use axum::extract::State;
 use axum::Json;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lettre::message::header::ContentType;
 use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
@@ -21,6 +21,36 @@ use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAut
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
+/// refresh auth token
+pub async fn refresh_token(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor(token): PathWithAuthExtractor<String>,
+) -> Result<String, Error> {
+    let claim = match decode::<Claims>(
+        &token,
+        &DecodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+        &Validation::default(),
+    ) {
+        Ok(data) => data,
+        Err(err) => {
+            debug!("token is expired");
+            return Err(Error::UnAuthorized(
+                format!("UnAuthorized Request: {:?}", err),
+                "/refresh_token".to_string(),
+            ));
+        }
+    };
+    let claims = Claims::new(claim.claims.sub.clone());
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+    )
+    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    Ok(token)
+}
+
+/// register new user
 pub async fn create_user(
     State(app_state): State<AppState>,
     JsonExtractor(new_user): JsonExtractor<UserRegister>,

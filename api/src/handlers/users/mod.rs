@@ -44,23 +44,20 @@ impl LoginRequest {
         Ok(())
     }
 }
+
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
     pub exp: u64,
     pub iat: u64,
-    pub update: u64,
 }
+
+const EXPIRES: u64 = 3_600_000;
 
 impl Claims {
     pub fn new(sub: String) -> Self {
         let now = chrono::Local::now().timestamp_millis() as u64;
-        let exp = now + 10_000;
-        Self {
-            sub,
-            exp,
-            iat: now,
-            update: 10_000,
-        }
+        let exp = now + EXPIRES;
+        Self { sub, exp, iat: now }
     }
 }

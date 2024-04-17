@@ -1,4 +1,3 @@
-use abi::errors::Error;
 use axum::extract::path::ErrorKind;
 use axum::extract::rejection::{JsonRejection, PathRejection};
 use axum::extract::{FromRequestParts, Request};
@@ -7,9 +6,15 @@ use axum::{
     async_trait,
     extract::{FromRequest, MatchedPath},
     http::StatusCode,
-    RequestPartsExt,
+    Extension, RequestPartsExt,
 };
+use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::de::DeserializeOwned;
+
+use abi::errors::Error;
+
+use crate::handlers::users::Claims;
+use crate::AppState;
 
 pub struct JsonWithAuthExtractor<T>(pub T);
 
@@ -38,6 +43,16 @@ where
             .map(|path| path.as_str().to_owned())
             .ok()
             .unwrap_or(String::new());
+        let Extension(app_state) = parts
+            .extract::<Extension<AppState>>()
+            .await
+            .map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Error::InternalServer(err.to_string()),
+                )
+            })?;
+
         if let Some(header) = parts.headers.get(AUTHORIZATION_HEADER) {
             // analyze the header
             let header = header.to_str().unwrap_or("");
@@ -48,34 +63,18 @@ where
                 ));
             }
             let header: Vec<&str> = header.split_whitespace().collect();
-            tracing::debug!("header : {}", header[1]);
 
-            // let claim = match decode::<Claims>(
-            //     header[1],
-            //     &DecodingKey::from_secret(CONFIG.get().unwrap().jwt_secret().as_bytes()),
-            //     &Validation::default(),
-            // ) {
-            //     Ok(data) => data,
-            //     Err(err) => match err.kind() {
-            //         ErrorKind::ExpiredSignature => {
-            //         }
-            //         _ => {
-            //             return Err((
-            //                 StatusCode::INTERNAL_SERVER_ERROR,
-            //                 Error::InternalServer(err.to_string()),
-            //             ));
-            //         }
-            //     },
-            // };
-            // // if the token is expired
-            // if chrono::Local::now().timestamp_millis() as u64 - claim.claims.iat
-            //     > claim.claims.update
-            // {
-            //     return Err((
-            //         StatusCode::UNAUTHORIZED,
-            //         Error::UnAuthorized("UnAuthorized Request".to_string(), path),
-            //     ));
-            // }
+            if let Err(err) = decode::<Claims>(
+                header[1],
+                &DecodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+                &Validation::default(),
+            ) {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Error::InternalServer(err.to_string()),
+                ));
+            }
+
             let req = Request::from_parts(parts, body);
 
             match axum::Json::<T>::from_request(req, state).await {
@@ -113,6 +112,16 @@ where
             .map(|path| path.as_str().to_owned())
             .ok()
             .unwrap_or(String::new());
+        let Extension(app_state) = parts
+            .extract::<Extension<AppState>>()
+            .await
+            .map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Error::InternalServer(err.to_string()),
+                )
+            })?;
+
         if let Some(header) = parts.headers.get(AUTHORIZATION_HEADER) {
             // 解析请求头
             let header = header.to_str().unwrap_or("");
@@ -122,8 +131,20 @@ where
                     Error::UnAuthorized("UnAuthorized Request".to_string(), path),
                 ));
             }
+
             let header: Vec<&str> = header.split_whitespace().collect();
-            tracing::debug!("header : {}", header[1]);
+
+            if let Err(err) = decode::<Claims>(
+                header[1],
+                &DecodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+                &Validation::default(),
+            ) {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Error::InternalServer(err.to_string()),
+                ));
+            }
+
             match axum::extract::Path::<T>::from_request_parts(parts, state).await {
                 Ok(value) => Ok(Self(value.0)),
                 Err(rejection) => {
@@ -154,7 +175,7 @@ where
                                 }
 
                                 ErrorKind::UnsupportedType { .. } => {
-                                    // this errors is caused by the programmer using an unsupported type
+                                    // these errors are caused by the programmer using an unsupported type
                                     // (such as nested maps) so respond with `500` instead
                                     status = StatusCode::INTERNAL_SERVER_ERROR;
                                     Error::InternalServer(kind.to_string())
