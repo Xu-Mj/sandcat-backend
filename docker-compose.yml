@@ -38,6 +38,17 @@ services:
     volumes:
       - 'mongodata:/data/db'
 
+  postgres:
+    image: 'postgres:latest'
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=im
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+
   minio:
     image: 'minio/minio:latest'
     ports:
@@ -52,3 +63,4 @@ services:
 volumes:
   mongodata:
   miniodata:
+  postgres_data:
