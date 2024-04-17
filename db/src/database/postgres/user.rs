@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use abi::errors::Error;
-use abi::message::{User, UserWithMatchType};
+use abi::message::{User, UserUpdate, UserWithMatchType};
 
 use crate::database::user::UserRepo;
 
@@ -77,27 +77,26 @@ impl UserRepo for PostgresUser {
         Ok(users)
     }
 
-    async fn update_user(&self, user: User) -> Result<User, Error> {
+    async fn update_user(&self, user: UserUpdate) -> Result<User, Error> {
         let user = sqlx::query_as(
             "UPDATE users SET
             name = COALESCE(NULLIF($2, ''), name),
             avatar = COALESCE(NULLIF($3, ''), avatar),
             gender = COALESCE(NULLIF($4, ''), gender),
-            age = COALESCE(NULLIF($5, 0), age),
-            phone = COALESCE(NULLIF($6, ''), phone),
-            email = COALESCE(NULLIF($7, ''), email),
-            address = COALESCE(NULLIF($8, ''), address),
-            region = COALESCE(NULLIF($9, ''), region),
-            birthday = COALESCE(NULLIF($10, 0), birthday),
-            signature = COALESCE(NULLIF($11, ''), signature),
-            update_time = $12
-            WHERE id = $1",
+            phone = COALESCE(NULLIF($5, ''), phone),
+            email = COALESCE(NULLIF($6, ''), email),
+            address = COALESCE(NULLIF($7, ''), address),
+            region = COALESCE(NULLIF($8, ''), region),
+            birthday = COALESCE(NULLIF($9, 0), birthday),
+            signature = COALESCE(NULLIF($10, ''), signature),
+            update_time = $11
+            WHERE id = $1
+            RETURNING *",
         )
         .bind(&user.id)
         .bind(&user.name)
         .bind(&user.avatar)
         .bind(&user.gender)
-        .bind(user.age)
         .bind(&user.phone)
         .bind(&user.email)
         .bind(&user.address)

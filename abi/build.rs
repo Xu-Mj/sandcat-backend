@@ -60,6 +60,7 @@ fn main() {
             "GetDbMsgRequest",
             "UserAndGroupID",
             "User",
+            "UserUpdate",
             "UserWithMatchType",
             "Friend",
             "Friendship",

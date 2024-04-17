@@ -13,7 +13,7 @@ use tracing::{debug, error};
 
 use abi::errors::Error;
 use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User,
+    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User, UserUpdate,
     UserWithMatchType, VerifyPwdRequest,
 };
 use utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
@@ -73,7 +73,7 @@ pub async fn create_user(
 
 pub async fn update_user(
     State(app_state): State<AppState>,
-    JsonExtractor(user): JsonExtractor<User>,
+    JsonExtractor(user): JsonExtractor<UserUpdate>,
 ) -> Result<Json<User>, Error> {
     // todo need to check the email is registered already
     let request = UpdateUserRequest { user: Some(user) };

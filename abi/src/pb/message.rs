@@ -289,6 +289,31 @@ pub struct User {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserUpdate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "5")]
+    pub phone: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "6")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "7")]
+    pub address: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "8")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "9")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(string, optional, tag = "10")]
+    pub signature: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserWithMatchType {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
@@ -612,7 +637,7 @@ pub struct GetUserResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateUserRequest {
     #[prost(message, optional, tag = "1")]
-    pub user: ::core::option::Option<User>,
+    pub user: ::core::option::Option<UserUpdate>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

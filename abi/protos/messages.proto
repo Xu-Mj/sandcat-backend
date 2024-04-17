@@ -224,6 +224,19 @@ message User{
   string signature = 16;
 }
 
+message UserUpdate{
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string gender = 4;
+  optional string phone = 5;
+  optional string email = 6;
+  optional string address = 7;
+  optional string region = 8;
+  optional int64 birthday = 9;
+  optional string signature = 10;
+}
+
 message UserWithMatchType{
   string id = 1;
   string name = 2;
@@ -416,7 +429,7 @@ message GetUserResponse {
 }
 
 message UpdateUserRequest {
-  User user = 1;
+  UserUpdate user = 1;
 }
 
 message UpdateUserResponse {

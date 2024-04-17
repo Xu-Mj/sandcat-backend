@@ -1,5 +1,5 @@
 use abi::errors::Error;
-use abi::message::{User, UserWithMatchType};
+use abi::message::{User, UserUpdate, UserWithMatchType};
 use async_trait::async_trait;
 use std::fmt::Debug;
 
@@ -18,7 +18,7 @@ pub trait UserRepo: Sync + Send + Debug {
         pattern: &str,
     ) -> Result<Vec<UserWithMatchType>, Error>;
 
-    async fn update_user(&self, user: User) -> Result<User, Error>;
+    async fn update_user(&self, user: UserUpdate) -> Result<User, Error>;
 
     async fn verify_pwd(&self, account: &str, password: &str) -> Result<User, Error>;
 }
