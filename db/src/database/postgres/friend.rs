@@ -88,6 +88,7 @@ impl FriendRepo for PostgresFriend {
             create_time: now,
             account: user.account,
             remark: None,
+            email: None,
         };
         Ok((fs_req, fs_send))
     }
@@ -283,6 +284,7 @@ impl FriendRepo for PostgresFriend {
             account: user.account,
             signature: user.signature,
             create_time: friendship.accept_time,
+            email: None,
         };
         let send = Friend {
             fs_id: friendship.id,
@@ -300,15 +302,31 @@ impl FriendRepo for PostgresFriend {
             account: friend.account,
             signature: friend.signature,
             create_time: friendship.accept_time,
+            email: None,
         };
         Ok((req, send))
     }
 
     async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error> {
         sqlx::query(
-            "UPDATE friendships
-                SET status = 'Deleted'
-            WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)",
+            "WITH updated AS (
+            UPDATE friendships
+            SET status = 'Deleted'
+            WHERE
+                ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
+                AND status != 'Deleted'
+            RETURNING user_id, friend_id
+            )
+            DELETE FROM friendships
+            WHERE
+                ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
+                AND NOT EXISTS (
+                    SELECT 1 FROM updated
+                    WHERE
+                        updated.user_id = friendships.user_id
+                        AND
+                        updated.friend_id = friendships.friend_id
+                )",
         )
         .bind(user_id)
         .bind(friend_id)

@@ -175,6 +175,7 @@ pub struct GroupInfo {
     #[prost(int64, tag = "8")]
     pub update_time: i64,
 }
+/// fixme add account field
 /// / group member information also related to database table group_members
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -337,6 +338,8 @@ pub struct UserWithMatchType {
     pub match_type: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "11")]
     pub signature: ::prost::alloc::string::String,
+    #[prost(bool, tag = "12")]
+    pub is_friend: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -395,6 +398,8 @@ pub struct FriendshipWithUser {
     pub account: ::prost::alloc::string::String,
     #[prost(string, optional, tag = "13")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "14")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -430,6 +435,8 @@ pub struct Friend {
     pub signature: ::prost::alloc::string::String,
     #[prost(int64, tag = "15")]
     pub create_time: i64,
+    #[prost(string, optional, tag = "16")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -658,8 +665,8 @@ pub struct SearchUserRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchUserResponse {
-    #[prost(message, repeated, tag = "1")]
-    pub users: ::prost::alloc::vec::Vec<UserWithMatchType>,
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<UserWithMatchType>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

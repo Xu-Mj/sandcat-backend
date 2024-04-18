@@ -57,5 +57,6 @@ Why should we *not* do this?
 - timestamp issue: we use the time millis(i64) as the timestamp in database, but we should use the TimeStamp in the
   future.
 - axum's routes layer or with_state?
+- user table should add login device, used to check if the client need to sync the friend list
 
 ## Future possibilities

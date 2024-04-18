@@ -16,7 +16,7 @@ pub trait UserRepo: Sync + Send + Debug {
         &self,
         user_id: &str,
         pattern: &str,
-    ) -> Result<Vec<UserWithMatchType>, Error>;
+    ) -> Result<Option<UserWithMatchType>, Error>;
 
     async fn update_user(&self, user: UserUpdate) -> Result<User, Error>;
 

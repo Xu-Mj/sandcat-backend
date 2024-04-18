@@ -55,26 +55,27 @@ impl UserRepo for PostgresUser {
         Ok(user)
     }
 
+    /// not allow to use username
     async fn search_user(
         &self,
         user_id: &str,
         pattern: &str,
-    ) -> Result<Vec<UserWithMatchType>, Error> {
-        let users: Vec<UserWithMatchType> = sqlx::query_as(
+    ) -> Result<Option<UserWithMatchType>, Error> {
+        let user = sqlx::query_as(
             "SELECT id, name, account, avatar, gender, age, email, region, birthday, signature,
              CASE
-                WHEN name LIKE $2 THEN 'name'
                 WHEN phone = $2 THEN 'phone'
+                WHEN email = $2 THEN 'email'
+                WHEN account = $2 THEN 'account'
                 ELSE null
              END AS match_type
-             FROM users WHERE id <> $1 AND (name LIKE $2 OR phone = $3)",
+             FROM users WHERE id <> $1 AND (email = $2 OR phone = $2 OR account = $2)",
         )
         .bind(user_id)
-        .bind(&format!("%{}%", pattern))
         .bind(pattern)
-        .fetch_all(&self.pool)
+        .fetch_optional(&self.pool)
         .await?;
-        Ok(users)
+        Ok(user)
     }
 
     async fn update_user(&self, user: UserUpdate) -> Result<User, Error> {

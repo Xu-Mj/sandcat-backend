@@ -38,6 +38,7 @@ impl FromRow<'_, PgRow> for UserWithMatchType {
             birthday: row.try_get("birthday")?,
             match_type: row.try_get("match_type")?,
             signature: row.try_get("signature")?,
+            is_friend: false,
         })
     }
 }

@@ -260,8 +260,8 @@ impl DbService for DbRpcService {
         if pattern.is_empty() || pattern.chars().count() > 32 {
             return Err(Status::invalid_argument("keyword is empty or too long"));
         }
-        let users = self.db.user.search_user(&user_id, &pattern).await?;
-        Ok(Response::new(SearchUserResponse { users }))
+        let user = self.db.user.search_user(&user_id, &pattern).await?;
+        Ok(Response::new(SearchUserResponse { user }))
     }
 
     async fn verify_password(

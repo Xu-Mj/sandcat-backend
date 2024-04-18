@@ -16,9 +16,10 @@ impl Display for FriendshipStatus {
         }
     }
 }
-#[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[sqlx(type_name = "friend_request_status")]
 pub enum FsStatus {
+    #[default]
     Pending,
     Accepted,
     Rejected,
@@ -62,24 +63,25 @@ impl FromRow<'_, PgRow> for Friendship {
 
 impl FromRow<'_, PgRow> for Friend {
     fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
-        let status: FsStatus = row.try_get("status")?;
+        let status: FsStatus = row.try_get("status").unwrap_or_default();
         let status = FriendshipStatus::from(status);
         Ok(Self {
-            fs_id: row.try_get("fs_id")?,
-            friend_id: row.try_get("friend_id")?,
-            name: row.try_get("name")?,
-            account: row.try_get("account")?,
-            avatar: row.try_get("avatar")?,
-            gender: row.try_get("gender")?,
-            age: row.try_get("age")?,
-            region: row.try_get("region")?,
+            fs_id: row.try_get("fs_id").unwrap_or_default(),
+            friend_id: row.try_get("friend_id").unwrap_or_default(),
+            name: row.try_get("name").unwrap_or_default(),
+            account: row.try_get("account").unwrap_or_default(),
+            avatar: row.try_get("avatar").unwrap_or_default(),
+            gender: row.try_get("gender").unwrap_or_default(),
+            age: row.try_get("age").unwrap_or_default(),
+            region: row.try_get("region").unwrap_or_default(),
             status: status as i32,
-            hello: row.try_get("hello")?,
-            remark: row.try_get("remark")?,
-            source: row.try_get("source")?,
-            accept_time: row.try_get("accept_time")?,
-            signature: row.try_get("signature")?,
-            create_time: row.try_get("create_time")?,
+            hello: row.try_get("hello").unwrap_or_default(),
+            remark: row.try_get("remark").unwrap_or_default(),
+            source: row.try_get("source").unwrap_or_default(),
+            accept_time: row.try_get("accept_time").unwrap_or_default(),
+            signature: row.try_get("signature").unwrap_or_default(),
+            create_time: row.try_get("create_time").unwrap_or_default(),
+            email: row.try_get("email").unwrap_or_default(),
         })
     }
 }
@@ -102,18 +104,19 @@ impl From<User> for FriendshipWithUser {
 impl FromRow<'_, PgRow> for FriendshipWithUser {
     fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
         Ok(Self {
-            fs_id: row.try_get("fs_id")?,
-            user_id: row.try_get("user_id")?,
-            name: row.try_get("name")?,
-            account: row.try_get("account")?,
-            avatar: row.try_get("avatar")?,
-            gender: row.try_get("gender")?,
-            age: row.try_get("age")?,
-            region: row.try_get("region")?,
-            status: row.try_get("status")?,
-            apply_msg: row.try_get("apply_msg")?,
-            source: row.try_get("source")?,
-            create_time: row.try_get("create_time")?,
+            fs_id: row.try_get("fs_id").unwrap_or_default(),
+            user_id: row.try_get("user_id").unwrap_or_default(),
+            name: row.try_get("name").unwrap_or_default(),
+            account: row.try_get("account").unwrap_or_default(),
+            avatar: row.try_get("avatar").unwrap_or_default(),
+            gender: row.try_get("gender").unwrap_or_default(),
+            age: row.try_get("age").unwrap_or_default(),
+            region: row.try_get("region").unwrap_or_default(),
+            status: row.try_get("status").unwrap_or_default(),
+            apply_msg: row.try_get("apply_msg").unwrap_or_default(),
+            source: row.try_get("source").unwrap_or_default(),
+            create_time: row.try_get("create_time").unwrap_or_default(),
+            email: row.try_get("email").unwrap_or_default(),
             remark: None,
         })
     }
@@ -137,6 +140,7 @@ impl From<User> for Friend {
             accept_time: 0,
             signature: value.signature,
             create_time: 0,
+            email: value.email,
         }
     }
 }

@@ -177,6 +177,7 @@ message GroupInfo {
   int64 update_time = 8;
 }
 
+// fixme add account field
 /// group member information also related to database table group_members
 message GroupMember {
   int32 age = 1;
@@ -260,6 +261,7 @@ message UserWithMatchType{
   optional int64 birthday = 9;
   optional string match_type = 10;
   string signature = 11;
+  bool is_friend = 12;
 }
 
 message Friendship{
@@ -290,6 +292,7 @@ message FriendshipWithUser{
   int64 create_time = 11;
   string account = 12;
   optional string remark = 13;
+  optional string email = 14;
 }
 
 message Friend{
@@ -308,6 +311,7 @@ message Friend{
   string friend_id = 13;
   string signature = 14;
   int64 create_time = 15;
+  optional string email = 16;
 }
 
 message FsCreateRequest {
@@ -454,7 +458,7 @@ message SearchUserRequest {
 }
 
 message SearchUserResponse {
-  repeated UserWithMatchType users = 1;
+  UserWithMatchType user = 1;
 }
 
 message VerifyPwdRequest {

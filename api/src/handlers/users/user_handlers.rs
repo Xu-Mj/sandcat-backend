@@ -140,16 +140,16 @@ pub async fn get_user_by_id(
 pub async fn search_user(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, pattern)): PathWithAuthExtractor<(String, String)>,
-) -> Result<Json<Vec<UserWithMatchType>>, Error> {
+) -> Result<Json<Option<UserWithMatchType>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = SearchUserRequest { user_id, pattern };
-    let users = db_rpc
+    let user = db_rpc
         .search_user(request)
         .await
         .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
-        .users;
-    Ok(Json(users))
+        .user;
+    Ok(Json(user))
 }
 
 pub async fn logout(
