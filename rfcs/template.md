@@ -27,19 +27,7 @@ first purpose: study rust.
   offer api for other services to call. based on rpc.
 - db
   database layer, consumer the mq data to postgres, mongodb and reds.
-  ![core flow](images/时序图.awebp)
-
-## Drawbacks
-
-Why should we *not* do this?
-
-## Rationale and alternatives
-
-- Why is this design the best in the space of possible designs?
-- What other designs have been considered and what is the rationale for not choosing them?
-- What is the impact of not doing this?
-- If this is a language proposal, could this be done in a library or macro instead? Does the proposed change make Rust
-  code easier or harder to read, understand, and maintain?
+  ![core flow](images/seq-chart.png)
 
 ## Unresolved questions
 
