@@ -47,10 +47,10 @@ impl UserRepo for PostgresUser {
         Ok(result)
     }
 
-    async fn get_user_by_id(&self, id: &str) -> Result<User, Error> {
+    async fn get_user_by_id(&self, id: &str) -> Result<Option<User>, Error> {
         let user = sqlx::query_as("SELECT * FROM users WHERE id = $1")
             .bind(id)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await?;
         Ok(user)
     }
@@ -110,12 +110,17 @@ impl UserRepo for PostgresUser {
         Ok(user)
     }
 
-    async fn verify_pwd(&self, account: &str, password: &str) -> Result<User, Error> {
-        let mut user: User =
+    async fn verify_pwd(&self, account: &str, password: &str) -> Result<Option<User>, Error> {
+        let user: Option<User> =
             sqlx::query_as("SELECT * FROM users WHERE account = $1 OR phone = $1 OR email = $1")
                 .bind(account)
-                .fetch_one(&self.pool)
+                .fetch_optional(&self.pool)
                 .await?;
+        if user.is_none() {
+            return Ok(None);
+        }
+
+        let mut user = user.unwrap();
         let parsed_hash =
             PasswordHash::new(&user.password).map_err(|e| Error::InternalServer(e.to_string()))?;
         let is_valid = Argon2::default()
@@ -123,8 +128,8 @@ impl UserRepo for PostgresUser {
             .is_ok();
         user.password = "".to_string();
         if !is_valid {
-            return Err(Error::AccountOrPassword);
+            return Ok(None);
         }
-        Ok(user)
+        Ok(Some(user))
     }
 }

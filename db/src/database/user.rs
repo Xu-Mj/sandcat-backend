@@ -9,7 +9,7 @@ pub trait UserRepo: Sync + Send + Debug {
     async fn create_user(&self, user: User) -> Result<User, Error>;
 
     /// get user by id
-    async fn get_user_by_id(&self, id: &str) -> Result<User, Error>;
+    async fn get_user_by_id(&self, id: &str) -> Result<Option<User>, Error>;
 
     /// search user by pattern, return users and matched method
     async fn search_user(
@@ -20,5 +20,5 @@ pub trait UserRepo: Sync + Send + Debug {
 
     async fn update_user(&self, user: UserUpdate) -> Result<User, Error>;
 
-    async fn verify_pwd(&self, account: &str, password: &str) -> Result<User, Error>;
+    async fn verify_pwd(&self, account: &str, password: &str) -> Result<Option<User>, Error>;
 }

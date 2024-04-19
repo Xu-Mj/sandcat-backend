@@ -236,7 +236,7 @@ impl DbService for DbRpcService {
             return Err(Status::invalid_argument("user_id is empty"));
         }
         let user = self.db.user.get_user_by_id(&user_id).await?;
-        Ok(Response::new(GetUserResponse { user: Some(user) }))
+        Ok(Response::new(GetUserResponse { user }))
     }
 
     async fn update_user(
@@ -274,7 +274,7 @@ impl DbService for DbRpcService {
         }
 
         let user = self.db.user.verify_pwd(&account, &password).await?;
-        let response = VerifyPwdResponse { user: Some(user) };
+        let response = VerifyPwdResponse { user };
         Ok(Response::new(response))
     }
 
