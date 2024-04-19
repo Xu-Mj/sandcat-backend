@@ -1,6 +1,8 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tonic::transport::Channel;
+use xdb::searcher_init;
 
 use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::errors::Error;
@@ -68,11 +70,18 @@ impl AppState {
 }
 
 pub async fn start(config: Config) {
+    // init search ip region xdb
+    searcher_init(Some("./api/fixtures/xdb/ip2region.xdb".to_string()));
     let state = AppState::new(&config).await;
     let app = routes::app_routes(state.clone());
     let listener = tokio::net::TcpListener::bind(&config.server.server_url())
         .await
         .unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

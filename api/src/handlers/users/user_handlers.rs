@@ -1,4 +1,4 @@
-use axum::extract::State;
+use axum::extract::{ConnectInfo, State};
 use axum::Json;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lettre::message::header::ContentType;
@@ -8,8 +8,10 @@ use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use std::net::{IpAddr, SocketAddr};
 use tera::{Context, Tera};
 use tracing::{debug, error};
+use xdb::search_by_ip;
 
 use abi::errors::Error;
 use abi::message::{
@@ -18,6 +20,7 @@ use abi::message::{
 };
 
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
+use crate::api_utils::ip_region::parse_region;
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
@@ -162,13 +165,14 @@ pub async fn logout(
 
 pub async fn login(
     State(app_state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     JsonExtractor(mut login): JsonExtractor<LoginRequest>,
 ) -> Result<Json<Token>, Error> {
     // decode password from base64
     login.decode()?;
 
     let mut db_rpc = app_state.db_rpc.clone();
-    let user = db_rpc
+    let mut user = db_rpc
         .verify_password(VerifyPwdRequest {
             account: login.account,
             password: login.password,
@@ -194,6 +198,18 @@ pub async fn login(
         "ws://{}:{}/ws",
         &app_state.ws_config.host, &app_state.ws_config.port
     );
+
+    // query region
+    user.region = match addr.ip() {
+        IpAddr::V4(ip) => match search_by_ip(ip) {
+            Ok(region) => parse_region(&region),
+            Err(e) => {
+                error!("search region error: {:?}", e);
+                None
+            }
+        },
+        IpAddr::V6(_) => None,
+    };
 
     Ok(Json(Token {
         user,
