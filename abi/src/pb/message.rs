@@ -1658,6 +1658,7 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "GetFriendshipList"));
             self.inner.unary(req, path, codec).await
         }
+        /// / get friend list by user id
         pub async fn get_friend_list(
             &mut self,
             request: impl tonic::IntoRequest<super::FriendListRequest>,
@@ -1676,6 +1677,7 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "GetFriendList"));
             self.inner.unary(req, path, codec).await
         }
+        /// / update friend remark by user id and friend id
         pub async fn update_friend_remark(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateRemarkRequest>,
@@ -1695,6 +1697,7 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "UpdateFriendRemark"));
             self.inner.unary(req, path, codec).await
         }
+        /// / delete friend by user id and friend id
         pub async fn delete_friend(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteFriendRequest>,
@@ -2381,14 +2384,17 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::FsListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status>;
+        /// / get friend list by user id
         async fn get_friend_list(
             &self,
             request: tonic::Request<super::FriendListRequest>,
         ) -> std::result::Result<tonic::Response<super::FriendListResponse>, tonic::Status>;
+        /// / update friend remark by user id and friend id
         async fn update_friend_remark(
             &self,
             request: tonic::Request<super::UpdateRemarkRequest>,
         ) -> std::result::Result<tonic::Response<super::UpdateRemarkResponse>, tonic::Status>;
+        /// / delete friend by user id and friend id
         async fn delete_friend(
             &self,
             request: tonic::Request<super::DeleteFriendRequest>,

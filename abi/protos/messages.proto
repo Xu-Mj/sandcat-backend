@@ -575,8 +575,11 @@ service DbService {
   rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
   /// get friendship list
   rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
+  /// get friend list by user id
   rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
+  /// update friend remark by user id and friend id
   rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
+  /// delete friend by user id and friend id
   rpc DeleteFriend(DeleteFriendRequest) returns (DeleteFriendResponse);
 }
 
