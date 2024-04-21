@@ -44,6 +44,20 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    The project is designed with high performance and horizontal scalability in mind. Through asynchronous processing and a microservice architecture, the system is capable of scaling effectively by increasing the number of service instances in response to the growing load. Additionally, the project adopts a modular design philosophy that allows developers to customize or replace modules as needed.
 
-### Contributions and Community
+## Unresolved questions
 
-   The project is open-source and encourages the participation of Rust enthusiasts and IM system developers. We believe in the power of the community to drive the project towards greater perfection and maturity. If you have suggestions or would like to contribute code, please check out our GitHub repository and get involved.
+- save the message sequence to redis: we don't know if the seq is correct, we just increase it now.
+- how to handle the message sequence when the message is sent to the database module failed.
+- tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
+  list in the interval time.
+- need to design a websocket register center, to achieve the load balance.
+- shall we put the method that we get members id from cache into db service?
+- friendship need to redesign
+- conversation has nothing yet, it's only on the client side.
+- partition table for message have not been implemented yet.
+- GROUP MESSAGE SEQUENCE: WE INCREASE THE SEQUENCE AT CONSUMER MODULE, AND NEED TO GET SEQUENCE AT WS/MONGODB MODULE. IS
+  THERE ANY EFFECTIVE WAY TO PERFORMANT?
+- timestamp issue: we use the time millis(i64) as the timestamp in database, but we should use the TimeStamp in the
+  future.
+- axum's routes layer or with_state?
+- user table should add login device, used to check if the client need to sync the friend list

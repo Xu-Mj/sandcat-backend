@@ -138,3 +138,9 @@ WebRTC技术为我们的即时通讯提供了音视频通话的可能性。其�
 整个过程，除了建立P2P连接这部分WebRTC会自动完成外，其余部分如通话邀请、通话邀请取消、通话超时、通话挂断等需要我们自行设计和实现。总的来说，WebRTC流程繁多但层层递进，最终实现了安全、高效的音视频通话功能。
 
 **总结：**以上是对整个项目的整体概述以及一些功能的实现介绍，整个项目还在快速开发迭代中，感兴趣的话可以持续跟进，后续会对后端架构以及实现细节进行详细表述
+
+项目源码:
+
+- 前端[[Xu-Mj/sandcat: im app frontend (github.com)](https://github.com/Xu-Mj/sandcat)
+
+- 后端[[Xu-Mj/sandcat-backend: im app backend (github.com)](https://github.com/Xu-Mj/sandcat-backend)
