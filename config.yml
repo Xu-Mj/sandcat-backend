@@ -15,7 +15,7 @@ db:
     user:
     password:
     database: im
-  xdb: ./api/fixtures/xdb/ip2region.xdb
+  xdb: D:\Projects\rust\im-backend-rebuild\im-backend/api/fixtures/xdb/ip2region.xdb
 
 server:
   host: 127.0.0.1

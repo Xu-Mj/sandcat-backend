@@ -46,18 +46,15 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 ## Unresolved questions
 
-- save the message sequence to redis: we don't know if the seq is correct, we just increase it now.
-- how to handle the message sequence when the message is sent to the database module failed.
-- tonic grpc client load balance: it's just basic load balance for now, and it doesn't implement the get new service
-  list in the interval time.
-- need to design a websocket register center, to achieve the load balance.
-- shall we put the method that we get members id from cache into db service?
-- friendship need to redesign
-- conversation has nothing yet, it's only on the client side.
-- partition table for message have not been implemented yet.
-- GROUP MESSAGE SEQUENCE: WE INCREASE THE SEQUENCE AT CONSUMER MODULE, AND NEED TO GET SEQUENCE AT WS/MONGODB MODULE. IS
-  THERE ANY EFFECTIVE WAY TO PERFORMANT?
-- timestamp issue: we use the time millis(i64) as the timestamp in database, but we should use the TimeStamp in the
-  future.
-- axum's routes layer or with_state?
-- user table should add login device, used to check if the client need to sync the friend list
+- **Storing Message Sequences in Redis**: We currently increment the sequence numbers simply, without confirming their accuracy. There's a need to ensure the correctness of this sequence.
+- **Handling Message Sequences on Database Module Failure**: When sending messages to the database module fails, we require a mechanism to handle message sequences accordingly.
+- **Tonic gRPC Client Load Balancing**: The load balancing implemented so far is quite rudimentary, lacking the capability to retrieve a new service list at set intervals.
+- **Design of a WebSocket Register Center**: We need to consider the design of a WebSocket register center to achieve effective load balancing.
+- **Integrating Member ID Retrieval from Cache into DB Service**: Whether the method for retrieving member IDs from the cache should be integrated into the DB service is under consideration.
+- **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
+- **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
+- **Partition Table for Messages Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
+- **Group Message Sequencing**: The sequence for group messages is incremented at the consumer module, and we need to obtain the sequence in the WebSocket/mongoDB module. Is there a more effective way to do this?
+- **Timestamp Issues**: We use Unix time milliseconds (i64) as the timestamp in the database, but we should use a `TimeStamp` type in the future.
+- **Axum's Routes Layer or With_State?**: Should we utilize Axum's routes layer with state or the `with_state` method?
+- **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.

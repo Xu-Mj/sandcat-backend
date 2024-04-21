@@ -18,8 +18,27 @@ pub struct Config {
     pub service_center: ServiceCenterConfig,
     pub oss: OssConfig,
     pub mail: MailConfig,
+    pub log: LogConfig,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LogConfig {
+    pub level: String,
+    pub output: String,
+}
+
+impl LogConfig {
+    pub fn level(&self) -> tracing::Level {
+        match self.level.as_str() {
+            "trace" => tracing::Level::TRACE,
+            "debug" => tracing::Level::DEBUG,
+            "info" => tracing::Level::INFO,
+            "warn" => tracing::Level::WARN,
+            "error" => tracing::Level::ERROR,
+            _ => tracing::Level::INFO,
+        }
+    }
+}
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MailConfig {
     pub server: String,
@@ -51,6 +70,7 @@ pub struct DbConfig {
     // db config
     pub postgres: PostgresConfig,
     pub mongodb: MongoDbConfig,
+    pub xdb: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

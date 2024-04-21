@@ -1,11 +1,13 @@
 use abi::config::Config;
 use chat::ChatRpcService;
+use clap::{command, Arg};
 use consumer::ConsumerService;
 use db::rpc::DbRpcService;
 use pusher::PusherRpcService;
-use tracing::{info, Level};
+use tracing::info;
 use ws::ws_server::WsServer;
 
+const DEFAULT_CONFIG_PATH: &str = "./config.yml";
 #[tokio::main]
 async fn main() {
     // chat rely on kafka server
@@ -14,13 +16,46 @@ async fn main() {
     // ws rely on chat;
     // consumer rely on db and pusher rpc server;
 
-    // init tracing
-    tracing_subscriber::FmtSubscriber::builder()
-        .with_line_number(true)
-        .with_max_level(Level::DEBUG)
-        .init();
+    // get configuration path
+    let matches = command!()
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(
+            Arg::new("configuration")
+                .short('p')
+                .long("configuration")
+                .value_name("CONFIGURATION")
+                .default_value(DEFAULT_CONFIG_PATH)
+                .help("Set the configuration path"),
+        )
+        .get_matches();
+    let default_config = DEFAULT_CONFIG_PATH.to_string();
+    let configuration = matches
+        .get_one::<String>("configuration")
+        .unwrap_or(&default_config);
 
-    let config = Config::load("./abi/fixtures/im.yml").unwrap();
+    info!("load configuration from: {:?}", configuration);
+    let config = Config::load(configuration).unwrap();
+
+    // init tracing
+    if config.log.output != "console" {
+        // redirect log to file
+        let file_appender = tracing_appender::rolling::daily(&config.log.output, "sandcat");
+        let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+        // builder = builder.with_writer(non_blocking);
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_line_number(true)
+            .with_max_level(config.log.level())
+            .with_writer(non_blocking)
+            .init();
+    } else {
+        // log to console
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_line_number(true)
+            .with_max_level(config.log.level())
+            .init();
+    }
 
     // start chat rpc server
     let cloned_config = config.clone();

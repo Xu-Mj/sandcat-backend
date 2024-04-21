@@ -71,7 +71,7 @@ impl AppState {
 
 pub async fn start(config: Config) {
     // init search ip region xdb
-    searcher_init(Some("./api/fixtures/xdb/ip2region.xdb".to_string()));
+    searcher_init(Some(config.db.xdb.clone()));
     let state = AppState::new(&config).await;
     let app = routes::app_routes(state.clone());
     let listener = tokio::net::TcpListener::bind(&config.server.server_url())
