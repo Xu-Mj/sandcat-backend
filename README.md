@@ -1,10 +1,10 @@
-## IM Backend Architecture Description
+# IM Backend Architecture Description
 
-### Project Overview
+## Project Overview
 
 This project provides an implementation of a backend for an Instant Messaging (IM) system, developed in the Rust programming language, with a microservice architecture design. Its primary goal is to offer developers an efficient, stable, and scalable IM solution. The focus of this project is to explore and demonstrate the potential and practices of Rust in building high-performance backend services.
 
-### Key Features
+## Key Features
 
 - **Microservice Architecture:** The system is split into multiple independent service units, each responsible for a portion of the core business logic and communication with other services.
 - **Containerized Deployment:** All services can be packaged with Docker, facilitating deployment and management.
@@ -12,7 +12,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Data Storage:** Uses PostgreSQL and MongoDB for storing messages permanently and for inbox functionalities, respectively.
 - **Message Queue:** Leverages Kafka as a message queue to support high concurrency message pushing and processing.
 
-### Architecture Components
+## Architecture Components
 
 1. **Service Layer**
 
@@ -40,7 +40,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 
 
-### Performance and Scalability
+## Performance and Scalability
 
    The project is designed with high performance and horizontal scalability in mind. Through asynchronous processing and a microservice architecture, the system is capable of scaling effectively by increasing the number of service instances in response to the growing load. Additionally, the project adopts a modular design philosophy that allows developers to customize or replace modules as needed.
 
