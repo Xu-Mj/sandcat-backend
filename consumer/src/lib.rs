@@ -27,7 +27,7 @@ pub struct ConsumerService {
     /// rpc client
     db_rpc: DbServiceClient<Channel>,
     pusher: PushServiceClient<Channel>,
-    cache: Arc<Box<dyn Cache>>,
+    cache: Arc<dyn Cache>,
 }
 
 impl ConsumerService {
@@ -60,7 +60,7 @@ impl ConsumerService {
             consumer,
             db_rpc,
             pusher,
-            cache: Arc::new(cache),
+            cache,
         }
     }
 

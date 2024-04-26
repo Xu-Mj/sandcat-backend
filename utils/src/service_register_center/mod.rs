@@ -3,6 +3,8 @@ use abi::config::Config;
 use abi::errors::Error;
 use axum::async_trait;
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::sync::Arc;
 
 mod consul;
 pub mod typos;
@@ -10,7 +12,7 @@ pub mod typos;
 pub type Services = HashMap<String, Service>;
 /// the service register discovery center
 #[async_trait]
-pub trait ServiceRegister: Send + Sync {
+pub trait ServiceRegister: Send + Sync + Debug {
     /// service register
     async fn register(&self, registration: Registration) -> Result<(), Error>;
 
@@ -24,6 +26,6 @@ pub trait ServiceRegister: Send + Sync {
     async fn filter_by_name(&self, name: &str) -> Result<Services, Error>;
 }
 
-pub fn service_register_center(config: &Config) -> Box<dyn ServiceRegister> {
-    Box::new(consul::Consul::from_config(config))
+pub fn service_register_center(config: &Config) -> Arc<dyn ServiceRegister> {
+    Arc::new(consul::Consul::from_config(config))
 }

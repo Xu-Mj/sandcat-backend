@@ -10,6 +10,7 @@ use crate::service_register_center::typos::Registration;
 use crate::service_register_center::{ServiceRegister, Services};
 
 /// consul options
+#[derive(Debug, Clone)]
 pub struct ConsulOptions {
     pub host: String,
     pub port: u16,
@@ -29,13 +30,13 @@ impl ConsulOptions {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Consul {
     pub options: ConsulOptions,
     pub client: reqwest::Client,
 }
 
 impl Consul {
-    #[allow(dead_code)]
     pub fn from_config(config: &Config) -> Self {
         let options = ConsulOptions::from_config(config);
         let client = reqwest::Client::builder()

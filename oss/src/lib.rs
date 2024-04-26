@@ -3,6 +3,7 @@ use abi::errors::Error;
 use async_trait::async_trait;
 use bytes::Bytes;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 mod client;
 
@@ -14,6 +15,6 @@ pub trait Oss: Debug + Send + Sync {
     async fn delete_file(&self, key: &str) -> Result<(), Error>;
 }
 
-pub async fn oss(config: &Config) -> Box<dyn Oss> {
-    Box::new(client::S3Client::new(config).await)
+pub async fn oss(config: &Config) -> Arc<dyn Oss> {
+    Arc::new(client::S3Client::new(config).await)
 }

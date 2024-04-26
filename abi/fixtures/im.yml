@@ -21,6 +21,7 @@ server:
   host: 127.0.0.1
   port: 50001
   jwt_secret: xmj
+  ws_lb_strategy: Random # Random, RoundRobin
 
 service_center:
   host: 127.0.0.1
@@ -29,14 +30,19 @@ service_center:
   protocol: http
 
 websocket:
+  protocol: ws
   host: 127.0.0.1
-  port: 50000
+  port: 50010
+  name: websocket
+  tags:
+    - websocket
+    - grpc
 
 rpc:
   ws:
     protocol: http
     host: 127.0.0.1
-    port: 50002
+    port: 50012
     name: ws
     tags:
       - ws
@@ -89,11 +95,11 @@ kafka:
   group: chat
 
 oss:
-    endpoint: http://127.0.0.1:9000
-    access_key: minioadmin
-    secret_key: minioadmin
-    bucket: xmj
-    region: us-east-1
+  endpoint: http://127.0.0.1:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: xmj
+  region: us-east-1
 
 mail:
   server: smtp.qq.com

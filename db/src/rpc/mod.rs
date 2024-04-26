@@ -20,8 +20,8 @@ pub use service::*;
 /// DbRpcService contains the postgres trait, mongodb trait and redis trait
 pub struct DbRpcService {
     db: Arc<DbRepo>,
-    msg_rec_box: Arc<Box<dyn MsgRecBoxRepo>>,
-    cache: Arc<Box<dyn Cache>>,
+    msg_rec_box: Arc<dyn MsgRecBoxRepo>,
+    cache: Arc<dyn Cache>,
 }
 
 impl DbRpcService {
@@ -29,8 +29,8 @@ impl DbRpcService {
         let cache = cache::cache(config);
         Self {
             db: Arc::new(DbRepo::new(config).await),
-            msg_rec_box: Arc::new(database::msg_rec_box_repo(config, cache.clone()).await),
-            cache: Arc::new(cache),
+            msg_rec_box: database::msg_rec_box_repo(config, cache.clone()).await,
+            cache,
         }
     }
 

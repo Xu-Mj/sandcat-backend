@@ -21,6 +21,7 @@ server:
   host: 127.0.0.1
   port: 50001
   jwt_secret: xmj
+  ws_lb_strategy: RoundRobin # Random, RoundRobin
 
 service_center:
   host: 127.0.0.1
@@ -29,8 +30,14 @@ service_center:
   protocol: http
 
 websocket:
+  protocol: ws
   host: 127.0.0.1
   port: 50000
+  name: websocket
+  tags:
+    - websocket
+    - grpc
+
 
 rpc:
   ws:

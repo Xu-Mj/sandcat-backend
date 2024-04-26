@@ -27,18 +27,15 @@ pub async fn get_rpc_channel_by_name(
     name: &str,
     protocol: &str,
 ) -> Result<Channel, Error> {
-    let mut ws_list = crate::service_register_center(config)
-        .filter_by_name(name)
-        .await?;
+    let center = crate::service_register_center(config);
+    let mut service_list = center.filter_by_name(name).await?;
 
     // retry 5 times if no ws rpc url
-    if ws_list.is_empty() {
+    if service_list.is_empty() {
         for i in 0..5 {
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-            ws_list = crate::service_register_center(config)
-                .filter_by_name(name)
-                .await?;
-            if !ws_list.is_empty() {
+            service_list = center.filter_by_name(name).await?;
+            if !service_list.is_empty() {
                 break;
             }
             if i == 5 {
@@ -46,7 +43,7 @@ pub async fn get_rpc_channel_by_name(
             }
         }
     }
-    let endpoints = ws_list.values().map(|v| {
+    let endpoints = service_list.values().map(|v| {
         let url = format!("{}://{}:{}", protocol, v.address, v.port);
         Endpoint::from_shared(url).unwrap()
     });

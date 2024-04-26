@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 
@@ -62,6 +63,6 @@ impl Clone for Box<dyn Cache> {
     }
 }
 
-pub fn cache(config: &Config) -> Box<dyn Cache> {
-    Box::new(redis::RedisCache::from_config(config))
+pub fn cache(config: &Config) -> Arc<dyn Cache> {
+    Arc::new(redis::RedisCache::from_config(config))
 }
