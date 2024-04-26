@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use bson::{doc, Document};
 use mongodb::options::FindOptions;
 use mongodb::{Client, Collection, Database};
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
 use tracing::error;
@@ -21,7 +22,7 @@ use crate::database::mongodb::utils::to_doc;
 pub struct MsgBox {
     /// for message box
     mb: Collection<Document>,
-    cache: Box<dyn Cache>,
+    cache: Arc<dyn Cache>,
 }
 
 /// for all users single message receive box
@@ -29,11 +30,11 @@ const COLL_SINGLE_BOX: &str = "single_msg_box";
 
 #[allow(dead_code)]
 impl MsgBox {
-    pub async fn new(db: Database, cache: Box<dyn Cache>) -> Self {
+    pub async fn new(db: Database, cache: Arc<dyn Cache>) -> Self {
         let mb = db.collection(COLL_SINGLE_BOX);
         Self { mb, cache }
     }
-    pub async fn from_config(config: &Config, cache: Box<dyn Cache>) -> Self {
+    pub async fn from_config(config: &Config, cache: Arc<dyn Cache>) -> Self {
         let db = Client::with_uri_str(config.db.mongodb.url())
             .await
             .unwrap()

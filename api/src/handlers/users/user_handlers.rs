@@ -193,11 +193,16 @@ pub async fn login(
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
     app_state.cache.user_login(&user.account).await?;
-    // todo get websocket address
-    let ws_addr = format!(
-        "ws://{}:{}/ws",
-        &app_state.ws_config.host, &app_state.ws_config.port
-    );
+
+    // get websocket service address
+    // let ws_lb = Arc::get_mut(&mut app_state.ws_lb).unwrap();
+    let ws_addr = if let Some(addr) = app_state.ws_lb.get_service().await {
+        format!("{}://{}/ws", &app_state.ws_config.protocol, addr)
+    } else {
+        return Err(Error::InternalServer(
+            "No websocket service available".to_string(),
+        ));
+    };
 
     // query region
     user.region = match addr.ip() {

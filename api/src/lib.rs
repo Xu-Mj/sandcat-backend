@@ -4,6 +4,7 @@ use std::sync::Arc;
 use tonic::transport::Channel;
 use xdb::searcher_init;
 
+use crate::api_utils::lb;
 use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
@@ -19,8 +20,9 @@ pub(crate) mod routes;
 pub struct AppState {
     pub db_rpc: DbServiceClient<Channel>,
     pub ws_rpc: MsgServiceClient<Channel>,
-    pub cache: Arc<Box<dyn Cache>>,
-    pub oss: Arc<Box<dyn Oss>>,
+    pub cache: Arc<dyn Cache>,
+    pub oss: Arc<dyn Oss>,
+    pub ws_lb: Arc<lb::LoadBalancer>,
     pub ws_config: WsServerConfig,
     pub mail_config: MailConfig,
     pub jwt_secret: String,
@@ -32,19 +34,31 @@ impl AppState {
 
         let db_rpc = Self::get_db_rpc_client(config).await.unwrap();
 
-        let cache = Arc::new(cache::cache(config));
+        let cache = cache::cache(config);
 
-        let oss = Arc::new(oss::oss(config).await);
+        let oss = oss::oss(config).await;
 
         let ws_config = config.websocket.clone();
 
         let mail_config = config.mail.clone();
+
+        let register = utils::service_register_center(config);
+
+        let ws_lb = Arc::new(
+            lb::LoadBalancer::new(
+                config.websocket.name.clone(),
+                config.server.ws_lb_strategy.clone(),
+                register,
+            )
+            .await,
+        );
 
         Self {
             ws_rpc,
             db_rpc,
             cache,
             oss,
+            ws_lb,
             ws_config,
             mail_config,
             jwt_secret: config.server.jwt_secret.clone(),

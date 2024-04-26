@@ -9,6 +9,7 @@ use crate::database::friend::FriendRepo;
 use abi::config::Config;
 use cache::Cache;
 use sqlx::PgPool;
+use std::sync::Arc;
 // use sqlx::PgPool;
 
 pub(crate) use crate::database::group::GroupStoreRepo;
@@ -42,6 +43,6 @@ impl DbRepo {
     }
 }
 
-pub async fn msg_rec_box_repo(config: &Config, cache: Box<dyn Cache>) -> Box<dyn MsgRecBoxRepo> {
-    Box::new(mongodb::MsgBox::from_config(config, cache).await)
+pub async fn msg_rec_box_repo(config: &Config, cache: Arc<dyn Cache>) -> Arc<dyn MsgRecBoxRepo> {
+    Arc::new(mongodb::MsgBox::from_config(config, cache).await)
 }

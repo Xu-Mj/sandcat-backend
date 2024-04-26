@@ -19,7 +19,7 @@ pub struct GrpcHealthCheck {
 }
 
 /// returned type from register center
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Service {
     #[serde(rename = "ID")]
     pub id: String,

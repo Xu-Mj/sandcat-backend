@@ -89,8 +89,11 @@ pub struct PusherRpcServerConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct WsServerConfig {
+    pub protocol: String,
     pub host: String,
     pub port: u16,
+    pub name: String,
+    pub tags: Vec<String>,
 }
 
 impl WsServerConfig {
@@ -225,6 +228,7 @@ pub struct ServerConfig {
     pub host: String,
     pub port: u16,
     pub jwt_secret: String,
+    pub ws_lb_strategy: String,
 }
 
 impl Config {
@@ -283,6 +287,7 @@ impl ServerConfig {
             host: self.host.clone(),
             port,
             jwt_secret: self.jwt_secret.clone(),
+            ws_lb_strategy: self.ws_lb_strategy.clone(),
         }
     }
 }

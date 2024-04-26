@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::client::Client;
 use crate::rpc::MsgRpcService;
 use abi::config::Config;
+use abi::errors::Error;
 use abi::message::Msg;
 use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
@@ -15,6 +16,7 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, RwLock};
 use tracing::error;
+use utils::typos::Registration;
 
 use crate::manager::Manager;
 
@@ -34,6 +36,21 @@ pub struct WsServer {
 }
 
 impl WsServer {
+    async fn register_service(config: &Config) -> Result<(), Error> {
+        // register service to service register center
+        let center = utils::service_register_center(config);
+        let registration = Registration {
+            id: format!("{}-{}", utils::get_host_name()?, &config.websocket.name),
+            name: config.websocket.name.clone(),
+            address: config.websocket.host.clone(),
+            port: config.websocket.port,
+            tags: config.websocket.tags.clone(),
+            check: None,
+        };
+        center.register(registration).await?;
+        Ok(())
+    }
+
     pub async fn start(config: Config) {
         let (tx, rx) = mpsc::channel(1024);
         let hub = Manager::new(tx, &config).await;
@@ -59,6 +76,10 @@ impl WsServer {
             println!("start websocket server on {}", addr);
             axum::serve(listener, router).await.unwrap();
         });
+
+        // register websocket service to consul
+        Self::register_service(&config).await.unwrap();
+
         let config = config.clone();
         let mut rpc = tokio::spawn(async move {
             // start rpc server

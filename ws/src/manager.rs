@@ -20,7 +20,7 @@ type Hub = Arc<DashMap<UserID, DashMap<PlatformID, Client>>>;
 pub struct Manager {
     tx: mpsc::Sender<Msg>,
     pub hub: Hub,
-    pub cache: Box<dyn Cache>,
+    pub cache: Arc<dyn Cache>,
     pub chat_rpc: ChatServiceClient<Channel>,
 }
 
