@@ -1,11 +1,12 @@
 use async_trait::async_trait;
 use bson::{doc, Document};
-use mongodb::options::FindOptions;
-use mongodb::{Client, Collection, Database};
+use mongodb::options::{FindOptions, IndexOptions};
+use mongodb::{Client, Collection, Database, IndexModel};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
 use tracing::error;
+use tracing::log::debug;
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -40,6 +41,15 @@ impl MsgBox {
             .unwrap()
             .database(&config.db.mongodb.database);
         let mb = db.collection(COLL_SINGLE_BOX);
+
+        // create server_id index
+        let index_model = IndexModel::builder()
+            .keys(doc! {"server_id": 1})
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+        mb.create_index(index_model, None).await.unwrap();
+        debug!("create index for message box");
+
         Self { mb, cache }
     }
 }
