@@ -1021,7 +1021,6 @@ dependencies = [
  "clap",
  "consumer",
  "db",
- "log",
  "pusher",
  "tokio",
  "tracing",

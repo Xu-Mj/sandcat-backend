@@ -8,15 +8,15 @@ edition = "2021"
 
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
+api = { version = "0.1.0", path = "../api" }
 chat = { version = "0.1.0", path = "../chat" }
 consumer = { version = "0.1.0", path = "../consumer" }
 db = { version = "0.1.0", path = "../db" }
 pusher = { version = "0.1.0", path = "../pusher" }
-tokio = { version = "1.36.0", features = ["full"] }
 ws = { version = "0.1.0", path = "../ws" }
-log = "0.4.20"
-tracing-subscriber = { version = "0.3.18" }
-tracing = "0.1.40"
-api = { version = "0.1.0", path = "../api" }
+
 clap = { version = "4.5.4", features = ["cargo"] }
+tokio = { version = "1.36.0", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18" }
 tracing-appender = "0.2.3"

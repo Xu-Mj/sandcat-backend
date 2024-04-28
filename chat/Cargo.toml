@@ -8,14 +8,15 @@ edition = "2021"
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
 utils = { version = "0.1.0", path = "../utils" }
-tonic = { version = "0.11.0", features = ["gzip"] }
-tokio = { version = "1", features = ["full"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+
+async-trait = "0.1.80"
 chrono = { version = "0.4.31", features = ["serde"] }
 nanoid = "0.4.0"
 rdkafka = { version = "0.36.2", features = ["cmake-build"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tonic = { version = "0.11.0", features = ["gzip"] }
+tokio = { version = "1", features = ["full"] }
 tonic-health = "0.11.0"
-async-trait = "0.1.80"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

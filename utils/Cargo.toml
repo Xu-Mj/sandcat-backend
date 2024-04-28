@@ -7,17 +7,18 @@ edition = "2021"
 
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
+
 axum = "0.7.4"
+argon2 = "0.5.3"
+chrono = "0.4.35"
+hostname = "0.4"
+http = "0.2.12"
+mongodb = "2.8.2"
+reqwest = { version = "0.12.2", features = ["json"] }
 serde = "1.0.197"
-tracing = "0.1.40"
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres"] }
 tokio = { version = "1.36.0", features = ["macros", "rt", "rt-multi-thread"] }
-uuid = { version = "1.7.0", features = ["v4"] }
-mongodb = "2.8.2"
-chrono = "0.4.35"
-reqwest = { version = "0.12.2", features = ["json"] }
-hostname = "0.4"
 tonic = "0.11.0"
-argon2 = "0.5.3"
-http = "0.2.12"
 tower = "0.4.13"
+tracing = "0.1.40"
+uuid = { version = "1.7.0", features = ["v4"] }

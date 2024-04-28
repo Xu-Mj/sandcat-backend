@@ -7,25 +7,26 @@ edition = "2021"
 
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
-tokio = { version = "1.36.0", features = ["full"] }
-tonic = { version = "0.11.0", features = ["gzip"] }
+cache = { version = "0.1.0", path = "../cache" }
+utils = { version = "0.1.0", path = "../utils" }
+
+argon2 = "0.5.3"
+async-trait = "0.1.79"
+bson = { version = "2.9.0", features = ["chrono-0_4"] }
+chrono = { version = "0.4.31", features = ["serde"] }
+futures = "0.3.30"
+mongodb = "2.8.2"
+nanoid = "0.4.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 sqlx = { version = "0.7", features = [
     "runtime-tokio-rustls",
     "postgres",
     "chrono",
     "uuid",
 ] }
+tokio = { version = "1.36.0", features = ["full"] }
+tonic = { version = "0.11.0", features = ["gzip"] }
+tonic-health = "0.11.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-chrono = { version = "0.4.31", features = ["serde"] }
-async-trait = "0.1.79"
-mongodb = "2.8.2"
-bson = { version = "2.9.0", features = ["chrono-0_4"] }
-utils = { version = "0.1.0", path = "../utils" }
-cache = { version = "0.1.0", path = "../cache" }
-futures = "0.3.30"
-tonic-health = "0.11.0"
-nanoid = "0.4.0"
-argon2 = "0.5.3"
