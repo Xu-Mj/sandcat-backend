@@ -58,3 +58,86 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Timestamp Issues**: We use Unix time milliseconds (i64) as the timestamp in the database, but we should use a `TimeStamp` type in the future.
 - **Axum's Routes Layer or With_State?**: Should we utilize Axum's routes layer with state or the `with_state` method?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
+
+## Development
+
+1. clone the project
+
+   ```shell
+   git clone
+   cd sandcat-backend
+   ```
+
+2. install `librdkafka`
+
+   **Ubuntu：**
+
+   ```shell
+   apt install librdkafka-dev
+   ```
+
+   **Windows:**
+
+   this is a painful task...
+
+   ```shell
+   # install vcpkg
+   git clone https://github.com/microsoft/vcpkg
+   cd vcpkg
+   .\bootstrap-vcpkg.bat
+   # Install librdkafka
+   vcpkg install librdkafka
+   .\vcpkg integrate install
+   ```
+
+   **important:** restart your command console to make sure the environment variable has been modified successfully.
+
+   I'm struggling to configure the `cmake-build` feature for rdkafka. if anyone has experience with this, your guidance would be greatly appreciated.
+
+   so let's use the `dynamic-linking` feature
+
+   **modify rdkafka-rust dependence**
+
+   ```shell
+   cargo add rdkafka-rust --features dynamic-linking -p consumer
+   cargo add rdkafka-rust --features dynamic-linking -p chat
+   ```
+
+​	if you encounter problems during compilation, please try manually removing the `cmake-build` feature and then attempt to 	compile again.
+
+3. run docker compose
+
+   ```shell
+   docker-compose up -d
+   ```
+
+   **important:** make sure all the third service are running in docker.
+
+4. install sqlx-cli and init the database
+
+   ```shell
+   cargo install sqlx-cli
+   sqlx migrate run
+   ```
+
+5. build
+
+   ```shell
+   cargo build --release
+   ```
+
+6. copy the binary file to root path
+
+   ```shell
+   cp target/release/cmd ./sandcat
+   ```
+
+7. run
+
+   ```shell
+   ./sancat
+   ```
+
+   if you need adjust some configuration, please modify the `config.toml`
+
+**important:** Given that our working environment may differ, should you encounter any errors during your deployment, please do let me know. Together, we'll work towards finding a solution.
