@@ -92,7 +92,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** restart your command console to make sure the environment variable has been modified successfully.
 
-   I'm struggling to configure the `cmake-build` feature for rdkafka. if anyone has experience with this, your guidance would be greatly appreciated.
+   I'm struggling to configure the cmake-build feature for rdkafka-rust. If anyone has experience with this, your guidance would be greatly appreciated.
 
    so let's use the `dynamic-linking` feature
 
@@ -102,8 +102,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
    cargo add rdkafka-rust --features dynamic-linking -p consumer
    cargo add rdkafka-rust --features dynamic-linking -p chat
    ```
-
-​	if you encounter problems during compilation, please try manually removing the `cmake-build` feature and then attempt to 	compile again.
+   If you encounter problems during compilation, please try manually removing the cmake-build feature and then attempt to compile again.
 
 3. run docker compose
 
