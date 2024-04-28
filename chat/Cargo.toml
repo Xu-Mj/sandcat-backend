@@ -16,6 +16,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4.31", features = ["serde"] }
 nanoid = "0.4.0"
-rdkafka = { version = "0.36.2", features = ["dynamic-linking"] }
+rdkafka = { version = "0.36.2", features = ["cmake-build"] }
 tonic-health = "0.11.0"
 async-trait = "0.1.80"
