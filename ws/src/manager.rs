@@ -1,14 +1,16 @@
-use crate::client::Client;
+use std::sync::Arc;
+
 use abi::config::Config;
+use dashmap::DashMap;
+use tokio::sync::mpsc;
+use tracing::{debug, error, info};
+
+use crate::client::Client;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
 use cache::Cache;
-use dashmap::DashMap;
-use std::sync::Arc;
-use tokio::sync::mpsc;
-use tonic::transport::Channel;
-use tracing::{debug, error, info};
+use utils::LbWithServiceDiscovery;
 
 type UserID = String;
 type PlatformID = String;
@@ -21,7 +23,7 @@ pub struct Manager {
     tx: mpsc::Sender<Msg>,
     pub hub: Hub,
     pub cache: Arc<dyn Cache>,
-    pub chat_rpc: ChatServiceClient<Channel>,
+    pub chat_rpc: ChatServiceClient<LbWithServiceDiscovery>,
 }
 
 #[allow(dead_code)]
@@ -39,9 +41,11 @@ impl Manager {
         }
     }
 
-    async fn get_chat_rpc_client(config: &Config) -> Result<ChatServiceClient<Channel>, Error> {
+    async fn get_chat_rpc_client(
+        config: &Config,
+    ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
-        let channel = utils::get_rpc_channel_by_name(
+        let channel = utils::get_channel_with_config(
             config,
             &config.rpc.chat.name,
             &config.rpc.chat.protocol,
