@@ -8,7 +8,6 @@ edition = "2021"
 
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
-kafka = "0.10.0"
 serde = "1.0.197"
 tokio = { version = "1.36.0", features = ["full"] }
 tracing-subscriber = "0.3.18"
