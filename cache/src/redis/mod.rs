@@ -15,7 +15,7 @@ const REGISTER_CODE_EXPIRE: i64 = 300;
 
 const USER_ONLINE_SET: &str = "user_online_set";
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
 }
@@ -26,6 +26,8 @@ impl RedisCache {
         Self { client }
     }
     pub fn from_config(config: &Config) -> Self {
+        // Intentionally use unwrap to ensure Redis connection at startup.
+        // Program should panic if unable to connect to Redis, as it's critical for operation.
         let client = redis::Client::open(config.redis.url()).unwrap();
         RedisCache { client }
     }
@@ -157,10 +159,6 @@ impl Cache for RedisCache {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         let result: i64 = conn.scard(USER_ONLINE_SET).await?;
         Ok(result)
-    }
-
-    fn clone_box(&self) -> Box<dyn Cache> {
-        Box::new(self.clone())
     }
 }
 
