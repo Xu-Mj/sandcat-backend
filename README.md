@@ -96,11 +96,11 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    so let's use the `dynamic-linking` feature
 
-   **modify rdkafka-rust dependence**
+   **modify rdkafka dependence**
 
    ```shell
-   cargo add rdkafka-rust --features dynamic-linking -p consumer
-   cargo add rdkafka-rust --features dynamic-linking -p chat
+   cargo add rdkafka --features dynamic-linking -p consumer
+   cargo add rdkafka --features dynamic-linking -p chat
    ```
    If you encounter problems during compilation, please try manually removing the cmake-build feature and then attempt to compile again.
 
