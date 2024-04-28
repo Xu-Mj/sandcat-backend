@@ -1,7 +1,6 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use tonic::transport::Channel;
 use xdb::searcher_init;
 
 use crate::api_utils::lb;
@@ -11,6 +10,7 @@ use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
 use oss::Oss;
+use utils::LbWithServiceDiscovery;
 
 mod api_utils;
 pub(crate) mod handlers;
@@ -18,8 +18,8 @@ pub(crate) mod routes;
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub db_rpc: DbServiceClient<Channel>,
-    pub ws_rpc: MsgServiceClient<Channel>,
+    pub db_rpc: DbServiceClient<LbWithServiceDiscovery>,
+    pub ws_rpc: MsgServiceClient<LbWithServiceDiscovery>,
     pub cache: Arc<dyn Cache>,
     pub oss: Arc<dyn Oss>,
     pub ws_lb: Arc<lb::LoadBalancer>,
@@ -65,18 +65,22 @@ impl AppState {
         }
     }
 
-    async fn get_db_rpc_client(config: &Config) -> Result<DbServiceClient<Channel>, Error> {
+    async fn get_db_rpc_client(
+        config: &Config,
+    ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
         let channel =
-            utils::get_rpc_channel_by_name(config, &config.rpc.db.name, &config.rpc.db.protocol)
+            utils::get_channel_with_config(config, &config.rpc.db.name, &config.rpc.db.protocol)
                 .await?;
         let db_rpc = DbServiceClient::new(channel);
         Ok(db_rpc)
     }
 
-    async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
+    async fn get_ws_rpc_client(
+        config: &Config,
+    ) -> Result<MsgServiceClient<LbWithServiceDiscovery>, Error> {
         let channel =
-            utils::get_rpc_channel_by_name(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
+            utils::get_channel_with_config(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
                 .await?;
         let ws_rpc = MsgServiceClient::new(channel);
         Ok(ws_rpc)

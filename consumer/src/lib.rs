@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::{ClientConfig, Message};
-use tonic::transport::Channel;
 use tracing::{debug, error, warn};
 
 use abi::config::Config;
@@ -14,6 +13,7 @@ use abi::message::{
     SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
+use utils::LbWithServiceDiscovery;
 
 /// message type: single, group, other
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -25,15 +25,14 @@ enum MsgType2 {
 pub struct ConsumerService {
     consumer: StreamConsumer,
     /// rpc client
-    db_rpc: DbServiceClient<Channel>,
-    pusher: PushServiceClient<Channel>,
+    db_rpc: DbServiceClient<LbWithServiceDiscovery>,
+    pusher: PushServiceClient<LbWithServiceDiscovery>,
     cache: Arc<dyn Cache>,
 }
 
 impl ConsumerService {
     pub async fn new(config: &Config) -> Self {
         // init kafka consumer
-        // todo 了解kafka相关配置
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", &config.kafka.group)
             .set("bootstrap.servers", config.kafka.hosts.join(","))
@@ -44,7 +43,7 @@ impl ConsumerService {
             .create()
             .expect("Consumer creation failed");
 
-        // 订阅主题
+        // subscribe to topic
         consumer
             .subscribe(&[&config.kafka.topic])
             .expect("Can't subscribe to specified topic");
@@ -64,17 +63,21 @@ impl ConsumerService {
         }
     }
 
-    async fn get_db_rpc_client(config: &Config) -> Result<DbServiceClient<Channel>, Error> {
+    async fn get_db_rpc_client(
+        config: &Config,
+    ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
         let channel =
-            utils::get_rpc_channel_by_name(config, &config.rpc.db.name, &config.rpc.db.protocol)
+            utils::get_channel_with_config(config, &config.rpc.db.name, &config.rpc.db.protocol)
                 .await?;
         let db_rpc = DbServiceClient::new(channel);
         Ok(db_rpc)
     }
 
-    async fn get_pusher_rpc_client(config: &Config) -> Result<PushServiceClient<Channel>, Error> {
-        let channel = utils::get_rpc_channel_by_name(
+    async fn get_pusher_rpc_client(
+        config: &Config,
+    ) -> Result<PushServiceClient<LbWithServiceDiscovery>, Error> {
+        let channel = utils::get_channel_with_config(
             config,
             &config.rpc.pusher.name,
             &config.rpc.pusher.protocol,
@@ -85,7 +88,6 @@ impl ConsumerService {
     }
 
     pub async fn consume(&mut self) -> Result<(), Error> {
-        // 开始消费消息
         loop {
             match self.consumer.recv().await {
                 Err(e) => error!("Kafka error: {}", e),
@@ -256,7 +258,7 @@ impl ConsumerService {
     }
 
     async fn send_to_db(
-        db_rpc: &mut DbServiceClient<Channel>,
+        db_rpc: &mut DbServiceClient<LbWithServiceDiscovery>,
         msg: Msg,
         msg_type: MsgType2,
         need_to_history: bool,
@@ -312,7 +314,7 @@ impl ConsumerService {
     }
 
     async fn send_single_to_pusher(
-        pusher: &mut PushServiceClient<Channel>,
+        pusher: &mut PushServiceClient<LbWithServiceDiscovery>,
         msg: Msg,
     ) -> Result<(), Error> {
         pusher
@@ -323,7 +325,7 @@ impl ConsumerService {
     }
 
     async fn send_group_to_pusher(
-        pusher: &mut PushServiceClient<Channel>,
+        pusher: &mut PushServiceClient<LbWithServiceDiscovery>,
         msg: Msg,
         members_id: Vec<String>,
     ) -> Result<(), Error> {

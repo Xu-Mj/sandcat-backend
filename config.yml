@@ -50,7 +50,7 @@ rpc:
       - grpc
     grpc_health_check:
       grpc_use_tls: false
-      interval: 30000 # second
+      interval: 30 # second
   chat:
     protocol: http
     host: 127.0.0.1

@@ -1,10 +1,12 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use dashmap::DashMap;
 use tokio::sync::mpsc;
 use tonic::server::NamedService;
-use tonic::transport::{Channel, Server};
+use tonic::transport::{Channel, Endpoint, Server};
 use tonic::{async_trait, Request, Response, Status};
+use tower::discover::Change;
 use tracing::{debug, error, info};
 
 use abi::config::Config;
@@ -13,16 +15,53 @@ use abi::message::msg_service_client::MsgServiceClient;
 use abi::message::push_service_server::{PushService, PushServiceServer};
 use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
 use utils::typos::{GrpcHealthCheck, Registration};
+use utils::DynamicServiceDiscovery;
 
 pub struct PusherRpcService {
     ws_rpc: MsgServiceClient<Channel>,
-    ws_rpc_list: Arc<DashMap<String, MsgServiceClient<Channel>>>,
+    ws_rpc_list: Arc<DashMap<SocketAddr, MsgServiceClient<Channel>>>,
 }
 
 impl PusherRpcService {
     pub async fn new(config: &Config) -> Self {
         let ws_rpc = Self::get_ws_rpc_client(config).await.unwrap();
-        let ws_rpc_list = Arc::new(Self::get_ws_rpc_client_list(config).await.unwrap());
+        let register = utils::service_register_center(config);
+        let ws_rpc_list = Arc::new(DashMap::new());
+        let cloned_list = ws_rpc_list.clone();
+        let (tx, mut rx) = mpsc::channel::<Change<SocketAddr, Endpoint>>(100);
+
+        // read the service from the worker
+        tokio::spawn(async move {
+            while let Some(change) = rx.recv().await {
+                match change {
+                    Change::Insert(service_id, client) => {
+                        match MsgServiceClient::connect(client).await {
+                            Ok(client) => {
+                                cloned_list.insert(service_id, client);
+                            }
+                            Err(err) => {
+                                error!("connect to ws service error: {:?}", err);
+                            }
+                        };
+                    }
+                    Change::Remove(service_id) => {
+                        cloned_list.remove(&service_id);
+                    }
+                }
+            }
+        });
+
+        let worker = DynamicServiceDiscovery::new(
+            register,
+            config.rpc.ws.name.clone(),
+            tokio::time::Duration::from_secs(10),
+            tx,
+            config.rpc.ws.protocol.clone(),
+        );
+
+        // start the worker
+        tokio::spawn(worker.run());
+
         Self {
             ws_rpc,
             ws_rpc_list,
@@ -66,40 +105,38 @@ impl PusherRpcService {
         Ok(ws_rpc)
     }
 
-    async fn get_ws_rpc_client_list(
-        config: &Config,
-    ) -> Result<DashMap<String, MsgServiceClient<Channel>>, Error> {
-        // use service register center to get ws rpc url
-        let mut ws_list = utils::service_register_center(config)
-            .filter_by_name(&config.rpc.ws.name)
-            .await?;
-
-        // retry 5 times if no ws rpc url
-        if ws_list.is_empty() {
-            for i in 0..5 {
-                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                ws_list = utils::service_register_center(config)
-                    .filter_by_name(&config.rpc.ws.name)
-                    .await?;
-                if !ws_list.is_empty() {
-                    break;
-                }
-                if i == 5 {
-                    return Err(Error::ServiceNotFound(String::from(&config.rpc.ws.name)));
-                }
-            }
-        }
-
-        let map: DashMap<String, MsgServiceClient<Channel>> = DashMap::with_capacity(ws_list.len());
-        for (k, v) in ws_list.into_iter() {
-            let url = format!("{}://{}:{}", &config.rpc.ws.protocol, v.address, v.port);
-            let client = MsgServiceClient::connect(url)
-                .await
-                .map_err(|e| Error::TonicError(e.to_string()))?;
-            map.insert(k, client);
-        }
-        Ok(map)
-    }
+    // async fn get_ws_rpc_client_list(
+    //     config: &Config,
+    // ) -> Result<DashMap<String, MsgServiceClient<Channel>>, Error> {
+    //     // use service register center to get ws rpc url
+    //     let register = utils::service_register_center(config);
+    //     let service_name = config.rpc.ws.name.clone();
+    //     let mut ws_list = register.filter_by_name(&service_name).await?;
+    //
+    //     // retry 5 times if no ws rpc url
+    //     if ws_list.is_empty() {
+    //         for i in 0..5 {
+    //             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    //             ws_list = register.filter_by_name(&service_name).await?;
+    //             if !ws_list.is_empty() {
+    //                 break;
+    //             }
+    //             if i == 5 {
+    //                 return Err(Error::ServiceNotFound(service_name.clone()));
+    //             }
+    //         }
+    //     }
+    //
+    //     let map: DashMap<String, MsgServiceClient<Channel>> = DashMap::with_capacity(ws_list.len());
+    //     for (k, v) in ws_list.into_iter() {
+    //         let url = format!("{}://{}:{}", &config.rpc.ws.protocol, v.address, v.port);
+    //         let client = MsgServiceClient::connect(url)
+    //             .await
+    //             .map_err(|e| Error::TonicError(e.to_string()))?;
+    //         map.insert(k, client);
+    //     }
+    //     Ok(map)
+    // }
 
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
@@ -144,7 +181,7 @@ impl PushService for PusherRpcService {
         // send message to ws with asynchronous way
         for v in ws_rpc.iter() {
             let tx = tx.clone();
-            let service_id = v.key().clone();
+            let service_id = *v.key();
             let mut v = v.clone();
             let request = request.clone();
             tokio::spawn(async move {
@@ -177,7 +214,7 @@ impl PushService for PusherRpcService {
         // send message to ws with asynchronous way
         for v in ws_rpc.iter() {
             let tx = tx.clone();
-            let service_id = v.key().clone();
+            let service_id = *v.key();
             let mut v = v.clone();
             let request = request.clone();
             tokio::spawn(async move {
