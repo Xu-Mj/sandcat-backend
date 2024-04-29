@@ -92,7 +92,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** restart your command console to make sure the environment variable has been modified successfully.
 
-   I'm struggling to configure the cmake-build feature for rdkafka-rust. If anyone has experience with this, your guidance would be greatly appreciated.
+   I'm struggling to configure the `cmake-build` feature for `rdkafka`. If anyone has experience with this, your guidance would be greatly appreciated.
 
    so let's use the `dynamic-linking` feature
 
