@@ -27,13 +27,7 @@ pub struct AppState {
     manager: Manager,
 }
 
-/// need mq connection pool
-/// redis connection pool
-/// client connection pool
-pub struct WsServer {
-    // client connection pool
-    // manager: Manager,
-}
+pub struct WsServer;
 
 impl WsServer {
     async fn register_service(config: &Config) -> Result<(), Error> {
