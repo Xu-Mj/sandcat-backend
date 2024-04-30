@@ -119,7 +119,7 @@ mod tests {
 
     #[tokio::test]
     async fn register_deregister_should_work() {
-        let config = Config::load("../abi/fixtures/im.yml").unwrap();
+        let config = Config::load("../config.yml").unwrap();
 
         let consul = Consul::from_config(&config);
         let registration = Registration {

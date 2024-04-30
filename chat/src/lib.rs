@@ -35,7 +35,18 @@ impl ChatRpcService {
         let broker = config.kafka.hosts.join(",");
         let producer: FutureProducer = ClientConfig::new()
             .set("bootstrap.servers", &broker)
-            .set("message.timeout.ms", "5000")
+            .set(
+                "message.timeout.ms",
+                config.kafka.producer.timeout.to_string(),
+            )
+            .set("acks", config.kafka.producer.acks.clone())
+            // make sure the message is sent exactly once
+            .set("enable.idempotence", "true")
+            .set("retries", config.kafka.producer.max_retry.to_string())
+            .set(
+                "retry.backoff.ms",
+                config.kafka.producer.retry_interval.to_string(),
+            )
             .create()
             .expect("Producer creation error");
 
