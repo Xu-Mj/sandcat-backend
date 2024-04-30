@@ -36,10 +36,16 @@ impl ConsumerService {
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", &config.kafka.group)
             .set("bootstrap.servers", config.kafka.hosts.join(","))
-            // .set("enable.auto.commit", "true")
-            // .set("auto.commit.interval.ms", "1000")
-            .set("session.timeout.ms", "6000")
+            .set("enable.auto.commit", "false")
+            .set(
+                "session.timeout.ms",
+                config.kafka.consumer.session_timeout.to_string(),
+            )
             .set("enable.partition.eof", "false")
+            .set(
+                "auto.offset.reset",
+                config.kafka.consumer.auto_offset_reset.clone(),
+            )
             .create()
             .expect("Consumer creation failed");
 

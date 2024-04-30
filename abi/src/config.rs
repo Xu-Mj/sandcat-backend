@@ -198,6 +198,21 @@ pub struct KafkaConfig {
     pub hosts: Vec<String>,
     pub topic: String,
     pub group: String,
+    pub producer: KafkaProducer,
+    pub consumer: KafkaConsumer,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct KafkaProducer {
+    pub timeout: u16,
+    pub acks: String,
+    pub max_retry: u8,
+    pub retry_interval: u16,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct KafkaConsumer {
+    pub session_timeout: u16,
+    pub auto_offset_reset: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -298,7 +313,7 @@ mod tests {
 
     #[test]
     fn test_load() {
-        let config = match Config::load("./fixtures/im.yml") {
+        let config = match Config::load("../config.yml") {
             Ok(config) => config,
             Err(err) => {
                 panic!("load config error: {:?}", err);
@@ -308,6 +323,6 @@ mod tests {
         assert_eq!(config.db.postgres.host, "localhost");
         assert_eq!(config.db.postgres.port, 5432);
         assert_eq!(config.db.postgres.user, "postgres");
-        assert_eq!(config.db.postgres.password, "root");
+        assert_eq!(config.db.postgres.password, "postgres");
     }
 }

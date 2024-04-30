@@ -92,15 +92,24 @@ redis:
 kafka:
   hosts:
     - 127.0.0.1:9092
-  topic: xmj
+  topic: sandcat-chat
   group: chat
+  producer:
+    timeout: 3000
+    acks: all # 0: no response, 1: leader response, all: all response
+    max_retry: 3
+    retry_interval: 1000 # retry interval in milliseconds
+  consumer:
+    auto_offset_reset: earliest # earliest, latest
+    session_timeout: 20000
+
 
 oss:
-    endpoint: http://127.0.0.1:9000
-    access_key: minioadmin
-    secret_key: minioadmin
-    bucket: xmj
-    region: us-east-1
+  endpoint: http://127.0.0.1:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: sandcat
+  region: us-east-1
 
 mail:
   server: smtp.qq.com

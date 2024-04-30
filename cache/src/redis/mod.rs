@@ -203,7 +203,7 @@ mod tests {
         // we need to use different database,
         // in case of the flush db command will cause conflict in drop method
         fn from_db(db: u8) -> Self {
-            let config = Config::load("../abi/fixtures/im.yml").unwrap();
+            let config = Config::load("../config.yml").unwrap();
             let url = format!("{}/{}", config.redis.url(), db);
             let client = redis::Client::open(url).unwrap();
             let cache = RedisCache::new(client.clone());
