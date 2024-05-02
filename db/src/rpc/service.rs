@@ -10,10 +10,10 @@ use tracing::debug;
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
-    CreateUserRequest, CreateUserResponse, DeleteFriendRequest, DeleteFriendResponse,
-    FriendListRequest, FriendListResponse, FsAgreeRequest, FsAgreeResponse, FsCreateRequest,
-    FsCreateResponse, FsListRequest, FsListResponse, GetDbMsgRequest, GetMsgResp, GetUserRequest,
-    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
+    CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
+    DeleteFriendResponse, FriendListRequest, FriendListResponse, FsAgreeRequest, FsAgreeResponse,
+    FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse, GetDbMsgRequest, GetMsgResp,
+    GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
     GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
     GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
     SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMessageRequest, SaveMessageResponse,
@@ -82,6 +82,18 @@ impl DbService for DbRpcService {
             .await?;
         Ok(Response::new(GetMsgResp { messages: result }))
     }
+
+    async fn del_messages(
+        &self,
+        request: Request<DelMsgRequest>,
+    ) -> Result<Response<DelMsgResp>, Status> {
+        let req = request.into_inner();
+        self.msg_rec_box
+            .delete_messages(&req.user_id, req.msg_id)
+            .await?;
+        Ok(Response::new(DelMsgResp {}))
+    }
+
     async fn group_create(
         &self,
         request: Request<GroupCreateRequest>,

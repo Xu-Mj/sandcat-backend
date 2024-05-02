@@ -3,7 +3,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
-use abi::message::{GetDbMsgRequest, Msg};
+use abi::message::{DelMsgRequest, GetDbMsgRequest, Msg};
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
@@ -71,4 +71,18 @@ pub async fn get_seq(
 ) -> Result<Json<Seq>, Error> {
     let seq = state.cache.get_seq(&user_id).await?;
     Ok(Json(Seq { seq }))
+}
+
+pub async fn del_msg(
+    State(state): State<AppState>,
+    JsonWithAuthExtractor(req): JsonWithAuthExtractor<DelMsgRequest>,
+) -> Result<(), Error> {
+    let mut db_rpc = state.db_rpc.clone();
+    db_rpc.del_messages(req).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure db rpc service error: get_messages {:?}",
+            e
+        ))
+    })?;
+    Ok(())
 }

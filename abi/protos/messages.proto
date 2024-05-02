@@ -514,6 +514,14 @@ message GetMsgResp{
   repeated Msg messages = 1;
 }
 
+message DelMsgRequest {
+  string user_id = 1;
+  repeated string msg_id = 2;
+}
+
+message DelMsgResp{
+}
+
 message GroupCreateRequest {
   GroupCreate group = 1;
 }
@@ -547,6 +555,7 @@ service DbService {
   /// query message from mongodb by start seq to end seq
   rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
   rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
+  rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member

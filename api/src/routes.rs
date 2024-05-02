@@ -10,7 +10,7 @@ use crate::handlers::friends::friend_handlers::{
 use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, invite_new_members, update_group_handler,
 };
-use crate::handlers::messages::msg_handlers::{get_seq, pull_offline_messages};
+use crate::handlers::messages::msg_handlers::{del_msg, get_seq, pull_offline_messages};
 use crate::handlers::users::{
     create_user, get_user_by_id, login, logout, refresh_token, search_user, send_email, update_user,
 };
@@ -95,5 +95,6 @@ fn msg_routes(state: AppState) -> Router {
         .layer(Extension(state.clone()))
         .route("/seq/:user_id", get(get_seq))
         .layer(Extension(state.clone()))
+        .route("/", delete(del_msg))
         .with_state(state)
 }

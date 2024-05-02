@@ -25,7 +25,7 @@ pub trait MsgRecBoxRepo: Sync + Send {
 
     async fn delete_message(&self, message_id: &str) -> Result<(), Error>;
 
-    async fn delete_messages(&self, message_ids: Vec<String>) -> Result<(), Error>;
+    async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error>;
 
     async fn get_message(&self, message_id: &str) -> Result<Option<Msg>, Error>;
 

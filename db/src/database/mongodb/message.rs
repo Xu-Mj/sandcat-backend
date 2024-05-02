@@ -84,8 +84,8 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn delete_messages(&self, message_ids: Vec<String>) -> Result<(), Error> {
-        let query = doc! {"server_id": {"$in": message_ids}};
+    async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error> {
+        let query = doc! {"receiver_id": user_id, "server_id": {"$in": message_ids}};
         self.mb.delete_many(query, None).await?;
 
         Ok(())
@@ -270,7 +270,10 @@ mod tests {
         msg_box.save_message(&msg).await.unwrap();
 
         // delete it
-        msg_box.delete_messages(msg_id.clone()).await.unwrap();
+        msg_box
+            .delete_messages("111", msg_id.clone())
+            .await
+            .unwrap();
 
         let msg = msg_box.get_message(&msg_id[0]).await.unwrap();
         assert!(msg.is_none());
