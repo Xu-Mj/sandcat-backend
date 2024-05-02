@@ -56,6 +56,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Timestamp Issues**: We use Unix time milliseconds (i64) as the timestamp in the database, but we should use a `TimeStamp` type in the future.
 - **Axum's Routes Layer or With_State?**: Should we utilize Axum's routes layer with state or the `with_state` method?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
+- **Friendship Read Status**: we should delete the Friendship related message after user read it.
 
 ## Development
 
