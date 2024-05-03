@@ -136,6 +136,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
    ./sandcat
    ```
 
-   if you need adjust some configuration, please modify the `config.toml`
+   if you need adjust some configuration, please modify the `config.yml`
 
 **important:** Given that our working environment may differ, should you encounter any errors during your deployment, please do let me know. Together, we'll work towards finding a solution.
