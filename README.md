@@ -133,7 +133,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 7. run
 
    ```shell
-   ./sancat
+   ./sandcat
    ```
 
    if you need adjust some configuration, please modify the `config.toml`
