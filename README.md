@@ -63,7 +63,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 1. clone the project
 
    ```shell
-   git clone
+   git clone https://github.com/Xu-Mj/sandcat-backend.git
    cd sandcat-backend
    ```
 
