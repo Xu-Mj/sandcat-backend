@@ -141,7 +141,7 @@ impl GroupStoreRepo for PostgresGroup {
              avatar = COALESCE(NULLIF($2, ''), avatar),
              description = COALESCE(NULLIF($3, ''), description),
              announcement = COALESCE(NULLIF($4, ''), announcement),
-             update_time = $5)
+             update_time = $5
              WHERE id = $6 RETURNING *",
         )
         .bind(&group.name)

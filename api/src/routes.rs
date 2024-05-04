@@ -71,7 +71,7 @@ fn group_routes(state: AppState) -> Router {
         .layer(Extension(state.clone()))
         .route("/", delete(delete_group_handler))
         .layer(Extension(state.clone()))
-        .route("/update/:user_id", put(update_group_handler))
+        .route("/:user_id", put(update_group_handler))
         .layer(Extension(state.clone()))
         .with_state(state)
 }
