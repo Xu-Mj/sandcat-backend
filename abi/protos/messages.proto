@@ -452,6 +452,13 @@ message UpdateUserResponse {
   User user = 1;
 }
 
+message UpdateRegionRequest {
+  string user_id = 1;
+  string region = 2;
+}
+
+message UpdateRegionResponse {}
+
 message SearchUserRequest {
   string user_id = 1;
   string pattern = 2;
@@ -574,6 +581,8 @@ service DbService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   /// update user
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  /// update user region
+  rpc UpdateUserRegion(UpdateRegionRequest) returns (UpdateRegionResponse);
   /// search user
   rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
   /// verify password

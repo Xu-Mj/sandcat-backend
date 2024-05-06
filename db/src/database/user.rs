@@ -20,5 +20,8 @@ pub trait UserRepo: Sync + Send + Debug {
 
     async fn update_user(&self, user: UserUpdate) -> Result<User, Error>;
 
+    /// update user region by user id
+    async fn update_region(&self, user_id: &str, region: &str) -> Result<(), Error>;
+
     async fn verify_pwd(&self, account: &str, password: &str) -> Result<Option<User>, Error>;
 }

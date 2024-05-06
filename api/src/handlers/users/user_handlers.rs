@@ -15,8 +15,8 @@ use xdb::search_by_ip;
 
 use abi::errors::Error;
 use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User, UserUpdate,
-    UserWithMatchType, VerifyPwdRequest,
+    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateRegionRequest, UpdateUserRequest,
+    User, UserUpdate, UserWithMatchType, VerifyPwdRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
@@ -216,6 +216,17 @@ pub async fn login(
         IpAddr::V6(_) => None,
     };
 
+    if user.region.is_some() {
+        // update user region
+        let request = UpdateRegionRequest {
+            user_id: user.id.clone(),
+            region: user.region.as_ref().unwrap().clone(),
+        };
+        let _ = db_rpc
+            .update_user_region(request)
+            .await
+            .map_err(|err| Error::InternalServer(err.message().to_string()))?;
+    }
     Ok(Json(Token {
         user,
         token,

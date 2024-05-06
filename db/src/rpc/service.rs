@@ -17,8 +17,9 @@ use abi::message::{
     GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
     GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
     SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateRemarkRequest, UpdateRemarkResponse,
-    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    SearchUserRequest, SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse,
+    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
+    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -262,6 +263,19 @@ impl DbService for DbRpcService {
 
         let user = self.db.user.update_user(user).await?;
         Ok(Response::new(UpdateUserResponse { user: Some(user) }))
+    }
+
+    async fn update_user_region(
+        &self,
+        request: Request<UpdateRegionRequest>,
+    ) -> Result<Response<UpdateRegionResponse>, Status> {
+        let inner = request.into_inner();
+
+        self.db
+            .user
+            .update_region(&inner.user_id, &inner.region)
+            .await?;
+        Ok(Response::new(UpdateRegionResponse {}))
     }
 
     async fn search_user(

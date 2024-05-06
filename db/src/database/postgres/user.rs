@@ -110,6 +110,15 @@ impl UserRepo for PostgresUser {
         Ok(user)
     }
 
+    async fn update_region(&self, user_id: &str, region: &str) -> Result<(), Error> {
+        sqlx::query("UPDATE users SET region = $2 WHERE id = $1")
+            .bind(user_id)
+            .bind(region)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     async fn verify_pwd(&self, account: &str, password: &str) -> Result<Option<User>, Error> {
         let user: Option<User> =
             sqlx::query_as("SELECT * FROM users WHERE account = $1 OR phone = $1 OR email = $1")
