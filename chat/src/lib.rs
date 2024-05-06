@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -8,7 +7,6 @@ use rdkafka::client::DefaultClientContext;
 use rdkafka::error::KafkaError;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
-use tokio::sync::Mutex;
 use tonic::server::NamedService;
 use tonic::transport::Server;
 use tracing::{error, info};
@@ -20,16 +18,13 @@ use abi::message::{MsgResponse, SendMsgRequest};
 use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct ChatRpcService {
-    pub kafka: Arc<Mutex<FutureProducer>>,
+    pub kafka: FutureProducer,
     pub topic: String,
 }
 
 impl ChatRpcService {
     pub fn new(kafka: FutureProducer, topic: String) -> Self {
-        Self {
-            kafka: Arc::new(Mutex::new(kafka)),
-            topic,
-        }
+        Self { kafka, topic }
     }
     pub async fn start(config: &Config) -> Result<(), Error> {
         let broker = config.kafka.hosts.join(",");
@@ -167,13 +162,7 @@ impl ChatService for ChatRpcService {
         let payload = serde_json::to_string(&msg).unwrap();
         // let kafka generate key, then we need set FutureRecord<String, type>
         let record: FutureRecord<String, String> = FutureRecord::to(&self.topic).payload(&payload);
-        let err = match self
-            .kafka
-            .lock()
-            .await
-            .send(record, Duration::from_secs(0))
-            .await
-        {
+        let err = match self.kafka.send(record, Duration::from_secs(0)).await {
             Ok(_) => String::new(),
             Err((err, msg)) => {
                 error!(
