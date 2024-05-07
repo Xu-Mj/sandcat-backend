@@ -115,6 +115,7 @@ impl WsServerConfig {
         }
     }
 }
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RpcServerConfig {
     pub protocol: String,
@@ -209,6 +210,7 @@ pub struct KafkaProducer {
     pub max_retry: u8,
     pub retry_interval: u16,
 }
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct KafkaConsumer {
     pub session_timeout: u16,
@@ -225,6 +227,7 @@ pub struct PostgresConfig {
     #[serde(default = "default_conn")]
     pub max_connections: u32,
 }
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MongoDbConfig {
     pub host: String,
@@ -267,6 +270,7 @@ impl PostgresConfig {
         format!("{}/{}", self.server_url(), self.database)
     }
 }
+
 impl MongoDbConfig {
     pub fn server_url(&self) -> String {
         match (self.user.is_empty(), self.password.is_empty()) {

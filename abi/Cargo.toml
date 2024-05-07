@@ -14,7 +14,7 @@ derive_builder = "0.20.0"
 mongodb = "2.8.2"
 prost = "0.12.3"
 prost-types = "0.12.3"
-redis = { version = "0.25.2", features = ["tokio-comp"] }
+redis = "0.25.2"
 regex = "1.10.3"
 reqwest = "0.12.2"
 sqlx = { version = "0.7", features = [

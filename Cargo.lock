@@ -908,7 +908,6 @@ dependencies = [
  "async-trait",
  "redis",
  "tokio",
- "tonic",
  "tracing",
  "tracing-subscriber",
 ]
@@ -4742,6 +4741,7 @@ version = "0.1.0"
 dependencies = [
  "abi",
  "argon2",
+ "async-trait",
  "axum 0.7.5",
  "chrono",
  "hostname 0.4.0",

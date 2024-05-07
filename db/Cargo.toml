@@ -23,7 +23,6 @@ sqlx = { version = "0.7", features = [
     "runtime-tokio-rustls",
     "postgres",
     "chrono",
-    "uuid",
 ] }
 tokio = { version = "1.36.0", features = ["full"] }
 tonic = { version = "0.11.0", features = ["gzip"] }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::async_trait;
+use async_trait::async_trait;
 use tracing::debug;
 
 use abi::config::Config;

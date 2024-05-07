@@ -1,7 +1,7 @@
 use crate::service_register_center::typos::{Registration, Service};
 use abi::config::Config;
 use abi::errors::Error;
-use axum::async_trait;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::Arc;
