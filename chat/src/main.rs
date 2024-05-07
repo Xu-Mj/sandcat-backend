@@ -8,5 +8,5 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
     let config = Config::load("../abi/fixtures/im.yml").unwrap();
-    ChatRpcService::start(&config).await.unwrap();
+    ChatRpcService::start(&config).await;
 }

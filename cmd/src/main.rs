@@ -60,7 +60,7 @@ async fn main() {
     // start chat rpc server
     let cloned_config = config.clone();
     let chat_server = tokio::spawn(async move {
-        ChatRpcService::start(&cloned_config).await.unwrap();
+        ChatRpcService::start(&cloned_config).await;
     });
 
     // start ws rpc server

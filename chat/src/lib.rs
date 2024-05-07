@@ -26,7 +26,7 @@ impl ChatRpcService {
     pub fn new(kafka: FutureProducer, topic: String) -> Self {
         Self { kafka, topic }
     }
-    pub async fn start(config: &Config) -> Result<(), Error> {
+    pub async fn start(config: &Config) {
         let broker = config.kafka.hosts.join(",");
         let producer: FutureProducer = ClientConfig::new()
             .set("bootstrap.servers", &broker)
@@ -50,7 +50,9 @@ impl ChatRpcService {
             .expect("Topic creation error");
 
         // register service
-        Self::register_service(config).await?;
+        Self::register_service(config)
+            .await
+            .expect("Service register error");
         info!("<chat> rpc service register to service register center");
 
         // health check
@@ -73,7 +75,6 @@ impl ChatRpcService {
             .serve(config.rpc.chat.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-        Ok(())
     }
 
     async fn register_service(config: &Config) -> Result<(), Error> {
