@@ -145,12 +145,10 @@ impl ChatService for ChatRpcService {
         &self,
         request: tonic::Request<SendMsgRequest>,
     ) -> Result<tonic::Response<MsgResponse>, tonic::Status> {
-        let inner = request.into_inner().message;
-        if inner.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
-        }
-
-        let mut msg = inner.unwrap();
+        let mut msg = request
+            .into_inner()
+            .message
+            .ok_or_else(|| tonic::Status::invalid_argument("message is empty"))?;
 
         // generate msg id
         msg.server_id = nanoid!();
