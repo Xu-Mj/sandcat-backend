@@ -936,7 +936,9 @@ version = "0.1.0"
 dependencies = [
  "abi",
  "async-trait",
+ "cache",
  "chrono",
+ "db",
  "nanoid",
  "rdkafka",
  "serde",
