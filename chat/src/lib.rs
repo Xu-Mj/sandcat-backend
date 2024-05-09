@@ -273,6 +273,7 @@ impl ChatService for ChatRpcService {
             | MsgType::GroupDismissOrExitReceived
             | MsgType::GroupInvitationReceived
             | MsgType::GroupUpdate => {
+                // group operation, update the cache in the db service
                 // query group members id from the cache
                 let mut members = self.get_members_id(&msg.receiver_id).await?;
 
