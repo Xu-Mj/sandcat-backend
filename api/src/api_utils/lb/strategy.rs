@@ -10,6 +10,7 @@ pub fn get_strategy(lb_type: LoadBalanceStrategyType) -> Arc<dyn LoadBalanceStra
     }
 }
 
+#[allow(dead_code)]
 pub trait LoadBalanceStrategy: Debug + Send + Sync {
     fn index(&self, service_count: usize) -> usize;
     fn reset(&mut self) {}

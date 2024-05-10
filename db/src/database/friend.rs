@@ -20,6 +20,7 @@ pub trait FriendRepo: Send + Sync {
     async fn get_fs_list(&self, user_id: &str) -> Result<Vec<FriendshipWithUser>, Error>;
 
     /// update friend apply request
+    #[allow(dead_code)]
     async fn update_fs(&self, fs: FsUpdate) -> Result<Friendship, Error>;
 
     /// update friend remark; the status should be accepted
@@ -32,6 +33,7 @@ pub trait FriendRepo: Send + Sync {
 
     /// update friend status; the status should be accepted or blocked.
     /// this is not that to agree friend-apply-request
+    #[allow(dead_code)]
     async fn update_friend_status(
         &self,
         user_id: &str,

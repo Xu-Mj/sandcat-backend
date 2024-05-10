@@ -18,17 +18,16 @@ impl MongoDbTester {
         user: impl Into<String>,
         password: impl Into<String>,
     ) -> MongoDbTester {
-        let mut tdb = MongoDbTester {
+        let uuid = uuid::Uuid::new_v4();
+        let dbname = format!("test_{}", uuid);
+        let tdb = MongoDbTester {
             host: host.into(),
             port,
             user: user.into(),
             password: password.into(),
-            dbname: "".into(),
+            dbname: dbname.clone(),
         };
         let server_url = tdb.server_url();
-        let uuid = uuid::Uuid::new_v4();
-        let dbname = format!("test_{}", uuid);
-        tdb.dbname = dbname.clone();
         let client = mongodb::Client::with_uri_str(server_url).await.unwrap();
         client.database(&dbname);
         tdb
