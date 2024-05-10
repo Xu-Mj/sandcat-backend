@@ -2,7 +2,6 @@ use axum::extract::State;
 use axum::Json;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use tracing::error;
 
 use abi::errors::Error;
 use abi::message::{
@@ -24,7 +23,8 @@ pub async fn create_group_handler(
     // filter the empty item
     new_group.members_id.retain(|v| !v.is_empty());
 
-    new_group.id = nanoid!();
+    let group_id = nanoid!();
+    new_group.id.clone_from(&group_id);
     // put the owner to the group members
     new_group.members_id.push(user_id.clone());
 
@@ -42,16 +42,18 @@ pub async fn create_group_handler(
         .invitation
         .ok_or_else(|| Error::InternalServer("group create failed".to_string()))?;
 
-    let mut msg_rpc = app_state.ws_rpc.clone();
+    let mut chat_rpc = app_state.chat_rpc.clone();
     let msg = bincode::serialize(&invitation).map_err(|e| Error::InternalServer(e.to_string()))?;
-    let receiver_id = invitation.info.as_ref().unwrap().id.clone();
-    tokio::spawn(async move {
-        let request = SendMsgRequest::new_with_group_invitation(user_id, receiver_id, msg);
-        // send it to online users
-        if let Err(e) = msg_rpc.send_message(request).await {
-            error!("send_group_msg_to_user errors: {:#?}", e);
-        }
-    });
+
+    // send the group invitation to the members
+    let request = SendMsgRequest::new_with_group_invitation(user_id, group_id, msg);
+
+    chat_rpc.send_msg(request).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure chat rpc service error: send_msg {:?}",
+            e
+        ))
+    })?;
 
     Ok(Json(invitation))
 }
@@ -87,17 +89,18 @@ pub async fn invite_new_members(
         group_id,
         members,
     };
-    let mut msg_rpc = app_state.ws_rpc.clone();
+    let mut chat_rpc = app_state.chat_rpc.clone();
 
     let msg = bincode::serialize(&new_invite).map_err(|e| Error::InternalServer(e.to_string()))?;
-    tokio::spawn(async move {
-        let request =
-            SendMsgRequest::new_with_group_invite_new(new_invite.user_id, new_invite.group_id, msg);
-        // send it to online users
-        if let Err(e) = msg_rpc.send_message(request).await {
-            error!("send_group_msg_to_user errors: {:#?}", e);
-        }
-    });
+
+    let request =
+        SendMsgRequest::new_with_group_invite_new(new_invite.user_id, new_invite.group_id, msg);
+    chat_rpc.send_msg(request).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure chat rpc service error: send_msg {:?}",
+            e
+        ))
+    })?;
 
     Ok(())
 }
@@ -123,16 +126,16 @@ pub async fn update_group_handler(
 
     //todo notify the group members, except updater
     // let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
-    let mut ws_rpc = app_state.ws_rpc.clone();
+    let mut chat_rpc = app_state.chat_rpc.clone();
     // notify members, except self
     let msg = bincode::serialize(&inner).map_err(|e| Error::InternalServer(e.to_string()))?;
     let req = SendMsgRequest::new_with_group_update(user_id, inner.id.clone(), msg);
-    if let Err(e) = ws_rpc.send_message(req).await {
-        error!(
-            "procedure ws rpc service error: send_group_msg_to_user {:?}",
+    chat_rpc.send_msg(req).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure chat rpc service error: send_msg {:?}",
             e
-        )
-    }
+        ))
+    })?;
     Ok(Json(inner))
 }
 
@@ -170,15 +173,15 @@ pub async fn delete_group_handler(
         MsgType::GroupMemberExit
     };
 
-    let mut ws_rpc = app_state.ws_rpc.clone();
+    let mut chat_rpc = app_state.chat_rpc.clone();
     // notify members, except self
     let ws_req = SendMsgRequest::new_with_group_operation(group.user_id, group.group_id, msg);
-    if let Err(e) = ws_rpc.send_message(ws_req).await {
-        error!(
-            "procedure ws rpc service error: send_group_msg_to_user {:?}",
+    chat_rpc.send_msg(ws_req).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure chat rpc service error: send_msg {:?}",
             e
-        )
-    }
+        ))
+    })?;
 
     Ok(())
 }

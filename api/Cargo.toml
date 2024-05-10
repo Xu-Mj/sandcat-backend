@@ -9,6 +9,7 @@ edition = "2021"
 
 abi = { version = "0.1.0", path = "../abi" }
 cache = { version = "0.1.0", path = "../cache" }
+chat = { version = "0.1.0", path = "../chat" }
 oss = { version = "0.1.0", path = "../oss" }
 db = { version = "0.1.0", path = "../db" }
 ws = { version = "0.1.0", path = "../ws" }

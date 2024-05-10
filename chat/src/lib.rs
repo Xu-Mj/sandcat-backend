@@ -14,12 +14,12 @@ use tracing::{error, info};
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_server::{ChatService, ChatServiceServer};
-use abi::message::{MsgResponse, SendMsgRequest};
+use abi::message::{MsgResponse, MsgType, SendMsgRequest};
 use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct ChatRpcService {
-    pub kafka: FutureProducer,
-    pub topic: String,
+    kafka: FutureProducer,
+    topic: String,
 }
 
 impl ChatRpcService {
@@ -145,15 +145,18 @@ impl ChatService for ChatRpcService {
         &self,
         request: tonic::Request<SendMsgRequest>,
     ) -> Result<tonic::Response<MsgResponse>, tonic::Status> {
-        let inner = request.into_inner().message;
-        if inner.is_none() {
-            return Err(tonic::Status::invalid_argument("message is empty"));
-        }
-
-        let mut msg = inner.unwrap();
+        let mut msg = request
+            .into_inner()
+            .message
+            .ok_or_else(|| tonic::Status::invalid_argument("message is empty"))?;
 
         // generate msg id
-        msg.server_id = nanoid!();
+        if !(msg.msg_type == MsgType::GroupDismissOrExitReceived as i32
+            || msg.msg_type == MsgType::GroupInvitationReceived as i32
+            || msg.msg_type == MsgType::FriendshipReceived as i32)
+        {
+            msg.server_id = nanoid!();
+        }
         msg.send_time = chrono::Local::now()
             .naive_local()
             .and_utc()
@@ -163,6 +166,7 @@ impl ChatService for ChatRpcService {
         let payload = serde_json::to_string(&msg).unwrap();
         // let kafka generate key, then we need set FutureRecord<String, type>
         let record: FutureRecord<String, String> = FutureRecord::to(&self.topic).payload(&payload);
+
         let err = match self.kafka.send(record, Duration::from_secs(0)).await {
             Ok(_) => String::new(),
             Err((err, msg)) => {

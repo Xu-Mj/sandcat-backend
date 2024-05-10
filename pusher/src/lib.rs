@@ -105,39 +105,6 @@ impl PusherRpcService {
         Ok(ws_rpc)
     }
 
-    // async fn get_ws_rpc_client_list(
-    //     config: &Config,
-    // ) -> Result<DashMap<String, MsgServiceClient<Channel>>, Error> {
-    //     // use service register center to get ws rpc url
-    //     let register = utils::service_register_center(config);
-    //     let service_name = config.rpc.ws.name.clone();
-    //     let mut ws_list = register.filter_by_name(&service_name).await?;
-    //
-    //     // retry 5 times if no ws rpc url
-    //     if ws_list.is_empty() {
-    //         for i in 0..5 {
-    //             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    //             ws_list = register.filter_by_name(&service_name).await?;
-    //             if !ws_list.is_empty() {
-    //                 break;
-    //             }
-    //             if i == 5 {
-    //                 return Err(Error::ServiceNotFound(service_name.clone()));
-    //             }
-    //         }
-    //     }
-    //
-    //     let map: DashMap<String, MsgServiceClient<Channel>> = DashMap::with_capacity(ws_list.len());
-    //     for (k, v) in ws_list.into_iter() {
-    //         let url = format!("{}://{}:{}", &config.rpc.ws.protocol, v.address, v.port);
-    //         let client = MsgServiceClient::connect(url)
-    //             .await
-    //             .map_err(|e| Error::TonicError(e.to_string()))?;
-    //         map.insert(k, client);
-    //     }
-    //     Ok(map)
-    // }
-
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
         let center = utils::service_register_center(config);

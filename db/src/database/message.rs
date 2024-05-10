@@ -27,6 +27,7 @@ pub trait MsgRecBoxRepo: Sync + Send {
 
     async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error>;
 
+    #[allow(dead_code)]
     async fn get_message(&self, message_id: &str) -> Result<Option<Msg>, Error>;
 
     /// need to think about how to get message from receive box,

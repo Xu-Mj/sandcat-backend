@@ -263,10 +263,10 @@ mod tests {
         // save it into mongodb
         msg_box.save_message(&msg).await.unwrap();
 
-        msg.server_id = msg_id[1].clone();
+        msg.server_id.clone_from(&msg_id[1]);
         msg_box.save_message(&msg).await.unwrap();
 
-        msg.server_id = msg_id[2].clone();
+        msg.server_id.clone_from(&msg_id[2]);
         msg_box.save_message(&msg).await.unwrap();
 
         // delete it

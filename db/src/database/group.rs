@@ -14,10 +14,12 @@ pub trait GroupStoreRepo: Sync + Send {
 
     async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error>;
 
+    #[allow(dead_code)]
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error>;
 
     async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error>;
 
+    #[allow(dead_code)]
     async fn query_group_members_by_group_id(
         &self,
         group_id: &str,

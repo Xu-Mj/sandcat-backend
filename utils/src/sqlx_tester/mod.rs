@@ -21,17 +21,16 @@ impl TestDb {
         password: impl Into<String>,
         migrations: impl Into<String>,
     ) -> TestDb {
-        let mut tdb = TestDb {
+        let uuid = uuid::Uuid::new_v4();
+        let dbname = format!("test_{}", uuid);
+        let tdb = TestDb {
             host: host.into(),
             port,
             user: user.into(),
             password: password.into(),
-            dbname: "".into(),
+            dbname: dbname.clone(),
         };
         let server_url = tdb.server_url();
-        let uuid = uuid::Uuid::new_v4();
-        let dbname = format!("test_{}", uuid);
-        tdb.dbname = dbname.clone();
         let url = tdb.url();
         let migrations = migrations.into();
         // create database in tokio runtime

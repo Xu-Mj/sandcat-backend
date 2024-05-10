@@ -68,9 +68,9 @@ impl FriendRepo for PostgresFriend {
         };
 
         let mut fs_req = FriendshipWithUser::from(friend);
-        fs_req.fs_id = fs_id.0.clone();
+        fs_req.fs_id.clone_from(&fs_id.0);
         fs_req.status = FriendshipStatus::Pending as i32;
-        fs_req.source = fs.source.clone();
+        fs_req.source.clone_from(&fs.source);
         fs_req.create_time = now;
         fs_req.remark = fs.req_remark;
 

@@ -145,7 +145,7 @@ impl Manager {
                         message.content_type = ContentType::Error as i32;
                     }
                     message.msg_type = MsgType::MsgRecResp as i32;
-                    message.server_id = response.server_id.clone();
+                    message.server_id.clone_from(&response.server_id);
                     message.content = response.err.into_bytes();
                 }
                 Err(err) => {

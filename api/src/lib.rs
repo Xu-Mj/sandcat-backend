@@ -6,6 +6,7 @@ use xdb::searcher_init;
 use crate::api_utils::lb;
 use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::errors::Error;
+use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
@@ -20,6 +21,7 @@ pub(crate) mod routes;
 pub struct AppState {
     pub db_rpc: DbServiceClient<LbWithServiceDiscovery>,
     pub ws_rpc: MsgServiceClient<LbWithServiceDiscovery>,
+    pub chat_rpc: ChatServiceClient<LbWithServiceDiscovery>,
     pub cache: Arc<dyn Cache>,
     pub oss: Arc<dyn Oss>,
     pub ws_lb: Arc<lb::LoadBalancer>,
@@ -33,6 +35,7 @@ impl AppState {
         let ws_rpc = Self::get_ws_rpc_client(config).await.unwrap();
 
         let db_rpc = Self::get_db_rpc_client(config).await.unwrap();
+        let chat_rpc = Self::get_chat_rpc_client(config).await.unwrap();
 
         let cache = cache::cache(config);
 
@@ -62,7 +65,22 @@ impl AppState {
             ws_config,
             mail_config,
             jwt_secret: config.server.jwt_secret.clone(),
+            chat_rpc,
         }
+    }
+
+    async fn get_chat_rpc_client(
+        config: &Config,
+    ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
+        // use service register center to get ws rpc url
+        let channel = utils::get_channel_with_config(
+            config,
+            &config.rpc.chat.name,
+            &config.rpc.chat.protocol,
+        )
+        .await?;
+        let chat_rpc = ChatServiceClient::new(channel);
+        Ok(chat_rpc)
     }
 
     async fn get_db_rpc_client(
