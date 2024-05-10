@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 axum = "0.7.4"
 bincode = "1.3.3"
-chrono = { version = "0.4.34", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 derive_builder = "0.20.0"
 mongodb = "2.8.2"
 prost = "0.12.3"
@@ -23,12 +23,12 @@ sqlx = { version = "0.7", features = [
     "chrono",
     "uuid",
 ] }
-serde = { version = "1.0.197", features = ["derive"] }
-serde_json = "1.0.114"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 serde_yaml = "0.9.32"
 thiserror = "1.0.57"
 tonic = { version = "0.11.0", features = ["gzip"] }
-tokio = "1.36.0"
+tokio = "1"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 
