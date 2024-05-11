@@ -1,4 +1,4 @@
-use abi::config::Config;
+use abi::config::{Component, Config};
 use chat::ChatRpcService;
 use clap::{command, Arg};
 use consumer::ConsumerService;
@@ -8,6 +8,7 @@ use tracing::info;
 use ws::ws_server::WsServer;
 
 const DEFAULT_CONFIG_PATH: &str = "./config.yml";
+
 #[tokio::main]
 async fn main() {
     // chat rely on kafka server
@@ -57,6 +58,17 @@ async fn main() {
             .init();
     }
 
+    match config.component {
+        Component::Chat => ChatRpcService::start(&config).await,
+        Component::Consumer => ConsumerService::new(&config).await.consume().await.unwrap(),
+        Component::Db => DbRpcService::start(&config).await,
+        Component::Pusher => api::start(config.clone()).await,
+        Component::Ws => WsServer::start(config.clone()).await,
+        Component::All => start_all(config).await,
+    }
+}
+
+async fn start_all(config: Config) {
     // start chat rpc server
     let cloned_config = config.clone();
     let chat_server = tokio::spawn(async move {
@@ -72,13 +84,13 @@ async fn main() {
     // start db rpc server
     let cloned_config = config.clone();
     let db_server = tokio::spawn(async move {
-        DbRpcService::start(&cloned_config).await.unwrap();
+        DbRpcService::start(&cloned_config).await;
     });
 
     // start pusher rpc server
     let cloned_config = config.clone();
     let pusher_server = tokio::spawn(async move {
-        PusherRpcService::start(&cloned_config).await.unwrap();
+        PusherRpcService::start(&cloned_config).await;
     });
 
     // start api server
@@ -89,15 +101,8 @@ async fn main() {
 
     // start consumer rpc server
     let consumer_server = tokio::spawn(async move {
-        let mut consumer = ConsumerService::new(&config).await;
-        info!("start consumer...");
-        info!(
-            "connect to kafka server: {:?}; topic: {}, group: {}",
-            config.kafka.hosts, config.kafka.topic, config.kafka.group
-        );
-        info!("connect to rpc server: {}", config.rpc.db.rpc_server_url());
-        if let Err(e) = consumer.consume().await {
-            panic!("failed to consume message, error: {}", e);
+        if let Err(e) = ConsumerService::new(&config).await.consume().await {
+            panic!("failed to consume message, error: {:?}", e);
         }
     });
 

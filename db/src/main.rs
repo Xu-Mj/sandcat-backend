@@ -9,5 +9,5 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
     let config = Config::load("./abi/fixtures/im.yml").unwrap();
-    DbRpcService::start(&config).await.unwrap();
+    DbRpcService::start(&config).await;
 }
