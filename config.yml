@@ -1,3 +1,4 @@
+component: all # all, api, ws, rpc, db, pusher
 log:
   level: debug
   output: console

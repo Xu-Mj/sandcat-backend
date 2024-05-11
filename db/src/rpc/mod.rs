@@ -34,9 +34,9 @@ impl DbRpcService {
         }
     }
 
-    pub async fn start(config: &Config) -> Result<(), Error> {
+    pub async fn start(config: &Config) {
         // register service
-        Self::register_service(config).await?;
+        Self::register_service(config).await.unwrap();
         info!("<db> rpc service health check started");
 
         // open health check
@@ -59,7 +59,6 @@ impl DbRpcService {
             .serve(config.rpc.db.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-        Ok(())
     }
 
     async fn register_service(config: &Config) -> Result<(), Error> {

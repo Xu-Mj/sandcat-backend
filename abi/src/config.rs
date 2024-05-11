@@ -7,6 +7,7 @@ use std::{fs, path::Path};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
+    pub component: Component,
     // db config
     pub db: DbConfig,
     // server config
@@ -19,6 +20,17 @@ pub struct Config {
     pub oss: OssConfig,
     pub mail: MailConfig,
     pub log: LogConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Component {
+    Chat,
+    Consumer,
+    Db,
+    Pusher,
+    Ws,
+    All,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -68,9 +68,9 @@ impl PusherRpcService {
         }
     }
 
-    pub async fn start(config: &Config) -> Result<(), Error> {
+    pub async fn start(config: &Config) {
         // register service
-        Self::register_service(config).await?;
+        Self::register_service(config).await.unwrap();
         info!("<pusher> rpc service register to service register center");
 
         // for health check
@@ -93,7 +93,6 @@ impl PusherRpcService {
             .serve(config.rpc.pusher.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-        Ok(())
     }
 
     async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
