@@ -59,20 +59,6 @@ impl<Fetcher: ServiceFetcher> DynamicServiceDiscovery<Fetcher> {
     /// execute discovery once
     pub async fn discovery(&mut self) -> Result<(), Error> {
         //get services from service register center
-        // let map = self
-        //     .service_center
-        //     .filter_by_name(&self.service_name)
-        //     .await?;
-        // let x = map
-        //     .values()
-        //     .filter_map(|v| match format!("{}:{}", v.address, v.port).parse() {
-        //         Ok(s) => Some(s),
-        //         Err(e) => {
-        //             warn!("parse address error:{}", e);
-        //             None
-        //         }
-        //     })
-        //     .collect();
         let x = self.service_center.fetch().await?;
         let change_set = self.change_set(&x).await;
         for change in change_set {
