@@ -13,7 +13,7 @@ use abi::message::{
     SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
-use utils::LbWithServiceDiscovery;
+use utils::service_discovery::LbWithServiceDiscovery;
 
 /// message type: single, group, other
 #[derive(Debug, Clone, Eq, PartialEq)]

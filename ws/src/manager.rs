@@ -10,7 +10,7 @@ use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
 use cache::Cache;
-use utils::LbWithServiceDiscovery;
+use utils::service_discovery::LbWithServiceDiscovery;
 
 type UserID = String;
 type PlatformID = String;

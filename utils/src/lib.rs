@@ -3,11 +3,14 @@ use abi::errors::Error;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
+use std::sync::Arc;
 use tonic::transport::{Channel, Endpoint};
 
+use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery};
 pub use service_register_center::*;
 
 pub mod mongodb_tester;
+pub mod service_discovery;
 mod service_register_center;
 pub mod sqlx_tester;
 
@@ -67,6 +70,47 @@ pub fn hash_password(password: &[u8], salt: &str) -> Result<String, Error> {
         .hash_password(password, &SaltString::from_b64(salt).unwrap())
         .map_err(|e| Error::InternalServer(e.to_string()))?
         .to_string())
+}
+
+pub async fn get_channel_with_config(
+    config: &Config,
+    service_name: impl ToString,
+    protocol: impl ToString,
+) -> Result<LbWithServiceDiscovery, Error> {
+    let (channel, sender) = Channel::balance_channel(1024);
+    let discovery = DynamicServiceDiscovery::with_config(
+        config,
+        service_name.to_string(),
+        tokio::time::Duration::from_secs(10),
+        sender,
+        protocol.to_string(),
+    );
+    get_channel(discovery, channel).await
+}
+
+pub async fn get_channel_with_register(
+    register: Arc<dyn ServiceRegister>,
+    service_name: impl ToString,
+    protocol: impl ToString,
+) -> Result<LbWithServiceDiscovery, Error> {
+    let (channel, sender) = Channel::balance_channel(1024);
+    let discovery = DynamicServiceDiscovery::new(
+        register,
+        service_name.to_string(),
+        tokio::time::Duration::from_secs(10),
+        sender,
+        protocol.to_string(),
+    );
+    get_channel(discovery, channel).await
+}
+
+async fn get_channel(
+    mut discovery: DynamicServiceDiscovery,
+    channel: Channel,
+) -> Result<LbWithServiceDiscovery, Error> {
+    discovery.discovery().await?;
+    tokio::spawn(discovery.run());
+    Ok(LbWithServiceDiscovery(channel))
 }
 
 #[cfg(test)]

@@ -11,7 +11,7 @@ use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
 use oss::Oss;
-use utils::LbWithServiceDiscovery;
+use utils::service_discovery::LbWithServiceDiscovery;
 
 mod api_utils;
 pub(crate) mod handlers;

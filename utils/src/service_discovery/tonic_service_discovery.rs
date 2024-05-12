@@ -14,7 +14,7 @@ use tracing::{error, warn};
 
 /// custom load balancer for tonic
 #[derive(Debug, Clone)]
-pub struct LbWithServiceDiscovery(Channel);
+pub struct LbWithServiceDiscovery(pub Channel);
 
 /// implement the tonic service for custom load balancer
 impl tower::Service<http::Request<BoxBody>> for LbWithServiceDiscovery {
@@ -133,49 +133,8 @@ impl DynamicServiceDiscovery {
             tokio::time::sleep(self.dis_interval).await;
             // get services from service register center
             if let Err(e) = self.discovery().await {
-                error!("discovery error:{}", e);
+                error!("discovery error:{:?}", e);
             }
         }
     }
-}
-
-pub async fn get_channel_with_config(
-    config: &Config,
-    service_name: impl ToString,
-    protocol: impl ToString,
-) -> Result<LbWithServiceDiscovery, Error> {
-    let (channel, sender) = Channel::balance_channel(1024);
-    let discovery = DynamicServiceDiscovery::with_config(
-        config,
-        service_name.to_string(),
-        tokio::time::Duration::from_secs(10),
-        sender,
-        protocol.to_string(),
-    );
-    get_channel(discovery, channel).await
-}
-
-pub async fn get_channel_with_register(
-    register: Arc<dyn ServiceRegister>,
-    service_name: impl ToString,
-    protocol: impl ToString,
-) -> Result<LbWithServiceDiscovery, Error> {
-    let (channel, sender) = Channel::balance_channel(1024);
-    let discovery = DynamicServiceDiscovery::new(
-        register,
-        service_name.to_string(),
-        tokio::time::Duration::from_secs(10),
-        sender,
-        protocol.to_string(),
-    );
-    get_channel(discovery, channel).await
-}
-
-async fn get_channel(
-    mut discovery: DynamicServiceDiscovery,
-    channel: Channel,
-) -> Result<LbWithServiceDiscovery, Error> {
-    discovery.discovery().await?;
-    tokio::spawn(discovery.run());
-    Ok(LbWithServiceDiscovery(channel))
 }

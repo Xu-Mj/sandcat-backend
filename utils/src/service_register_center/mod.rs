@@ -7,9 +7,7 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 mod consul;
-mod tonic_service_discovery;
 pub mod typos;
-pub use tonic_service_discovery::*;
 
 pub type Services = HashMap<String, Service>;
 /// the service register discovery center
