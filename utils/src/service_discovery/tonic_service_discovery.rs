@@ -1,16 +1,17 @@
-use crate::{service_register_center, ServiceRegister};
-use abi::config::Config;
-use abi::errors::Error;
 use std::collections::HashSet;
 use std::net::SocketAddr;
-use std::sync::Arc;
 use std::task::{Context, Poll};
+
 use tokio::sync::mpsc;
 use tonic::body::BoxBody;
 use tonic::client::GrpcService;
 use tonic::transport::{Channel, Endpoint};
 use tower::discover::Change;
 use tracing::{error, warn};
+
+use abi::errors::Error;
+
+use crate::service_discovery::service_fetcher::ServiceFetcher;
 
 /// custom load balancer for tonic
 #[derive(Debug, Clone)]
@@ -31,43 +32,22 @@ impl tower::Service<http::Request<BoxBody>> for LbWithServiceDiscovery {
     }
 }
 
-pub struct DynamicServiceDiscovery {
-    service_name: String,
+pub struct DynamicServiceDiscovery<Fetcher: ServiceFetcher> {
     services: HashSet<SocketAddr>,
     sender: mpsc::Sender<Change<SocketAddr, Endpoint>>,
     dis_interval: tokio::time::Duration,
-    service_center: Arc<dyn ServiceRegister>,
+    service_center: Fetcher,
     schema: String,
 }
 
-impl DynamicServiceDiscovery {
-    pub fn with_config(
-        config: &Config,
-        service_name: String,
-        dis_interval: tokio::time::Duration,
-        sender: mpsc::Sender<Change<SocketAddr, Endpoint>>,
-        schema: String,
-    ) -> Self {
-        let service_center = service_register_center(config);
-        Self {
-            service_name,
-            services: Default::default(),
-            sender,
-            dis_interval,
-            service_center,
-            schema,
-        }
-    }
-
+impl<Fetcher: ServiceFetcher> DynamicServiceDiscovery<Fetcher> {
     pub fn new(
-        service_center: Arc<dyn ServiceRegister>,
-        service_name: String,
+        service_center: Fetcher,
         dis_interval: tokio::time::Duration,
         sender: mpsc::Sender<Change<SocketAddr, Endpoint>>,
         schema: String,
     ) -> Self {
         Self {
-            service_name,
             services: Default::default(),
             sender,
             dis_interval,
@@ -79,20 +59,7 @@ impl DynamicServiceDiscovery {
     /// execute discovery once
     pub async fn discovery(&mut self) -> Result<(), Error> {
         //get services from service register center
-        let map = self
-            .service_center
-            .filter_by_name(&self.service_name)
-            .await?;
-        let x = map
-            .values()
-            .filter_map(|v| match format!("{}:{}", v.address, v.port).parse() {
-                Ok(s) => Some(s),
-                Err(e) => {
-                    warn!("parse address error:{}", e);
-                    None
-                }
-            })
-            .collect();
+        let x = self.service_center.fetch().await?;
         let change_set = self.change_set(&x).await;
         for change in change_set {
             self.sender
@@ -128,7 +95,7 @@ impl DynamicServiceDiscovery {
         Some(endpoint)
     }
 
-    pub async fn run(mut self) -> Result<(), Error> {
+    pub async fn run(mut self) {
         loop {
             tokio::time::sleep(self.dis_interval).await;
             // get services from service register center

@@ -3,10 +3,14 @@ use abi::errors::Error;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
+use async_trait::async_trait;
+use std::collections::HashSet;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tonic::transport::{Channel, Endpoint};
+use tracing::log::warn;
 
-use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery};
+use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery, ServiceFetcher};
 pub use service_register_center::*;
 
 pub mod mongodb_tester;
@@ -72,15 +76,53 @@ pub fn hash_password(password: &[u8], salt: &str) -> Result<String, Error> {
         .to_string())
 }
 
+pub struct ServiceResolver {
+    service_name: String,
+    service_center: Arc<dyn ServiceRegister>,
+}
+
+#[async_trait]
+impl ServiceFetcher for ServiceResolver {
+    async fn fetch(&self) -> Result<HashSet<SocketAddr>, Error> {
+        let map = self
+            .service_center
+            .filter_by_name(&self.service_name)
+            .await?;
+        let x = map
+            .values()
+            .filter_map(|v| match format!("{}:{}", v.address, v.port).parse() {
+                Ok(s) => Some(s),
+                Err(e) => {
+                    warn!("parse address error:{}", e);
+                    None
+                }
+            })
+            .collect();
+        Ok(x)
+    }
+}
+
+impl ServiceResolver {
+    pub fn new(service_center: Arc<dyn ServiceRegister>, service_name: String) -> Self {
+        Self {
+            service_name,
+            service_center,
+        }
+    }
+}
+
 pub async fn get_channel_with_config(
     config: &Config,
     service_name: impl ToString,
     protocol: impl ToString,
 ) -> Result<LbWithServiceDiscovery, Error> {
     let (channel, sender) = Channel::balance_channel(1024);
-    let discovery = DynamicServiceDiscovery::with_config(
-        config,
+    let service_resolver = ServiceResolver::new(
+        crate::service_register_center(config),
         service_name.to_string(),
+    );
+    let discovery = DynamicServiceDiscovery::new(
+        service_resolver,
         tokio::time::Duration::from_secs(10),
         sender,
         protocol.to_string(),
@@ -94,9 +136,9 @@ pub async fn get_channel_with_register(
     protocol: impl ToString,
 ) -> Result<LbWithServiceDiscovery, Error> {
     let (channel, sender) = Channel::balance_channel(1024);
+    let service_resolver = ServiceResolver::new(register, service_name.to_string());
     let discovery = DynamicServiceDiscovery::new(
-        register,
-        service_name.to_string(),
+        service_resolver,
         tokio::time::Duration::from_secs(10),
         sender,
         protocol.to_string(),
@@ -105,7 +147,7 @@ pub async fn get_channel_with_register(
 }
 
 async fn get_channel(
-    mut discovery: DynamicServiceDiscovery,
+    mut discovery: DynamicServiceDiscovery<ServiceResolver>,
     channel: Channel,
 ) -> Result<LbWithServiceDiscovery, Error> {
     discovery.discovery().await?;

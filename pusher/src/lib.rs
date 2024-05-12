@@ -16,6 +16,7 @@ use abi::message::push_service_server::{PushService, PushServiceServer};
 use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
 use utils::service_discovery::DynamicServiceDiscovery;
 use utils::typos::{GrpcHealthCheck, Registration};
+use utils::ServiceResolver;
 
 pub struct PusherRpcService {
     ws_rpc: MsgServiceClient<Channel>,
@@ -52,8 +53,7 @@ impl PusherRpcService {
         });
 
         let worker = DynamicServiceDiscovery::new(
-            register,
-            config.rpc.ws.name.clone(),
+            ServiceResolver::new(register, config.rpc.ws.name.clone()),
             tokio::time::Duration::from_secs(10),
             tx,
             config.rpc.ws.protocol.clone(),
