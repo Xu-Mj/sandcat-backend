@@ -47,13 +47,11 @@ This project provides an implementation of a backend for an Instant Messaging (I
 ## Unresolved questions
 
 - **Storing Message Sequences in Redis**: We currently increment the sequence numbers simply, without confirming their accuracy. There's a need to ensure the correctness of this sequence.
-- **Handling Message Sequences on Database Module Failure**: When sending messages to the database module fails, we require a mechanism to handle message sequences accordingly.
 - **Integrating Member ID Retrieval from Cache into DB Service**: Whether the method for retrieving member IDs from the cache should be integrated into the DB service is under consideration.
 - **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
-- **Partition Table for Messages Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
+- **Partition Table for Messages (Mongodb) Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
 - **Group Message Sequencing**: The sequence for group messages is incremented at the consumer module, and we need to obtain the sequence in the WebSocket/mongoDB module. Is there a more effective way to do this?
-- **Timestamp Issues**: We use Unix time milliseconds (i64) as the timestamp in the database, but we should use a `TimeStamp` type in the future.
 - **Axum's Routes Layer or With_State?**: Should we utilize Axum's routes layer with state or the `with_state` method?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
 - **Friendship Read Status**: we should delete the Friendship related message after user read it.
