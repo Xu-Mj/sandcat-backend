@@ -1,11 +1,6 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::client::Client;
-use crate::rpc::MsgRpcService;
-use abi::config::Config;
-use abi::errors::Error;
-use abi::message::Msg;
 use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -14,11 +9,19 @@ use axum::{
     Router,
 };
 use futures::{SinkExt, StreamExt};
+use synapse::pb::service_registry_client::ServiceRegistryClient;
+use synapse::pb::ServiceInstance;
 use tokio::sync::{mpsc, RwLock};
+use tonic::transport::Channel;
 use tracing::error;
-use utils::typos::Registration;
 
+use abi::config::Config;
+use abi::errors::Error;
+use abi::message::Msg;
+
+use crate::client::Client;
 use crate::manager::Manager;
+use crate::rpc::MsgRpcService;
 
 pub const HEART_BEAT_INTERVAL: u64 = 30;
 
@@ -32,16 +35,25 @@ pub struct WsServer;
 impl WsServer {
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
-        let center = utils::service_register_center(config);
-        let registration = Registration {
+        let addr = format!(
+            "{}://{}:{}",
+            config.service_center.protocol, config.service_center.host, config.service_center.port
+        );
+        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
+        let mut client = ServiceRegistryClient::new(channel);
+        let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.websocket.name),
             name: config.websocket.name.clone(),
             address: config.websocket.host.clone(),
-            port: config.websocket.port,
+            port: config.websocket.port as i32,
             tags: config.websocket.tags.clone(),
-            check: None,
+            version: "".to_string(),
+            r#type: 0,
+            metadata: Default::default(),
+            health_check: None,
+            status: 0,
         };
-        center.register(registration).await?;
+        client.register_service(service).await.unwrap();
         Ok(())
     }
 

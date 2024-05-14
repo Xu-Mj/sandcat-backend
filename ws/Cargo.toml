@@ -22,8 +22,8 @@ tokio = { version = "1.36.0", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tonic = { version = "0.11.0", features = ["gzip"] }
-tonic-health = "0.11.0"
 
+synapse = { git = "https://github.com/Xu-Mj/synapse.git", branch = "main" }
 [dev-dependencies]
 tungstenite = "0.21.0"
 tokio-tungstenite = "0.21.0"

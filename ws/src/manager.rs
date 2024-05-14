@@ -45,12 +45,7 @@ impl Manager {
         config: &Config,
     ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
-        let channel = utils::get_channel_with_config(
-            config,
-            &config.rpc.chat.name,
-            &config.rpc.chat.protocol,
-        )
-        .await?;
+        let channel = utils::get_chan(config, config.rpc.chat.name.clone()).await?;
         let chat_rpc = ChatServiceClient::new(channel);
         Ok(chat_rpc)
     }

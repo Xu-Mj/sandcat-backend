@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tonic::transport::Endpoint;
 
 use xdb::searcher_init;
 
@@ -44,14 +45,20 @@ impl AppState {
         let ws_config = config.websocket.clone();
 
         let mail_config = config.mail.clone();
-
-        let register = utils::service_register_center(config);
-
+        let addr = format!(
+            "{}://{}:{}",
+            config.service_center.protocol, config.service_center.host, config.service_center.port
+        );
+        // let register = utils::service_register_center(config);
+        let endpoint = Endpoint::from_shared(addr).unwrap();
+        let client = synapse::pb::service_registry_client::ServiceRegistryClient::connect(endpoint)
+            .await
+            .unwrap();
         let ws_lb = Arc::new(
             lb::LoadBalancer::new(
                 config.websocket.name.clone(),
                 config.server.ws_lb_strategy.clone(),
-                register,
+                client,
             )
             .await,
         );
@@ -73,12 +80,7 @@ impl AppState {
         config: &Config,
     ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
-        let channel = utils::get_channel_with_config(
-            config,
-            &config.rpc.chat.name,
-            &config.rpc.chat.protocol,
-        )
-        .await?;
+        let channel = utils::get_chan(config, config.rpc.pusher.name.clone()).await?;
         let chat_rpc = ChatServiceClient::new(channel);
         Ok(chat_rpc)
     }
@@ -87,9 +89,7 @@ impl AppState {
         config: &Config,
     ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
         // use service register center to get ws rpc url
-        let channel =
-            utils::get_channel_with_config(config, &config.rpc.db.name, &config.rpc.db.protocol)
-                .await?;
+        let channel = utils::get_chan(config, config.rpc.db.name.clone()).await?;
         let db_rpc = DbServiceClient::new(channel);
         Ok(db_rpc)
     }
@@ -97,9 +97,7 @@ impl AppState {
     async fn get_ws_rpc_client(
         config: &Config,
     ) -> Result<MsgServiceClient<LbWithServiceDiscovery>, Error> {
-        let channel =
-            utils::get_channel_with_config(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
-                .await?;
+        let channel = utils::get_chan(config, config.rpc.ws.name.clone()).await?;
         let ws_rpc = MsgServiceClient::new(channel);
         Ok(ws_rpc)
     }

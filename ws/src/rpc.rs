@@ -1,4 +1,6 @@
 use std::result::Result;
+use synapse::pb::service_registry_client::ServiceRegistryClient;
+use synapse::pb::{HealthCheck, ServiceInstance};
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -6,11 +8,9 @@ use abi::message::msg_service_server::MsgServiceServer;
 use abi::message::{
     msg_service_server::MsgService, SendGroupMsgRequest, SendMsgRequest, SendMsgResponse,
 };
-use tonic::server::NamedService;
-use tonic::transport::Server;
+use tonic::transport::{Channel, Server};
 use tonic::{async_trait, Request, Response, Status};
 use tracing::{debug, info};
-use utils::typos::{GrpcHealthCheck, Registration};
 
 use crate::manager::Manager;
 
@@ -29,10 +29,9 @@ impl MsgRpcService {
         info!("<ws> rpc service register to service register center");
 
         // open health check
-        let (mut reporter, health_service) = tonic_health::server::health_reporter();
-        reporter
-            .set_serving::<MsgServiceServer<MsgRpcService>>()
-            .await;
+        let health_service = synapse::pb::health_server::HealthServer::new(
+            synapse::health_service::HealthService {},
+        );
         info!("<ws> rpc service health check started");
 
         let service = Self::new(manager);
@@ -50,30 +49,32 @@ impl MsgRpcService {
             .unwrap();
         Ok(())
     }
-
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
-        let center = utils::service_register_center(config);
-        let grpc = format!(
-            "{}/{}",
-            config.rpc.ws.rpc_server_url(),
-            <MsgServiceServer<MsgRpcService> as NamedService>::NAME
+        let addr = format!(
+            "{}://{}:{}",
+            config.service_center.protocol, config.service_center.host, config.service_center.port
         );
-        let check = GrpcHealthCheck {
-            name: config.rpc.ws.name.clone(),
-            grpc,
-            grpc_use_tls: config.rpc.ws.grpc_health_check.grpc_use_tls,
-            interval: format!("{}s", config.rpc.ws.grpc_health_check.interval),
-        };
-        let registration = Registration {
+        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
+        let mut client = ServiceRegistryClient::new(channel);
+        let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.ws.name),
             name: config.rpc.ws.name.clone(),
             address: config.rpc.ws.host.clone(),
-            port: config.rpc.ws.port,
+            port: config.rpc.ws.port as i32,
             tags: config.rpc.ws.tags.clone(),
-            check: Some(check),
+            version: "".to_string(),
+            r#type: 0,
+            metadata: Default::default(),
+            health_check: Some(HealthCheck {
+                endpoint: "".to_string(),
+                interval: 10,
+                timeout: 10,
+                retries: 10,
+            }),
+            status: 0,
         };
-        center.register(registration).await?;
+        client.register_service(service).await.unwrap();
         Ok(())
     }
 }

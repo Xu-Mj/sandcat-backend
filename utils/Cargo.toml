@@ -23,3 +23,4 @@ tower = "0.4.13"
 tracing = "0.1.40"
 uuid = { version = "1.7.0", features = ["v4"] }
 async-trait = "0.1.80"
+synapse = { git = "https://github.com/Xu-Mj/synapse.git", branch = "main" }

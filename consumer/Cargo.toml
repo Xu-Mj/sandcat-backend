@@ -11,10 +11,11 @@ abi = { version = "0.1.0", path = "../abi" }
 cache = { version = "0.1.0", path = "../cache" }
 utils = { version = "0.1.0", path = "../utils" }
 
-rdkafka = { version = "0.36.2", features = ["cmake-build"] }
+rdkafka = { version = "0.36.2", features = ["dynamic-linking"] }
 serde = "1.0.197"
 serde_json = "1.0.114"
 tokio = { version = "1.36.0", features = ["full"] }
 tonic = { version = "0.11.0", features = ["gzip"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+synapse = { git = "https://github.com/Xu-Mj/synapse.git", branch = "main" }

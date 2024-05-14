@@ -115,27 +115,27 @@ impl ServiceRegister for Consul {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
-    #[tokio::test]
-    async fn register_deregister_should_work() {
-        let config = Config::load("../config.yml").unwrap();
-
-        let consul = Consul::from_config(&config);
-        let registration = Registration {
-            id: "test".to_string(),
-            name: "test".to_string(),
-            address: "127.0.0.1".to_string(),
-            port: 8081,
-            tags: vec!["test".to_string()],
-            check: None,
-        };
-        let result = consul.register(registration).await;
-        assert!(result.is_ok());
-        // delete it
-        let result = consul.deregister("test").await;
-        assert!(result.is_ok());
-    }
+    // #[tokio::test]
+    // async fn register_deregister_should_work() {
+    //     let config = Config::load("../config.yml").unwrap();
+    //
+    //     let consul = Consul::from_config(&config);
+    //     let registration = Registration {
+    //         id: "test".to_string(),
+    //         name: "test".to_string(),
+    //         address: "127.0.0.1".to_string(),
+    //         port: 8081,
+    //         tags: vec!["test".to_string()],
+    //         check: None,
+    //     };
+    //     let result = consul.register(registration).await;
+    //     assert!(result.is_ok());
+    //     // delete it
+    //     let result = consul.deregister("test").await;
+    //     assert!(result.is_ok());
+    // }
 
     // #[tokio::test]
     // async fn discovery_should_work() {
