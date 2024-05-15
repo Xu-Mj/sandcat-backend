@@ -9,8 +9,7 @@ use axum::{
     Router,
 };
 use futures::{SinkExt, StreamExt};
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::ServiceInstance;
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::{mpsc, RwLock};
 use tonic::transport::Channel;
 use tracing::error;
@@ -48,10 +47,10 @@ impl WsServer {
             port: config.websocket.port as i32,
             tags: config.websocket.tags.clone(),
             version: "".to_string(),
-            r#type: 0,
             metadata: Default::default(),
             health_check: None,
             status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

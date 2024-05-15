@@ -7,8 +7,8 @@ use rdkafka::client::DefaultClientContext;
 use rdkafka::error::KafkaError;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::{HealthCheck, ServiceInstance};
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tonic::transport::{Channel, Server};
 use tracing::{error, info};
 
@@ -56,9 +56,7 @@ impl ChatRpcService {
         info!("<chat> rpc service register to service register center");
 
         // health check
-        let health_service = synapse::pb::health_server::HealthServer::new(
-            synapse::health_service::HealthService {},
-        );
+        let health_service = HealthServer::new(HealthService::new());
         info!("<chat> rpc service health check started");
 
         let chat_rpc = Self::new(producer, config.kafka.topic.clone());
@@ -91,15 +89,17 @@ impl ChatRpcService {
             port: config.rpc.chat.port as i32,
             tags: config.rpc.chat.tags.clone(),
             version: "".to_string(),
-            r#type: 0,
             metadata: Default::default(),
             health_check: Some(HealthCheck {
                 endpoint: "".to_string(),
                 interval: 10,
                 timeout: 10,
                 retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
             }),
             status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

@@ -1,6 +1,10 @@
 use std::result::Result;
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::{HealthCheck, ServiceInstance};
+
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
+use tonic::transport::{Channel, Server};
+use tonic::{async_trait, Request, Response, Status};
+use tracing::{debug, info};
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -8,9 +12,6 @@ use abi::message::msg_service_server::MsgServiceServer;
 use abi::message::{
     msg_service_server::MsgService, SendGroupMsgRequest, SendMsgRequest, SendMsgResponse,
 };
-use tonic::transport::{Channel, Server};
-use tonic::{async_trait, Request, Response, Status};
-use tracing::{debug, info};
 
 use crate::manager::Manager;
 
@@ -29,9 +30,7 @@ impl MsgRpcService {
         info!("<ws> rpc service register to service register center");
 
         // open health check
-        let health_service = synapse::pb::health_server::HealthServer::new(
-            synapse::health_service::HealthService {},
-        );
+        let health_service = HealthServer::new(HealthService::new());
         info!("<ws> rpc service health check started");
 
         let service = Self::new(manager);
@@ -64,15 +63,17 @@ impl MsgRpcService {
             port: config.rpc.ws.port as i32,
             tags: config.rpc.ws.tags.clone(),
             version: "".to_string(),
-            r#type: 0,
             metadata: Default::default(),
             health_check: Some(HealthCheck {
                 endpoint: "".to_string(),
                 interval: 10,
                 timeout: 10,
                 retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
             }),
             status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use dashmap::DashMap;
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::{HealthCheck, ServiceInstance};
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::mpsc;
 use tonic::transport::{Channel, Endpoint, Server};
 use tonic::{async_trait, Request, Response, Status};
@@ -60,9 +60,7 @@ impl PusherRpcService {
         info!("<pusher> rpc service register to service register center");
 
         // for health check
-        let health_service = synapse::pb::health_server::HealthServer::new(
-            synapse::health_service::HealthService {},
-        );
+        let health_service = HealthServer::new(HealthService::new());
         info!("<pusher> rpc service health check started");
 
         let pusher_rpc = Self::new(config).await;
@@ -95,15 +93,17 @@ impl PusherRpcService {
             port: config.rpc.pusher.port as i32,
             tags: config.rpc.pusher.tags.clone(),
             version: "".to_string(),
-            r#type: 0,
             metadata: Default::default(),
             health_check: Some(HealthCheck {
                 endpoint: "".to_string(),
                 interval: 10,
                 timeout: 10,
                 retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
             }),
             status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

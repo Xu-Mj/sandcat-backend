@@ -3,10 +3,9 @@ mod strategy;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::{QueryRequest, ServiceStatus, SubscribeRequest};
-use tonic::transport::Channel;
-use tracing::debug;
+use synapse::service::client::ServiceClient;
+use synapse::service::ServiceStatus;
+use tracing::{debug, error};
 
 use crate::api_utils::lb::strategy::{get_strategy, LoadBalanceStrategy, LoadBalanceStrategyType};
 
@@ -17,7 +16,7 @@ pub struct LoadBalancer {
     /// service name in consul
     service_name: String,
     /// register center
-    service_register: ServiceRegistryClient<Channel>,
+    service_register: ServiceClient,
     /// service set
     service_set: Arc<RwLock<BTreeSet<String>>>,
     /// load balance strategy
@@ -30,7 +29,7 @@ impl LoadBalancer {
     pub async fn new(
         service_name: String,
         lb_type: impl Into<LoadBalanceStrategyType>,
-        service_register: ServiceRegistryClient<Channel>,
+        service_register: ServiceClient,
     ) -> Self {
         let strategy = get_strategy(lb_type.into());
         let mut balancer = Self {
@@ -82,25 +81,15 @@ impl LoadBalancer {
         let set = self.service_set.clone();
         tokio::spawn(async move {
             tokio::time::sleep(tokio::time::Duration::from_secs(UPDATE_SERVICE_INTERVAL)).await;
-            let res = client
-                .query_services(QueryRequest { name: name.clone() })
-                .await
-                .unwrap();
-            let services = res.into_inner().services;
-            debug!("services:{:?}", services);
-            for service in services {
-                // todo need to modify service register center to add protocol attr
-                let addr = format!("{}:{}", service.address, service.port);
-                set.write().unwrap().insert(addr);
-            }
-
-            let response = client
-                .subscribe(SubscribeRequest { service: name })
-                .await
-                .unwrap();
+            let mut stream = match client.subscribe(name).await {
+                Ok(stream) => stream,
+                Err(err) => {
+                    error!("subscribe error: {:?}", err);
+                    return;
+                }
+            };
             debug!("subscribe success");
-            let mut stream = response.into_inner();
-            while let Some(service) = stream.message().await.unwrap() {
+            while let Some(service) = stream.recv().await {
                 debug!("subscribe channel return: {:?}", service);
                 let addr = format!("{}:{}", service.address, service.port);
                 if service.active == ServiceStatus::Up as i32 {

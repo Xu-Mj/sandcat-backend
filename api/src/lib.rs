@@ -1,10 +1,9 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tonic::transport::Endpoint;
 
+use synapse::service::client::ServiceClient;
 use xdb::searcher_init;
 
-use crate::api_utils::lb;
 use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
@@ -13,6 +12,8 @@ use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
 use oss::Oss;
 use utils::service_discovery::LbWithServiceDiscovery;
+
+use crate::api_utils::lb;
 
 mod api_utils;
 pub(crate) mod handlers;
@@ -45,15 +46,12 @@ impl AppState {
         let ws_config = config.websocket.clone();
 
         let mail_config = config.mail.clone();
-        let addr = format!(
-            "{}://{}:{}",
-            config.service_center.protocol, config.service_center.host, config.service_center.port
-        );
-        // let register = utils::service_register_center(config);
-        let endpoint = Endpoint::from_shared(addr).unwrap();
-        let client = synapse::pb::service_registry_client::ServiceRegistryClient::connect(endpoint)
+        let client = ServiceClient::builder()
+            .server_host(config.service_center.host.clone())
+            .server_port(config.service_center.port)
+            .build()
             .await
-            .unwrap();
+            .expect("build service client failed");
         let ws_lb = Arc::new(
             lb::LoadBalancer::new(
                 config.websocket.name.clone(),

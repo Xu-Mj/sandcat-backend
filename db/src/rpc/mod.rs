@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use synapse::pb::service_registry_client::ServiceRegistryClient;
-use synapse::pb::{HealthCheck, ServiceInstance};
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 
 use tonic::transport::{Channel, Server};
 use tracing::info;
@@ -44,9 +44,7 @@ impl DbRpcService {
         // reporter
         //     .set_serving::<DbServiceServer<DbRpcService>>()
         //     .await;
-        let health_service = synapse::pb::health_server::HealthServer::new(
-            synapse::health_service::HealthService {},
-        );
+        let health_service = HealthServer::new(HealthService {});
         info!("<db> rpc service register to service register center");
 
         let db_rpc = DbRpcService::new(config).await;
@@ -79,15 +77,17 @@ impl DbRpcService {
             port: config.rpc.db.port as i32,
             tags: config.rpc.db.tags.clone(),
             version: "".to_string(),
-            r#type: 0,
             metadata: Default::default(),
             health_check: Some(HealthCheck {
                 endpoint: "".to_string(),
                 interval: 10,
                 timeout: 10,
                 retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
             }),
             status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

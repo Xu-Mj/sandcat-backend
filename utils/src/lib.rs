@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use synapse::pb::{QueryRequest, ServiceStatus, SubscribeRequest};
+use synapse::service::{QueryRequest, ServiceStatus, SubscribeRequest};
 use tokio::sync::mpsc::Sender;
 use tonic::transport::{Channel, Endpoint};
 use tower::discover::Change;
@@ -176,10 +176,9 @@ pub async fn get_chan_(
     );
     tokio::spawn(async move {
         let endpoint = Endpoint::from_shared(addr).unwrap();
-        let mut client =
-            synapse::pb::service_registry_client::ServiceRegistryClient::connect(endpoint)
-                .await
-                .unwrap();
+        let mut client = synapse::service::ServiceRegistryClient::connect(endpoint)
+            .await
+            .unwrap();
         // query service list
         debug!("query service list");
         let res = client
