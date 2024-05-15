@@ -7,8 +7,13 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use synapse::service::client::ServiceClient;
+use synapse::service::{Scheme, ServiceStatus};
+use tokio::sync::mpsc::Sender;
 use tonic::transport::{Channel, Endpoint};
+use tower::discover::Change;
 use tracing::log::warn;
+use tracing::{debug, error};
 
 use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery, ServiceFetcher};
 pub use service_register_center::*;
@@ -153,6 +158,52 @@ async fn get_channel(
     discovery.discovery().await?;
     tokio::spawn(discovery.run());
     Ok(LbWithServiceDiscovery(channel))
+}
+
+pub async fn get_chan(config: &Config, name: String) -> Result<LbWithServiceDiscovery, Error> {
+    let (channel, sender) = Channel::balance_channel(1024);
+    get_chan_(config, name, sender).await?;
+    Ok(LbWithServiceDiscovery(channel))
+}
+
+pub async fn get_chan_(
+    config: &Config,
+    name: String,
+    sender: Sender<Change<SocketAddr, Endpoint>>,
+) -> Result<(), Error> {
+    let mut client = ServiceClient::builder()
+        .server_host(config.service_center.host.clone())
+        .server_port(config.service_center.port)
+        .build()
+        .await
+        .map_err(|_| {
+            Error::InternalServer("Connect to service register center failed".to_string())
+        })?;
+
+    tokio::spawn(async move {
+        let mut stream = match client.subscribe(name).await {
+            Ok(stream) => stream,
+            Err(e) => {
+                error!("subscribe channel error: {:?}", e);
+                return;
+            }
+        };
+        while let Some(service) = stream.recv().await {
+            debug!("subscribe channel return: {:?}", service);
+            let addr = format!("{}:{}", service.address, service.port);
+            let socket_addr: SocketAddr = addr.parse().unwrap();
+            let scheme = Scheme::from(service.scheme as u8);
+            let addr = format!("{}://{}", scheme, addr);
+            let change = if service.active == ServiceStatus::Up as i32 {
+                let endpoint = Endpoint::from_shared(addr).unwrap();
+                Change::Insert(socket_addr, endpoint)
+            } else {
+                Change::Remove(socket_addr)
+            };
+            sender.send(change).await.unwrap();
+        }
+    });
+    Ok(())
 }
 
 #[cfg(test)]

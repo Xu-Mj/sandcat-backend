@@ -49,6 +49,7 @@ impl ConsumerService {
             .create()
             .expect("Consumer creation failed");
 
+        // todo register to service register center to monitor the service
         // subscribe to topic
         consumer
             .subscribe(&[&config.kafka.topic])
@@ -72,10 +73,7 @@ impl ConsumerService {
     async fn get_db_rpc_client(
         config: &Config,
     ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
-        // use service register center to get ws rpc url
-        let channel =
-            utils::get_channel_with_config(config, &config.rpc.db.name, &config.rpc.db.protocol)
-                .await?;
+        let channel = utils::get_chan(config, config.rpc.db.name.clone()).await?;
         let db_rpc = DbServiceClient::new(channel);
         Ok(db_rpc)
     }
@@ -83,12 +81,7 @@ impl ConsumerService {
     async fn get_pusher_rpc_client(
         config: &Config,
     ) -> Result<PushServiceClient<LbWithServiceDiscovery>, Error> {
-        let channel = utils::get_channel_with_config(
-            config,
-            &config.rpc.pusher.name,
-            &config.rpc.pusher.protocol,
-        )
-        .await?;
+        let channel = utils::get_chan(config, config.rpc.pusher.name.clone()).await?;
         let push_rpc = PushServiceClient::new(channel);
         Ok(push_rpc)
     }

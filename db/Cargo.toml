@@ -26,6 +26,6 @@ sqlx = { version = "0.7", features = [
 ] }
 tokio = { version = "1.36.0", features = ["full"] }
 tonic = { version = "0.11.0", features = ["gzip"] }
-tonic-health = "0.11.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+synapse = { git = "https://github.com/Xu-Mj/synapse.git", branch = "main" }

@@ -7,15 +7,15 @@ use rdkafka::client::DefaultClientContext;
 use rdkafka::error::KafkaError;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
-use tonic::server::NamedService;
-use tonic::transport::Server;
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
+use tonic::transport::{Channel, Server};
 use tracing::{error, info};
 
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::chat_service_server::{ChatService, ChatServiceServer};
 use abi::message::{MsgResponse, MsgType, SendMsgRequest};
-use utils::typos::{GrpcHealthCheck, Registration};
 
 pub struct ChatRpcService {
     kafka: FutureProducer,
@@ -56,10 +56,7 @@ impl ChatRpcService {
         info!("<chat> rpc service register to service register center");
 
         // health check
-        let (mut reporter, health_service) = tonic_health::server::health_reporter();
-        reporter
-            .set_serving::<ChatServiceServer<ChatRpcService>>()
-            .await;
+        let health_service = HealthServer::new(HealthService::new());
         info!("<chat> rpc service health check started");
 
         let chat_rpc = Self::new(producer, config.kafka.topic.clone());
@@ -79,27 +76,32 @@ impl ChatRpcService {
 
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
-        let center = utils::service_register_center(config);
-        let grpc = format!(
-            "{}/{}",
-            config.rpc.chat.rpc_server_url(),
-            <ChatServiceServer<ChatRpcService> as NamedService>::NAME
+        let addr = format!(
+            "{}://{}:{}",
+            config.service_center.protocol, config.service_center.host, config.service_center.port
         );
-        let check = GrpcHealthCheck {
-            name: config.rpc.chat.name.clone(),
-            grpc,
-            grpc_use_tls: config.rpc.chat.grpc_health_check.grpc_use_tls,
-            interval: format!("{}s", config.rpc.chat.grpc_health_check.interval),
-        };
-        let registration = Registration {
+        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
+        let mut client = ServiceRegistryClient::new(channel);
+        let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.chat.name),
             name: config.rpc.chat.name.clone(),
             address: config.rpc.chat.host.clone(),
-            port: config.rpc.chat.port,
+            port: config.rpc.chat.port as i32,
             tags: config.rpc.chat.tags.clone(),
-            check: Some(check),
+            version: "".to_string(),
+            metadata: Default::default(),
+            health_check: Some(HealthCheck {
+                endpoint: "".to_string(),
+                interval: 10,
+                timeout: 10,
+                retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
+            }),
+            status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
-        center.register(registration).await?;
+        client.register_service(service).await.unwrap();
         Ok(())
     }
 
@@ -167,6 +169,7 @@ impl ChatService for ChatRpcService {
         // let kafka generate key, then we need set FutureRecord<String, type>
         let record: FutureRecord<String, String> = FutureRecord::to(&self.topic).payload(&payload);
 
+        info!("send msg to kafka: {:?}", record);
         let err = match self.kafka.send(record, Duration::from_secs(0)).await {
             Ok(_) => String::new(),
             Err((err, msg)) => {

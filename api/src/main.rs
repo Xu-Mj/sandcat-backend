@@ -10,6 +10,6 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
 
-    let config = Config::load("./abi/fixtures/im.yml").unwrap();
+    let config = Config::load("config.yml").unwrap();
     start(config).await;
 }

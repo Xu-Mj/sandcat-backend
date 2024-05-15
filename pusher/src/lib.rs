@@ -2,8 +2,9 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use dashmap::DashMap;
+use synapse::health::{HealthCheck, HealthServer, HealthService};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::mpsc;
-use tonic::server::NamedService;
 use tonic::transport::{Channel, Endpoint, Server};
 use tonic::{async_trait, Request, Response, Status};
 use tower::discover::Change;
@@ -14,19 +15,13 @@ use abi::errors::Error;
 use abi::message::msg_service_client::MsgServiceClient;
 use abi::message::push_service_server::{PushService, PushServiceServer};
 use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
-use utils::service_discovery::DynamicServiceDiscovery;
-use utils::typos::{GrpcHealthCheck, Registration};
-use utils::ServiceResolver;
 
 pub struct PusherRpcService {
-    ws_rpc: MsgServiceClient<Channel>,
     ws_rpc_list: Arc<DashMap<SocketAddr, MsgServiceClient<Channel>>>,
 }
 
 impl PusherRpcService {
     pub async fn new(config: &Config) -> Self {
-        let ws_rpc = Self::get_ws_rpc_client(config).await.unwrap();
-        let register = utils::service_register_center(config);
         let ws_rpc_list = Arc::new(DashMap::new());
         let cloned_list = ws_rpc_list.clone();
         let (tx, mut rx) = mpsc::channel::<Change<SocketAddr, Endpoint>>(100);
@@ -52,20 +47,11 @@ impl PusherRpcService {
             }
         });
 
-        let worker = DynamicServiceDiscovery::new(
-            ServiceResolver::new(register, config.rpc.ws.name.clone()),
-            tokio::time::Duration::from_secs(10),
-            tx,
-            config.rpc.ws.protocol.clone(),
-        );
+        utils::get_chan_(config, config.rpc.ws.name.clone(), tx)
+            .await
+            .unwrap();
 
-        // start the worker
-        tokio::spawn(worker.run());
-
-        Self {
-            ws_rpc,
-            ws_rpc_list,
-        }
+        Self { ws_rpc_list }
     }
 
     pub async fn start(config: &Config) {
@@ -74,10 +60,7 @@ impl PusherRpcService {
         info!("<pusher> rpc service register to service register center");
 
         // for health check
-        let (mut reporter, health_service) = tonic_health::server::health_reporter();
-        reporter
-            .set_serving::<PushServiceServer<PusherRpcService>>()
-            .await;
+        let health_service = HealthServer::new(HealthService::new());
         info!("<pusher> rpc service health check started");
 
         let pusher_rpc = Self::new(config).await;
@@ -95,38 +78,34 @@ impl PusherRpcService {
             .unwrap();
     }
 
-    async fn get_ws_rpc_client(config: &Config) -> Result<MsgServiceClient<Channel>, Error> {
-        // use service register center to get ws rpc url
-        let channel =
-            utils::get_rpc_channel_by_name(config, &config.rpc.ws.name, &config.rpc.ws.protocol)
-                .await?;
-        let ws_rpc = MsgServiceClient::new(channel);
-        Ok(ws_rpc)
-    }
-
     async fn register_service(config: &Config) -> Result<(), Error> {
         // register service to service register center
-        let center = utils::service_register_center(config);
-        let grpc = format!(
-            "{}/{}",
-            config.rpc.pusher.rpc_server_url(),
-            <PushServiceServer<PusherRpcService> as NamedService>::NAME
+        let addr = format!(
+            "{}://{}:{}",
+            config.service_center.protocol, config.service_center.host, config.service_center.port
         );
-        let check = GrpcHealthCheck {
-            name: config.rpc.pusher.name.clone(),
-            grpc,
-            grpc_use_tls: config.rpc.pusher.grpc_health_check.grpc_use_tls,
-            interval: format!("{}s", config.rpc.pusher.grpc_health_check.interval),
-        };
-        let registration = Registration {
+        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
+        let mut client = ServiceRegistryClient::new(channel);
+        let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.pusher.name),
             name: config.rpc.pusher.name.clone(),
             address: config.rpc.pusher.host.clone(),
-            port: config.rpc.pusher.port,
+            port: config.rpc.pusher.port as i32,
             tags: config.rpc.pusher.tags.clone(),
-            check: Some(check),
+            version: "".to_string(),
+            metadata: Default::default(),
+            health_check: Some(HealthCheck {
+                endpoint: "".to_string(),
+                interval: 10,
+                timeout: 10,
+                retries: 10,
+                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+                tls_domain: None,
+            }),
+            status: 0,
+            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
         };
-        center.register(registration).await?;
+        client.register_service(service).await.unwrap();
         Ok(())
     }
 }
@@ -211,7 +190,8 @@ impl PushService for PusherRpcService {
     ) -> Result<Response<SendMsgResponse>, Status> {
         // push message to ws
         debug!("push msg request: {:?}", request);
-        let mut ws_rpc = self.ws_rpc.clone();
-        ws_rpc.send_msg_to_user(request).await
+        // let mut ws_rpc = self.ws_rpc.clone();
+        // ws_rpc.send_msg_to_user(request).await
+        Ok(Response::new(SendMsgResponse {}))
     }
 }

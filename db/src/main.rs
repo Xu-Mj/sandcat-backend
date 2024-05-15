@@ -7,7 +7,8 @@ use db::rpc::DbRpcService;
 async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(Level::DEBUG)
+        .with_line_number(true)
         .init();
-    let config = Config::load("./abi/fixtures/im.yml").unwrap();
+    let config = Config::load("config.yml").unwrap();
     DbRpcService::start(&config).await;
 }
