@@ -113,7 +113,7 @@ impl WsServer {
         ws: WebSocket,
         app_state: AppState,
     ) {
-        tracing::debug!(
+        tracing::info!(
             "client {} connected, user id : {}",
             user_id.clone(),
             pointer_id.clone()

@@ -169,6 +169,7 @@ impl ChatService for ChatRpcService {
         // let kafka generate key, then we need set FutureRecord<String, type>
         let record: FutureRecord<String, String> = FutureRecord::to(&self.topic).payload(&payload);
 
+        info!("send msg to kafka: {:?}", record);
         let err = match self.kafka.send(record, Duration::from_secs(0)).await {
             Ok(_) => String::new(),
             Err((err, msg)) => {

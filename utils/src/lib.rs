@@ -213,6 +213,7 @@ pub async fn get_chan_(
             debug!("subscribe channel return: {:?}", service);
             let addr = format!("{}:{}", service.address, service.port);
             let socket_addr: SocketAddr = addr.parse().unwrap();
+            let addr = format!("http://{}", addr);
             let change = if service.active == ServiceStatus::Up as i32 {
                 let endpoint = Endpoint::from_shared(addr).unwrap();
                 Change::Insert(socket_addr, endpoint)
