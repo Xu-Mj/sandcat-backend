@@ -21,10 +21,10 @@ services:
     depends_on:
       - zookeeper
 
-  consul:
-    image: 'consul:1.15.4'
-    ports:
-      - '8500:8500'
+  # consul:
+  #   image: 'consul:1.15.4'
+  #   ports:
+  #     - '8500:8500'
 
   redis:
     image: 'redis:latest'

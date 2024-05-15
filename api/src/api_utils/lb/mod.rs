@@ -40,18 +40,7 @@ impl LoadBalancer {
         };
 
         balancer.update().await;
-        // update the service address every 10 seconds
-        let mut cloned_balancer = balancer.clone();
-        tokio::spawn(async move {
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(UPDATE_SERVICE_INTERVAL)).await;
-                cloned_balancer.update().await;
-                debug!(
-                    "update the service address in load balancer: {:?}",
-                    cloned_balancer.service_set
-                );
-            }
-        });
+
         balancer
     }
 

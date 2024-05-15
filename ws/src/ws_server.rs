@@ -12,7 +12,7 @@ use futures::{SinkExt, StreamExt};
 use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::{mpsc, RwLock};
 use tonic::transport::Channel;
-use tracing::error;
+use tracing::{error, info};
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -78,7 +78,7 @@ impl WsServer {
         let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
         tracing::debug!("listening on {}", listener.local_addr().unwrap());
         let mut ws = tokio::spawn(async move {
-            println!("start websocket server on {}", addr);
+            info!("start websocket server on {}", addr);
             axum::serve(listener, router).await.unwrap();
         });
 
