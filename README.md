@@ -109,26 +109,35 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** make sure all the third service are running in docker.
 
-4. install sqlx-cli and init the database
+4. install our service register center
+
+   ```shell
+   git clone https://github.com/Xu-Mj/synapse.git
+   cd synapse
+   # or you can build and run the binary
+   cargo run --release
+   ```
+
+5. install sqlx-cli and init the database
 
    ```shell
    cargo install sqlx-cli
    sqlx migrate run
    ```
 
-5. build
+6. build
 
    ```shell
    cargo build --release
    ```
 
-6. copy the binary file to root path
+7. copy the binary file to root path
 
    ```shell
    cp target/release/cmd ./sandcat
    ```
 
-7. run
+8. run
 
    ```shell
    ./sandcat
