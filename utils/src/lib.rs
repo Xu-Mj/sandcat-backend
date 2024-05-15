@@ -7,12 +7,13 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use synapse::service::{QueryRequest, ServiceStatus, SubscribeRequest};
+use synapse::service::client::ServiceClient;
+use synapse::service::{Scheme, ServiceStatus};
 use tokio::sync::mpsc::Sender;
 use tonic::transport::{Channel, Endpoint};
 use tower::discover::Change;
-use tracing::debug;
 use tracing::log::warn;
+use tracing::{debug, error};
 
 use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery, ServiceFetcher};
 pub use service_register_center::*;
@@ -170,49 +171,29 @@ pub async fn get_chan_(
     name: String,
     sender: Sender<Change<SocketAddr, Endpoint>>,
 ) -> Result<(), Error> {
-    let addr = format!(
-        "{}://{}:{}",
-        config.service_center.protocol, config.service_center.host, config.service_center.port
-    );
+    let mut client = ServiceClient::builder()
+        .server_host(config.service_center.host.clone())
+        .server_port(config.service_center.port)
+        .build()
+        .await
+        .map_err(|_| {
+            Error::InternalServer("Connect to service register center failed".to_string())
+        })?;
+
     tokio::spawn(async move {
-        let endpoint = Endpoint::from_shared(addr).unwrap();
-        let mut client = synapse::service::ServiceRegistryClient::connect(endpoint)
-            .await
-            .unwrap();
-        // query service list
-        debug!("query service list");
-        let res = client
-            .query_services(QueryRequest { name: name.clone() })
-            .await
-            .unwrap();
-        let services = res.into_inner().services;
-        debug!("services:{:?}", services);
-        for service in services {
-            // todo need to modify service register center to add protocol attr
-            let addr = format!("{}:{}", service.address, service.port);
-            let socket_addr: SocketAddr = addr.parse().unwrap();
-            let addr = format!("http://{}", addr);
-
-            sender
-                .send(Change::Insert(
-                    socket_addr,
-                    Endpoint::from_shared(addr).unwrap(),
-                ))
-                .await
-                .unwrap();
-        }
-
-        let response = client
-            .subscribe(SubscribeRequest { service: name })
-            .await
-            .unwrap();
-        debug!("subscribe success");
-        let mut stream = response.into_inner();
-        while let Some(service) = stream.message().await.unwrap() {
+        let mut stream = match client.subscribe(name).await {
+            Ok(stream) => stream,
+            Err(e) => {
+                error!("subscribe channel error: {:?}", e);
+                return;
+            }
+        };
+        while let Some(service) = stream.recv().await {
             debug!("subscribe channel return: {:?}", service);
             let addr = format!("{}:{}", service.address, service.port);
             let socket_addr: SocketAddr = addr.parse().unwrap();
-            let addr = format!("http://{}", addr);
+            let scheme = Scheme::from(service.scheme as u8);
+            let addr = format!("{}://{}", scheme, addr);
             let change = if service.active == ServiceStatus::Up as i32 {
                 let endpoint = Endpoint::from_shared(addr).unwrap();
                 Change::Insert(socket_addr, endpoint)
