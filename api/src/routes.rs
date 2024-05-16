@@ -1,6 +1,6 @@
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
-use axum::{Extension, Router};
+use axum::Router;
 
 use crate::handlers::files::file::{get_file_by_name, upload};
 use crate::handlers::friends::friend_handlers::{
@@ -28,51 +28,33 @@ pub(crate) fn app_routes(state: AppState) -> Router {
 fn friend_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_friendship))
-        .layer(Extension(state.clone()))
         .route("/:id", get(get_friends_list_by_user_id))
-        .layer(Extension(state.clone()))
         .route("/:id/apply", get(get_apply_list_by_user_id))
-        .layer(Extension(state.clone()))
         .route("/agree", put(agree))
-        .layer(Extension(state.clone()))
         .route("/", delete(delete_friend))
-        .layer(Extension(state.clone()))
         .route("/remark", put(update_friend_remark))
-        .layer(Extension(state.clone()))
-        // .route("/:user_id/deny/:friend_id", post(deny))
         .with_state(state)
 }
 
 fn user_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_user))
-        .layer(Extension(state.clone()))
         .route("/", put(update_user))
-        .layer(Extension(state.clone()))
         .route("/:id", get(get_user_by_id))
-        .layer(Extension(state.clone()))
         .route("/refresh_token/:token", get(refresh_token))
-        .layer(Extension(state.clone()))
         .route("/:user_id/search/:pattern", get(search_user))
-        .layer(Extension(state.clone()))
         .route("/login", post(login))
         .route("/logout/:uuid", delete(logout))
-        .layer(Extension(state.clone()))
         .route("/mail/send", post(send_email))
-        .layer(Extension(state.clone()))
         .with_state(state)
 }
 
 fn group_routes(state: AppState) -> Router {
     Router::new()
         .route("/:user_id", post(create_group_handler))
-        .layer(Extension(state.clone()))
         .route("/invite", put(invite_new_members))
-        .layer(Extension(state.clone()))
         .route("/", delete(delete_group_handler))
-        .layer(Extension(state.clone()))
         .route("/:user_id", put(update_group_handler))
-        .layer(Extension(state.clone()))
         .with_state(state)
 }
 
@@ -83,18 +65,14 @@ fn file_routes(state: AppState) -> Router {
             "/upload",
             post(upload).layer(DefaultBodyLimit::max(MAX_FILE_UPLOAD_SIZE)),
         )
-        .layer(Extension(state.clone()))
         .route("/get/:filename", get(get_file_by_name))
-        .layer(Extension(state.clone()))
         .with_state(state)
 }
 
 fn msg_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(pull_offline_messages))
-        .layer(Extension(state.clone()))
         .route("/seq/:user_id", get(get_seq))
-        .layer(Extension(state.clone()))
         .route("/", delete(del_msg))
         .with_state(state)
 }

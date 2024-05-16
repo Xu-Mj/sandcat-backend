@@ -1,12 +1,12 @@
 use axum::extract::path::ErrorKind;
 use axum::extract::rejection::{JsonRejection, PathRejection};
-use axum::extract::{FromRequestParts, Request};
+use axum::extract::{FromRef, FromRequestParts, Request};
 use axum::http::request::Parts;
 use axum::{
     async_trait,
     extract::{FromRequest, MatchedPath},
     http::StatusCode,
-    Extension, RequestPartsExt,
+    RequestPartsExt,
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::de::DeserializeOwned;
@@ -27,10 +27,12 @@ const BEARER: &str = "Bearer";
 // When the user closes the page/app, record the user's closing time.
 // The next time the app opens, determine the time interval.
 // If it is more than seven days, you need to log in again
+
 #[async_trait]
 impl<S, T> FromRequest<S> for JsonWithAuthExtractor<T>
 where
     axum::Json<T>: FromRequest<S, Rejection = JsonRejection>,
+    AppState: FromRef<S>,
     S: Send + Sync,
 {
     type Rejection = (StatusCode, Error);
@@ -43,15 +45,7 @@ where
             .map(|path| path.as_str().to_owned())
             .ok()
             .unwrap_or(String::new());
-        let Extension(app_state) = parts
-            .extract::<Extension<AppState>>()
-            .await
-            .map_err(|err| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Error::InternalServer(err.to_string()),
-                )
-            })?;
+        let app_state = AppState::from_ref(state);
 
         if let Some(header) = parts.headers.get(AUTHORIZATION_HEADER) {
             // analyze the header
@@ -101,6 +95,7 @@ impl<S, T> FromRequestParts<S> for PathWithAuthExtractor<T>
 where
     // these trait bounds are copied from `rpc FromRequest for axum::extract::path::Path`
     T: DeserializeOwned + Send,
+    AppState: FromRef<S>,
     S: Send + Sync,
 {
     type Rejection = (StatusCode, Error);
@@ -112,15 +107,7 @@ where
             .map(|path| path.as_str().to_owned())
             .ok()
             .unwrap_or(String::new());
-        let Extension(app_state) = parts
-            .extract::<Extension<AppState>>()
-            .await
-            .map_err(|err| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Error::InternalServer(err.to_string()),
-                )
-            })?;
+        let app_state = AppState::from_ref(state);
 
         if let Some(header) = parts.headers.get(AUTHORIZATION_HEADER) {
             // 解析请求头
