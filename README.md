@@ -52,7 +52,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
 - **Partition Table for Messages (Mongodb) Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
 - **Group Message Sequencing**: The sequence for group messages is incremented at the consumer module, and we need to obtain the sequence in the WebSocket/mongoDB module. Is there a more effective way to do this?
-- **Axum's Routes Layer or With_State?**: Should we utilize Axum's routes layer with state or the `with_state` method?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
 - **Friendship Read Status**: we should delete the Friendship related message after user read it.
 
