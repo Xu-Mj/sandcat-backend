@@ -212,8 +212,8 @@ pub async fn start_register_center(config: &Config) {
     let hub = synapse::service::hub::Hub::new();
     let server = ServiceRegistryServer::new(hub);
     let addr = format!(
-        "{}://{}:{}",
-        config.service_center.protocol, config.service_center.host, config.service_center.port
+        "{}:{}",
+        config.service_center.host, config.service_center.port
     );
     Server::builder()
         .add_service(server)
