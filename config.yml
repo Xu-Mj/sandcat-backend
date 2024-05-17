@@ -95,6 +95,7 @@ kafka:
     - 127.0.0.1:9092
   topic: sandcat-chat
   group: chat
+  connect_timeout: 5000 # milliseconds
   producer:
     timeout: 3000
     acks: all # 0: no response, 1: leader response, all: all response

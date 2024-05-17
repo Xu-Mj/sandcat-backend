@@ -34,6 +34,10 @@ impl ChatRpcService {
                 "message.timeout.ms",
                 config.kafka.producer.timeout.to_string(),
             )
+            .set(
+                "socket.timeout.ms",
+                config.kafka.connect_timeout.to_string(),
+            )
             .set("acks", config.kafka.producer.acks.clone())
             // make sure the message is sent exactly once
             .set("enable.idempotence", "true")
@@ -45,7 +49,7 @@ impl ChatRpcService {
             .create()
             .expect("Producer creation error");
 
-        Self::ensure_topic_exists(&config.kafka.topic, &broker)
+        Self::ensure_topic_exists(&config.kafka.topic, &broker, config.kafka.connect_timeout)
             .await
             .expect("Topic creation error");
 
@@ -109,10 +113,15 @@ impl ChatRpcService {
         Ok(())
     }
 
-    async fn ensure_topic_exists(topic_name: &str, brokers: &str) -> Result<(), KafkaError> {
+    async fn ensure_topic_exists(
+        topic_name: &str,
+        brokers: &str,
+        timeout: u16,
+    ) -> Result<(), KafkaError> {
         // Create Kafka AdminClient
         let admin_client: AdminClient<DefaultClientContext> = ClientConfig::new()
             .set("bootstrap.servers", brokers)
+            .set("socket.timeout.ms", timeout.to_string())
             .create()?;
 
         // create topic

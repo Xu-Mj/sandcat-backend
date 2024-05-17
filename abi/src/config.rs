@@ -210,6 +210,7 @@ impl RedisConfig {
 pub struct KafkaConfig {
     pub hosts: Vec<String>,
     pub topic: String,
+    pub connect_timeout: u16,
     pub group: String,
     pub producer: KafkaProducer,
     pub consumer: KafkaConsumer,

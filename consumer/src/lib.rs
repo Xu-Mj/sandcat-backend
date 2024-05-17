@@ -41,6 +41,10 @@ impl ConsumerService {
                 "session.timeout.ms",
                 config.kafka.consumer.session_timeout.to_string(),
             )
+            .set(
+                "socket.timeout.ms",
+                config.kafka.connect_timeout.to_string(),
+            )
             .set("enable.partition.eof", "false")
             .set(
                 "auto.offset.reset",
