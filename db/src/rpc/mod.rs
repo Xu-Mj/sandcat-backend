@@ -71,7 +71,7 @@ impl DbRpcService {
         );
         let endpoint = Endpoint::from_shared(addr)
             .map_err(|e| Error::TonicError(e.to_string()))?
-            .connect_timeout(Duration::from_secs(5));
+            .connect_timeout(Duration::from_secs(config.service_center.timeout));
         let mut client = ServiceRegistryClient::connect(endpoint)
             .await
             .map_err(|e| Error::TonicError(e.to_string()))?;
