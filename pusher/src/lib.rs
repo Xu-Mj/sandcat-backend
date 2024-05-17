@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use dashmap::DashMap;
 use synapse::health::{HealthCheck, HealthServer, HealthService};
@@ -84,8 +85,12 @@ impl PusherRpcService {
             "{}://{}:{}",
             config.service_center.protocol, config.service_center.host, config.service_center.port
         );
-        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
-        let mut client = ServiceRegistryClient::new(channel);
+        let endpoint = Endpoint::from_shared(addr)
+            .map_err(|e| Error::TonicError(e.to_string()))?
+            .connect_timeout(Duration::from_secs(5));
+        let mut client = ServiceRegistryClient::connect(endpoint)
+            .await
+            .map_err(|e| Error::TonicError(e.to_string()))?;
         let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.pusher.name),
             name: config.rpc.pusher.name.clone(),

@@ -69,6 +69,12 @@ async fn main() {
 }
 
 async fn start_all(config: Config) {
+    // start service register center
+    let cloned_config = config.clone();
+    tokio::spawn(async move {
+        utils::start_register_center(&cloned_config).await;
+    });
+
     // start chat rpc server
     let cloned_config = config.clone();
     let chat_server = tokio::spawn(async move {

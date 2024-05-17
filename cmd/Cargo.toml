@@ -14,6 +14,7 @@ consumer = { version = "0.1.0", path = "../consumer" }
 db = { version = "0.1.0", path = "../db" }
 pusher = { version = "0.1.0", path = "../pusher" }
 ws = { version = "0.1.0", path = "../ws" }
+utils = { version = "0.1.0", path = "../utils" }
 
 clap = { version = "4.5.4", features = ["cargo"] }
 tokio = { version = "1.36.0", features = ["full"] }

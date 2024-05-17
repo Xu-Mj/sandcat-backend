@@ -9,7 +9,7 @@ use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
 use synapse::health::{HealthCheck, HealthServer, HealthService};
 use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
-use tonic::transport::{Channel, Server};
+use tonic::transport::{Endpoint, Server};
 use tracing::{error, info};
 
 use abi::config::Config;
@@ -80,8 +80,12 @@ impl ChatRpcService {
             "{}://{}:{}",
             config.service_center.protocol, config.service_center.host, config.service_center.port
         );
-        let channel = Channel::from_shared(addr).unwrap().connect().await.unwrap();
-        let mut client = ServiceRegistryClient::new(channel);
+        let endpoint = Endpoint::from_shared(addr)
+            .map_err(|e| Error::TonicError(e.to_string()))?
+            .connect_timeout(Duration::from_secs(5));
+        let mut client = ServiceRegistryClient::connect(endpoint)
+            .await
+            .map_err(|e| Error::TonicError(e.to_string()))?;
         let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.chat.name),
             name: config.rpc.chat.name.clone(),

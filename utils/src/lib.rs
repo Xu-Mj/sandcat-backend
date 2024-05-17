@@ -7,10 +7,11 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use synapse::service::client::ServiceClient;
-use synapse::service::{Scheme, ServiceStatus};
+use synapse::service::{Scheme, ServiceRegistryServer, ServiceStatus};
 use tokio::sync::mpsc::Sender;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::{Channel, Endpoint, Server};
 use tower::discover::Change;
 use tracing::log::warn;
 use tracing::{debug, error};
@@ -174,6 +175,7 @@ pub async fn get_chan_(
     let mut client = ServiceClient::builder()
         .server_host(config.service_center.host.clone())
         .server_port(config.service_center.port)
+        .connect_timeout(Duration::from_secs(5))
         .build()
         .await
         .map_err(|_| {
@@ -206,6 +208,19 @@ pub async fn get_chan_(
     Ok(())
 }
 
+pub async fn start_register_center(config: &Config) {
+    let hub = synapse::service::hub::Hub::new();
+    let server = ServiceRegistryServer::new(hub);
+    let addr = format!(
+        "{}://{}:{}",
+        config.service_center.protocol, config.service_center.host, config.service_center.port
+    );
+    Server::builder()
+        .add_service(server)
+        .serve(addr.parse().unwrap())
+        .await
+        .unwrap();
+}
 #[cfg(test)]
 mod tests {
     use super::*;
