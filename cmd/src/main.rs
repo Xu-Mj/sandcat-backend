@@ -4,7 +4,7 @@ use clap::{command, Arg};
 use consumer::ConsumerService;
 use db::rpc::DbRpcService;
 use pusher::PusherRpcService;
-use tracing::info;
+use tracing::{error, info};
 use ws::ws_server::WsServer;
 
 const DEFAULT_CONFIG_PATH: &str = "./config.yml";
@@ -71,7 +71,7 @@ async fn main() {
 async fn start_all(config: Config) {
     // start service register center
     let cloned_config = config.clone();
-    tokio::spawn(async move {
+    let register_center = tokio::spawn(async move {
         utils::start_register_center(&cloned_config).await;
     });
 
@@ -114,11 +114,12 @@ async fn start_all(config: Config) {
 
     // wait all server stop
     tokio::select! {
-        _ = chat_server => {},
-        _ = ws_server => {},
-        _ = db_server => {},
-        _ = pusher_server => {},
-        _ = api_server => {},
-        _ = consumer_server => {},
+        _ = register_center => {error!("register center down!")},
+        _ = chat_server => {error!("chat server down!")},
+        _ = ws_server => {error!("ws server down!")},
+        _ = db_server => {error!("database server down!")},
+        _ = pusher_server => {error!("pusher server down!")},
+        _ = api_server => {error!("api server down!")},
+        _ = consumer_server => {error!("consumer server down!")},
     }
 }
