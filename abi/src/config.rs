@@ -87,6 +87,7 @@ pub struct DbConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RpcConfig {
+    pub health_check: bool,
     pub ws: RpcServerConfig,
     pub chat: RpcServerConfig,
     pub db: RpcServerConfig,

@@ -61,6 +61,17 @@ impl MsgRpcService {
         let mut client = ServiceRegistryClient::connect(endpoint)
             .await
             .map_err(|e| Error::TonicError(e.to_string()))?;
+        let mut health_check = None;
+        if config.rpc.health_check {
+            health_check = Some(HealthCheck {
+                endpoint: "".to_string(),
+                interval: 10,
+                timeout: 10,
+                retries: 10,
+                scheme: Scheme::from(config.rpc.ws.protocol.as_str()) as i32,
+                tls_domain: None,
+            });
+        }
         let service = ServiceInstance {
             id: format!("{}-{}", utils::get_host_name()?, &config.rpc.ws.name),
             name: config.rpc.ws.name.clone(),
@@ -69,16 +80,9 @@ impl MsgRpcService {
             tags: config.rpc.ws.tags.clone(),
             version: "".to_string(),
             metadata: Default::default(),
-            health_check: Some(HealthCheck {
-                endpoint: "".to_string(),
-                interval: 10,
-                timeout: 10,
-                retries: 10,
-                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
-                tls_domain: None,
-            }),
+            health_check,
             status: 0,
-            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
+            scheme: Scheme::from(config.rpc.ws.protocol.as_str()) as i32,
         };
         client.register_service(service).await.unwrap();
         Ok(())

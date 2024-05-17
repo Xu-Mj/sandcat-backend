@@ -41,6 +41,7 @@ websocket:
 
 
 rpc:
+  health_check: false # no need to start the health check under dev mode
   ws:
     protocol: http
     host: 127.0.0.1
