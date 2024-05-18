@@ -1,13 +1,11 @@
 use std::result::Result;
-use std::time::Duration;
 
-use synapse::health::{HealthCheck, HealthServer, HealthService};
-use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
-use tonic::transport::{Endpoint, Server};
+use synapse::health::{HealthServer, HealthService};
+use tonic::transport::Server;
 use tonic::{async_trait, Request, Response, Status};
 use tracing::{debug, info};
 
-use abi::config::Config;
+use abi::config::{Component, Config};
 use abi::errors::Error;
 use abi::message::msg_service_server::MsgServiceServer;
 use abi::message::{
@@ -27,7 +25,7 @@ impl MsgRpcService {
 
     pub async fn start(manager: Manager, config: &Config) -> Result<(), Error> {
         // register service to service register center
-        Self::register_service(config).await?;
+        utils::register_service(config, Component::Ws).await?;
         info!("<ws> rpc service register to service register center");
 
         // open health check
@@ -47,44 +45,6 @@ impl MsgRpcService {
             .serve(config.rpc.ws.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-        Ok(())
-    }
-    async fn register_service(config: &Config) -> Result<(), Error> {
-        // register service to service register center
-        let addr = format!(
-            "{}://{}:{}",
-            config.service_center.protocol, config.service_center.host, config.service_center.port
-        );
-        let endpoint = Endpoint::from_shared(addr)
-            .map_err(|e| Error::TonicError(e.to_string()))?
-            .connect_timeout(Duration::from_secs(config.service_center.timeout));
-        let mut client = ServiceRegistryClient::connect(endpoint)
-            .await
-            .map_err(|e| Error::TonicError(e.to_string()))?;
-        let mut health_check = None;
-        if config.rpc.health_check {
-            health_check = Some(HealthCheck {
-                endpoint: "".to_string(),
-                interval: 10,
-                timeout: 10,
-                retries: 10,
-                scheme: Scheme::from(config.rpc.ws.protocol.as_str()) as i32,
-                tls_domain: None,
-            });
-        }
-        let service = ServiceInstance {
-            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.ws.name),
-            name: config.rpc.ws.name.clone(),
-            address: config.rpc.ws.host.clone(),
-            port: config.rpc.ws.port as i32,
-            tags: config.rpc.ws.tags.clone(),
-            version: "".to_string(),
-            metadata: Default::default(),
-            health_check,
-            status: 0,
-            scheme: Scheme::from(config.rpc.ws.protocol.as_str()) as i32,
-        };
-        client.register_service(service).await.unwrap();
         Ok(())
     }
 }
