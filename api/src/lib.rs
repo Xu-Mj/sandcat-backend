@@ -5,7 +5,6 @@ use synapse::service::client::ServiceClient;
 use xdb::searcher_init;
 
 use abi::config::{Config, MailConfig, WsServerConfig};
-use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::msg_service_client::MsgServiceClient;
@@ -34,10 +33,16 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(config: &Config) -> Self {
-        let ws_rpc = Self::get_ws_rpc_client(config).await.unwrap();
+        let ws_rpc = utils::get_rpc_client(config, config.rpc.ws.name.clone())
+            .await
+            .unwrap();
 
-        let db_rpc = Self::get_db_rpc_client(config).await.unwrap();
-        let chat_rpc = Self::get_chat_rpc_client(config).await.unwrap();
+        let db_rpc = utils::get_rpc_client(config, config.rpc.db.name.clone())
+            .await
+            .unwrap();
+        let chat_rpc = utils::get_rpc_client(config, config.rpc.chat.name.clone())
+            .await
+            .unwrap();
 
         let cache = cache::cache(config);
 
@@ -72,32 +77,6 @@ impl AppState {
             jwt_secret: config.server.jwt_secret.clone(),
             chat_rpc,
         }
-    }
-
-    async fn get_chat_rpc_client(
-        config: &Config,
-    ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
-        // use service register center to get ws rpc url
-        let channel = utils::get_chan(config, config.rpc.pusher.name.clone()).await?;
-        let chat_rpc = ChatServiceClient::new(channel);
-        Ok(chat_rpc)
-    }
-
-    async fn get_db_rpc_client(
-        config: &Config,
-    ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
-        // use service register center to get ws rpc url
-        let channel = utils::get_chan(config, config.rpc.db.name.clone()).await?;
-        let db_rpc = DbServiceClient::new(channel);
-        Ok(db_rpc)
-    }
-
-    async fn get_ws_rpc_client(
-        config: &Config,
-    ) -> Result<MsgServiceClient<LbWithServiceDiscovery>, Error> {
-        let channel = utils::get_chan(config, config.rpc.ws.name.clone()).await?;
-        let ws_rpc = MsgServiceClient::new(channel);
-        Ok(ws_rpc)
     }
 }
 

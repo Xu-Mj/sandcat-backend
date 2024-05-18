@@ -60,9 +60,12 @@ impl ConsumerService {
             .expect("Can't subscribe to specified topic");
 
         // init rpc client
-        let db_rpc = Self::get_db_rpc_client(config).await.unwrap();
-
-        let pusher = Self::get_pusher_rpc_client(config).await.unwrap();
+        let pusher = utils::get_rpc_client(config, config.rpc.pusher.name.clone())
+            .await
+            .unwrap();
+        let db_rpc = utils::get_rpc_client(config, config.rpc.db.name.clone())
+            .await
+            .unwrap();
 
         let cache = cache::cache(config);
 
@@ -72,22 +75,6 @@ impl ConsumerService {
             pusher,
             cache,
         }
-    }
-
-    async fn get_db_rpc_client(
-        config: &Config,
-    ) -> Result<DbServiceClient<LbWithServiceDiscovery>, Error> {
-        let channel = utils::get_chan(config, config.rpc.db.name.clone()).await?;
-        let db_rpc = DbServiceClient::new(channel);
-        Ok(db_rpc)
-    }
-
-    async fn get_pusher_rpc_client(
-        config: &Config,
-    ) -> Result<PushServiceClient<LbWithServiceDiscovery>, Error> {
-        let channel = utils::get_chan(config, config.rpc.pusher.name.clone()).await?;
-        let push_rpc = PushServiceClient::new(channel);
-        Ok(push_rpc)
     }
 
     pub async fn consume(&mut self) -> Result<(), Error> {

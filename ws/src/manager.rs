@@ -30,7 +30,7 @@ pub struct Manager {
 impl Manager {
     pub async fn new(tx: mpsc::Sender<Msg>, config: &Config) -> Self {
         let cache = cache::cache(config);
-        let chat_rpc = Self::get_chat_rpc_client(config)
+        let chat_rpc = utils::get_rpc_client(config, config.rpc.chat.name.clone())
             .await
             .expect("chat rpc can't open");
         Manager {
@@ -39,15 +39,6 @@ impl Manager {
             cache,
             chat_rpc,
         }
-    }
-
-    async fn get_chat_rpc_client(
-        config: &Config,
-    ) -> Result<ChatServiceClient<LbWithServiceDiscovery>, Error> {
-        // use service register center to get ws rpc url
-        let channel = utils::get_chan(config, config.rpc.chat.name.clone()).await?;
-        let chat_rpc = ChatServiceClient::new(channel);
-        Ok(chat_rpc)
     }
 
     pub async fn send_group(&self, obj_ids: &Vec<String>, mut msg: Msg) {
