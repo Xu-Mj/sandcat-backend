@@ -1,13 +1,13 @@
-use abi::config::{Component, Config};
-use abi::errors::Error;
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher};
-use async_trait::async_trait;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
+
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
+use async_trait::async_trait;
+use client_factory::ClientFactory;
 use synapse::health::HealthCheck;
 use synapse::service::client::ServiceClient;
 use synapse::service::{
@@ -20,13 +20,16 @@ use tracing::log::warn;
 use tracing::{debug, error};
 
 use crate::service_discovery::{DynamicServiceDiscovery, LbWithServiceDiscovery, ServiceFetcher};
+use abi::config::{Component, Config};
+use abi::errors::Error;
+
 pub use service_register_center::*;
 
+mod client_factory;
 pub mod mongodb_tester;
 pub mod service_discovery;
 mod service_register_center;
 pub mod sqlx_tester;
-
 // get host name
 pub fn get_host_name() -> Result<String, Error> {
     let hostname = hostname::get()?;
@@ -301,6 +304,15 @@ pub async fn register_service(config: &Config, com: Component) -> Result<(), Err
     client.register_service(service).await.unwrap();
     Ok(())
 }
+
+pub async fn get_rpc_client<T: ClientFactory>(
+    config: &Config,
+    service_name: String,
+) -> Result<T, Error> {
+    let channel = get_chan(config, service_name).await?;
+    Ok(T::n(channel))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

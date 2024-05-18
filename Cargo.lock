@@ -8,8 +8,11 @@ version = "0.1.0"
 dependencies = [
  "axum 0.7.5",
  "bincode",
+ "bytes",
  "chrono",
  "derive_builder",
+ "http 0.2.12",
+ "http-body 1.0.0",
  "mongodb",
  "prost",
  "prost-types",
@@ -24,6 +27,7 @@ dependencies = [
  "tokio",
  "tonic",
  "tonic-build",
+ "tower",
  "tracing",
  "tracing-subscriber",
 ]
