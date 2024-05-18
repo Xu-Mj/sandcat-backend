@@ -1,18 +1,15 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::Duration;
 
 use dashmap::DashMap;
-use synapse::health::{HealthCheck, HealthServer, HealthService};
-use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
+use synapse::health::{HealthServer, HealthService};
 use tokio::sync::mpsc;
 use tonic::transport::{Channel, Endpoint, Server};
 use tonic::{async_trait, Request, Response, Status};
 use tower::discover::Change;
 use tracing::{debug, error, info};
 
-use abi::config::Config;
-use abi::errors::Error;
+use abi::config::{Component, Config};
 use abi::message::msg_service_client::MsgServiceClient;
 use abi::message::push_service_server::{PushService, PushServiceServer};
 use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
@@ -57,7 +54,9 @@ impl PusherRpcService {
 
     pub async fn start(config: &Config) {
         // register service
-        Self::register_service(config).await.unwrap();
+        utils::register_service(config, Component::Pusher)
+            .await
+            .unwrap();
         info!("<pusher> rpc service register to service register center");
 
         // for health check
@@ -77,45 +76,6 @@ impl PusherRpcService {
             .serve(config.rpc.pusher.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-    }
-
-    async fn register_service(config: &Config) -> Result<(), Error> {
-        // register service to service register center
-        let addr = format!(
-            "{}://{}:{}",
-            config.service_center.protocol, config.service_center.host, config.service_center.port
-        );
-        let endpoint = Endpoint::from_shared(addr)
-            .map_err(|e| Error::TonicError(e.to_string()))?
-            .connect_timeout(Duration::from_secs(config.service_center.timeout));
-        let mut client = ServiceRegistryClient::connect(endpoint)
-            .await
-            .map_err(|e| Error::TonicError(e.to_string()))?;
-        let mut health_check = None;
-        if config.rpc.health_check {
-            health_check = Some(HealthCheck {
-                endpoint: "".to_string(),
-                interval: 10,
-                timeout: 10,
-                retries: 10,
-                scheme: Scheme::from(config.rpc.pusher.protocol.as_str()) as i32,
-                tls_domain: None,
-            });
-        }
-        let service = ServiceInstance {
-            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.pusher.name),
-            name: config.rpc.pusher.name.clone(),
-            address: config.rpc.pusher.host.clone(),
-            port: config.rpc.pusher.port as i32,
-            tags: config.rpc.pusher.tags.clone(),
-            version: "".to_string(),
-            metadata: Default::default(),
-            health_check,
-            status: 0,
-            scheme: Scheme::from(config.rpc.pusher.protocol.as_str()) as i32,
-        };
-        client.register_service(service).await.unwrap();
-        Ok(())
     }
 }
 

@@ -1,4 +1,4 @@
-use abi::config::Config;
+use abi::config::{Component, Config};
 use abi::errors::Error;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
@@ -8,8 +8,11 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
+use synapse::health::HealthCheck;
 use synapse::service::client::ServiceClient;
-use synapse::service::{Scheme, ServiceRegistryServer, ServiceStatus};
+use synapse::service::{
+    Scheme, ServiceInstance, ServiceRegistryClient, ServiceRegistryServer, ServiceStatus,
+};
 use tokio::sync::mpsc::Sender;
 use tonic::transport::{Channel, Endpoint, Server};
 use tower::discover::Change;
@@ -220,6 +223,83 @@ pub async fn start_register_center(config: &Config) {
         .serve(addr.parse().unwrap())
         .await
         .unwrap();
+}
+
+pub async fn register_service(config: &Config, com: Component) -> Result<(), Error> {
+    // register service to service register center
+    let addr = format!(
+        "{}://{}:{}",
+        config.service_center.protocol, config.service_center.host, config.service_center.port
+    );
+    let endpoint = Endpoint::from_shared(addr)
+        .map_err(|e| Error::TonicError(e.to_string()))?
+        .connect_timeout(Duration::from_secs(config.service_center.timeout));
+    let mut client = ServiceRegistryClient::connect(endpoint)
+        .await
+        .map_err(|e| Error::TonicError(e.to_string()))?;
+
+    let (scheme, name, host, port, tags) = match com {
+        abi::config::Component::Chat => {
+            let scheme = Scheme::from(config.rpc.chat.protocol.as_str()) as i32;
+            let name = config.rpc.chat.name.clone();
+            let host = config.rpc.chat.host.clone();
+            let port = config.rpc.chat.port as i32;
+            let tags = config.rpc.chat.tags.clone();
+            (scheme, name, host, port, tags)
+        }
+        abi::config::Component::Consumer => todo!("consumer"),
+        abi::config::Component::Db => {
+            let scheme = Scheme::from(config.rpc.db.protocol.as_str()) as i32;
+            let name = config.rpc.db.name.clone();
+            let host = config.rpc.db.host.clone();
+            let port = config.rpc.db.port as i32;
+            let tags = config.rpc.db.tags.clone();
+            (scheme, name, host, port, tags)
+        }
+        abi::config::Component::Pusher => {
+            let scheme = Scheme::from(config.rpc.pusher.protocol.as_str()) as i32;
+            let name = config.rpc.pusher.name.clone();
+            let host = config.rpc.pusher.host.clone();
+            let port = config.rpc.pusher.port as i32;
+            let tags = config.rpc.pusher.tags.clone();
+            (scheme, name, host, port, tags)
+        }
+        abi::config::Component::Ws => {
+            let scheme = Scheme::from(config.rpc.ws.protocol.as_str()) as i32;
+            let name = config.rpc.ws.name.clone();
+            let host = config.rpc.ws.host.clone();
+            let port = config.rpc.ws.port as i32;
+            let tags = config.rpc.ws.tags.clone();
+            (scheme, name, host, port, tags)
+        }
+        abi::config::Component::All => todo!("all"),
+    };
+
+    let mut health_check = None;
+    if config.rpc.health_check {
+        health_check = Some(HealthCheck {
+            endpoint: "".to_string(),
+            interval: 10,
+            timeout: 10,
+            retries: 10,
+            scheme,
+            tls_domain: None,
+        });
+    }
+    let service = ServiceInstance {
+        id: format!("{}-{}", get_host_name()?, name),
+        name,
+        address: host,
+        port,
+        tags,
+        version: "".to_string(),
+        metadata: Default::default(),
+        health_check,
+        status: 0,
+        scheme,
+    };
+    client.register_service(service).await.unwrap();
+    Ok(())
 }
 #[cfg(test)]
 mod tests {

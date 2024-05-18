@@ -1,12 +1,11 @@
 use std::sync::Arc;
-use std::time::Duration;
-use synapse::health::{HealthCheck, HealthServer, HealthService};
-use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 
-use tonic::transport::{Endpoint, Server};
+use synapse::health::{HealthServer, HealthService};
+
+use tonic::transport::Server;
 use tracing::info;
 
-use abi::config::Config;
+use abi::config::{Component, Config};
 use abi::errors::Error;
 use abi::message::db_service_server::DbServiceServer;
 use abi::message::{Msg, MsgType};
@@ -37,7 +36,9 @@ impl DbRpcService {
 
     pub async fn start(config: &Config) {
         // register service
-        Self::register_service(config).await.unwrap();
+        utils::register_service(config, Component::Db)
+            .await
+            .unwrap();
         info!("<db> rpc service health check started");
 
         // open health check
@@ -61,45 +62,6 @@ impl DbRpcService {
             .serve(config.rpc.db.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-    }
-
-    async fn register_service(config: &Config) -> Result<(), Error> {
-        // register service to service register center
-        let addr = format!(
-            "{}://{}:{}",
-            config.service_center.protocol, config.service_center.host, config.service_center.port
-        );
-        let endpoint = Endpoint::from_shared(addr)
-            .map_err(|e| Error::TonicError(e.to_string()))?
-            .connect_timeout(Duration::from_secs(config.service_center.timeout));
-        let mut client = ServiceRegistryClient::connect(endpoint)
-            .await
-            .map_err(|e| Error::TonicError(e.to_string()))?;
-        let mut health_check = None;
-        if config.rpc.health_check {
-            health_check = Some(HealthCheck {
-                endpoint: "".to_string(),
-                interval: 10,
-                timeout: 10,
-                retries: 10,
-                scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
-                tls_domain: None,
-            });
-        }
-        let service = ServiceInstance {
-            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.db.name),
-            name: config.rpc.db.name.clone(),
-            address: config.rpc.db.host.clone(),
-            port: config.rpc.db.port as i32,
-            tags: config.rpc.db.tags.clone(),
-            version: "".to_string(),
-            metadata: Default::default(),
-            health_check,
-            status: 0,
-            scheme: Scheme::from(config.rpc.db.protocol.as_str()) as i32,
-        };
-        client.register_service(service).await.unwrap();
-        Ok(())
     }
 
     pub async fn handle_message(&self, message: Msg, need_to_history: bool) -> Result<(), Error> {

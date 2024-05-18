@@ -7,13 +7,11 @@ use rdkafka::client::DefaultClientContext;
 use rdkafka::error::KafkaError;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
-use synapse::health::{HealthCheck, HealthServer, HealthService};
-use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
-use tonic::transport::{Endpoint, Server};
+use synapse::health::{HealthServer, HealthService};
+use tonic::transport::Server;
 use tracing::{error, info};
 
-use abi::config::Config;
-use abi::errors::Error;
+use abi::config::{Component, Config};
 use abi::message::chat_service_server::{ChatService, ChatServiceServer};
 use abi::message::{MsgResponse, MsgType, SendMsgRequest};
 
@@ -54,7 +52,7 @@ impl ChatRpcService {
             .expect("Topic creation error");
 
         // register service
-        Self::register_service(config)
+        utils::register_service(config, Component::Chat)
             .await
             .expect("Service register error");
         info!("<chat> rpc service register to service register center");
@@ -76,45 +74,6 @@ impl ChatRpcService {
             .serve(config.rpc.chat.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
-    }
-
-    async fn register_service(config: &Config) -> Result<(), Error> {
-        // register service to service register center
-        let addr = format!(
-            "{}://{}:{}",
-            config.service_center.protocol, config.service_center.host, config.service_center.port
-        );
-        let endpoint = Endpoint::from_shared(addr)
-            .map_err(|e| Error::TonicError(e.to_string()))?
-            .connect_timeout(Duration::from_secs(config.service_center.timeout));
-        let mut client = ServiceRegistryClient::connect(endpoint)
-            .await
-            .map_err(|e| Error::TonicError(e.to_string()))?;
-        let mut health_check = None;
-        if config.rpc.health_check {
-            health_check = Some(HealthCheck {
-                endpoint: "".to_string(),
-                interval: 10,
-                timeout: 10,
-                retries: 10,
-                scheme: Scheme::from(config.rpc.chat.protocol.as_str()) as i32,
-                tls_domain: None,
-            });
-        }
-        let service = ServiceInstance {
-            id: format!("{}-{}", utils::get_host_name()?, &config.rpc.chat.name),
-            name: config.rpc.chat.name.clone(),
-            address: config.rpc.chat.host.clone(),
-            port: config.rpc.chat.port as i32,
-            tags: config.rpc.chat.tags.clone(),
-            version: "".to_string(),
-            metadata: Default::default(),
-            health_check,
-            status: 0,
-            scheme: Scheme::from(config.rpc.chat.protocol.as_str()) as i32,
-        };
-        client.register_service(service).await.unwrap();
-        Ok(())
     }
 
     async fn ensure_topic_exists(
