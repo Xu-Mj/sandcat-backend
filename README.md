@@ -108,15 +108,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** make sure all the third service are running in docker.
 
-4. install our service register center
-
-   ```shell
-   git clone https://github.com/Xu-Mj/synapse.git
-   cd synapse
-   # or you can build and run the binary
-   cargo run --release
-   ```
-
 5. install sqlx-cli and init the database
 
    ```shell
