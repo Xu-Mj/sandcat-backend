@@ -1,8 +1,11 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use dashmap::DashMap;
 use synapse::health::{HealthServer, HealthService};
+use synapse::service::client::ServiceClient;
+use synapse::service::Service;
 use tokio::sync::mpsc;
 use tonic::transport::{Channel, Endpoint, Server};
 use tonic::{async_trait, Request, Response, Status};
@@ -16,10 +19,13 @@ use abi::message::{SendGroupMsgRequest, SendMsgRequest, SendMsgResponse};
 
 pub struct PusherRpcService {
     ws_rpc_list: Arc<DashMap<SocketAddr, MsgServiceClient<Channel>>>,
+    service_center: ServiceClient,
+    sub_svr_name: String,
 }
 
 impl PusherRpcService {
     pub async fn new(config: &Config) -> Self {
+        let sub_svr_name = config.rpc.ws.name.clone();
         let ws_rpc_list = Arc::new(DashMap::new());
         let cloned_list = ws_rpc_list.clone();
         let (tx, mut rx) = mpsc::channel::<Change<SocketAddr, Endpoint>>(100);
@@ -27,6 +33,7 @@ impl PusherRpcService {
         // read the service from the worker
         tokio::spawn(async move {
             while let Some(change) = rx.recv().await {
+                debug!("receive service change: {:?}", change);
                 match change {
                     Change::Insert(service_id, client) => {
                         match MsgServiceClient::connect(client).await {
@@ -45,11 +52,22 @@ impl PusherRpcService {
             }
         });
 
-        utils::get_chan_(config, config.rpc.ws.name.clone(), tx)
+        utils::get_chan_(config, sub_svr_name.clone(), tx)
             .await
             .unwrap();
 
-        Self { ws_rpc_list }
+        let service_center = ServiceClient::builder()
+            .server_host(config.service_center.host.clone())
+            .server_port(config.service_center.port)
+            .connect_timeout(Duration::from_millis(config.service_center.timeout))
+            .build()
+            .await
+            .unwrap();
+        Self {
+            ws_rpc_list,
+            service_center,
+            sub_svr_name,
+        }
     }
 
     pub async fn start(config: &Config) {
@@ -77,6 +95,36 @@ impl PusherRpcService {
             .await
             .unwrap();
     }
+
+    pub async fn handle_sub_services(&self, services: Vec<Service>) {
+        for service in services {
+            let addr = format!("{}:{}", service.address, service.port);
+            let socket: SocketAddr = match addr.parse() {
+                Ok(sa) => sa,
+                Err(err) => {
+                    error!("parse socket address error: {:?}", err);
+                    continue;
+                }
+            };
+            let addr = format!("{}://{}", service.scheme, addr);
+            // connect to ws service
+            let endpoint = match Endpoint::from_shared(addr) {
+                Ok(ep) => ep.connect_timeout(Duration::from_secs(5)),
+                Err(err) => {
+                    error!("connect to ws service error: {:?}", err);
+                    continue;
+                }
+            };
+            let ws = match MsgServiceClient::connect(endpoint).await {
+                Ok(client) => client,
+                Err(err) => {
+                    error!("connect to ws service error: {:?}", err);
+                    continue;
+                }
+            };
+            self.ws_rpc_list.insert(socket, ws);
+        }
+    }
 }
 
 #[async_trait]
@@ -90,6 +138,14 @@ impl PushService for PusherRpcService {
         let request = request.into_inner();
 
         let ws_rpc = self.ws_rpc_list.clone();
+        if ws_rpc.is_empty() {
+            let mut client = self.service_center.clone();
+            let list = client
+                .query_with_name(self.sub_svr_name.clone())
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+            self.handle_sub_services(list).await;
+        }
         let (tx, mut rx) = mpsc::channel(ws_rpc.len());
 
         // send message to ws with asynchronous way
@@ -124,6 +180,14 @@ impl PushService for PusherRpcService {
         // extract request
         let request = request.into_inner();
         let ws_rpc = self.ws_rpc_list.clone();
+        if ws_rpc.is_empty() {
+            let mut client = self.service_center.clone();
+            let list = client
+                .query_with_name(self.sub_svr_name.clone())
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+            self.handle_sub_services(list).await;
+        }
         let (tx, mut rx) = mpsc::channel(ws_rpc.len());
         // send message to ws with asynchronous way
         for v in ws_rpc.iter() {

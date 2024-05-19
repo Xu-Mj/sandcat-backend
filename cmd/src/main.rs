@@ -69,12 +69,6 @@ async fn main() {
 }
 
 async fn start_all(config: Config) {
-    // start service register center
-    let cloned_config = config.clone();
-    let register_center = tokio::spawn(async move {
-        utils::start_register_center(&cloned_config).await;
-    });
-
     // start chat rpc server
     let cloned_config = config.clone();
     let chat_server = tokio::spawn(async move {
@@ -114,7 +108,6 @@ async fn start_all(config: Config) {
 
     // wait all server stop
     tokio::select! {
-        _ = register_center => {error!("register center down!")},
         _ = chat_server => {error!("chat server down!")},
         _ = ws_server => {error!("ws server down!")},
         _ = db_server => {error!("database server down!")},

@@ -199,16 +199,31 @@ pub async fn get_chan_(
         while let Some(service) = stream.recv().await {
             debug!("subscribe channel return: {:?}", service);
             let addr = format!("{}:{}", service.address, service.port);
-            let socket_addr: SocketAddr = addr.parse().unwrap();
+            let socket_addr: SocketAddr = match addr.parse() {
+                Ok(sa) => sa,
+                Err(e) => {
+                    error!("parse address error:{:?}", e);
+                    continue;
+                }
+            };
             let scheme = Scheme::from(service.scheme as u8);
             let addr = format!("{}://{}", scheme, addr);
             let change = if service.active == ServiceStatus::Up as i32 {
-                let endpoint = Endpoint::from_shared(addr).unwrap();
+                let endpoint = match Endpoint::from_shared(addr) {
+                    Ok(endpoint) => endpoint,
+                    Err(err) => {
+                        error!("parse address error:{:?}", err);
+                        continue;
+                    }
+                };
                 Change::Insert(socket_addr, endpoint)
             } else {
                 Change::Remove(socket_addr)
             };
-            sender.send(change).await.unwrap();
+            if let Err(err) = sender.send(change).await {
+                error!("send channel error:{:?}", err);
+                break;
+            };
         }
     });
     Ok(())

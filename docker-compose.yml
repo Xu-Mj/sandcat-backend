@@ -19,15 +19,15 @@ services:
     depends_on:
       - zookeeper
 
-  # synapse:
-  #   image: synapse:latest
-  #   container_name: synapse
-  #   ports:
-  #     - "8500:8500"
-  #   environment:
-  #     - SERVICE_ADDRESS=0.0.0.0:8500
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
+  synapse:
+    image: xuxiaomeng/synapse:latest
+    container_name: synapse
+    ports:
+      - "8500:8500"
+    environment:
+      - SERVICE_ADDRESS=0.0.0.0:8500
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   redis:
     image: 'redis:latest'

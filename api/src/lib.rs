@@ -7,7 +7,6 @@ use xdb::searcher_init;
 use abi::config::{Config, MailConfig, WsServerConfig};
 use abi::message::chat_service_client::ChatServiceClient;
 use abi::message::db_service_client::DbServiceClient;
-use abi::message::msg_service_client::MsgServiceClient;
 use cache::Cache;
 use oss::Oss;
 use utils::service_discovery::LbWithServiceDiscovery;
@@ -21,7 +20,6 @@ pub(crate) mod routes;
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub db_rpc: DbServiceClient<LbWithServiceDiscovery>,
-    pub ws_rpc: MsgServiceClient<LbWithServiceDiscovery>,
     pub chat_rpc: ChatServiceClient<LbWithServiceDiscovery>,
     pub cache: Arc<dyn Cache>,
     pub oss: Arc<dyn Oss>,
@@ -33,10 +31,6 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(config: &Config) -> Self {
-        let ws_rpc = utils::get_rpc_client(config, config.rpc.ws.name.clone())
-            .await
-            .unwrap();
-
         let db_rpc = utils::get_rpc_client(config, config.rpc.db.name.clone())
             .await
             .unwrap();
@@ -67,7 +61,6 @@ impl AppState {
         );
 
         Self {
-            ws_rpc,
             db_rpc,
             cache,
             oss,
