@@ -8,6 +8,7 @@ CREATE TABLE messages
     msg_type     INT,
     content_type INT,
     content      BYTEA,
+    platform     INT,
     PRIMARY KEY (send_id, server_id, send_time)
 ) PARTITION BY RANGE (send_time);
 

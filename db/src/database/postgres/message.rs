@@ -21,9 +21,9 @@ impl MsgStoreRepo for PostgresMessage {
     async fn save_message(&self, message: Msg) -> Result<(), Error> {
         sqlx::query(
             "INSERT INTO messages
-             (local_id, server_id, send_id, receiver_id, msg_type, content_type, content, send_time)
+             (local_id, server_id, send_id, receiver_id, msg_type, content_type, content, send_time, platform)
              VALUES
-             ($1, $2, $3, $4, $5, $6, $7, $8)
+             ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              ON CONFLICT DO NOTHING",
         )
         .bind(&message.local_id)
@@ -34,6 +34,7 @@ impl MsgStoreRepo for PostgresMessage {
         .bind(message.content_type)
         .bind(&message.content)
         .bind(message.send_time)
+        .bind(message.platform)
         .execute(&self.pool)
         .await?;
         Ok(())

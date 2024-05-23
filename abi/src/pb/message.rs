@@ -33,16 +33,17 @@ pub struct Msg {
     pub content_type: i32,
     #[prost(bytes = "vec", tag = "10")]
     pub content: ::prost::alloc::vec::Vec<u8>,
+    /// it is unnecessary to put those out of content
+    /// optional string sdp = 12;
+    /// optional string sdp_mid = 13;
+    /// optional int32 sdp_m_index = 14;
     #[prost(bool, tag = "11")]
     pub is_read: bool,
-    #[prost(string, optional, tag = "12")]
-    pub sdp: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "13")]
-    pub sdp_mid: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int32, optional, tag = "14")]
-    pub sdp_m_index: ::core::option::Option<i32>,
     #[prost(string, tag = "15")]
     pub group_id: ::prost::alloc::string::String,
+    /// platform of the sender
+    #[prost(enumeration = "PlatformType", tag = "16")]
+    pub platform: i32,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -806,13 +807,13 @@ pub struct GroupCreateResponse {
 )]
 #[repr(i32)]
 pub enum PlatformType {
-    Web = 0,
+    Unknown = 0,
     Android = 1,
     Ios = 2,
     Windows = 3,
     Macos = 4,
     Linux = 5,
-    Unknown = 6,
+    Web = 6,
 }
 impl PlatformType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -821,25 +822,25 @@ impl PlatformType {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            PlatformType::Web => "WEB",
+            PlatformType::Unknown => "UNKNOWN",
             PlatformType::Android => "ANDROID",
             PlatformType::Ios => "IOS",
             PlatformType::Windows => "WINDOWS",
             PlatformType::Macos => "MACOS",
             PlatformType::Linux => "LINUX",
-            PlatformType::Unknown => "UNKNOWN",
+            PlatformType::Web => "WEB",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "WEB" => Some(Self::Web),
+            "UNKNOWN" => Some(Self::Unknown),
             "ANDROID" => Some(Self::Android),
             "IOS" => Some(Self::Ios),
             "WINDOWS" => Some(Self::Windows),
             "MACOS" => Some(Self::Macos),
             "LINUX" => Some(Self::Linux),
-            "UNKNOWN" => Some(Self::Unknown),
+            "WEB" => Some(Self::Web),
             _ => None,
         }
     }
@@ -1215,8 +1216,8 @@ pub mod chat_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::http::Uri;
     use tonic::codegen::*;
-    /// / chat service, receive message then generate message id and send message to mq;
-    /// / response operation result;
+    /// / chat service, receive message then generate message id and send message to
+    /// / mq; response operation result;
     #[derive(Debug, Clone)]
     pub struct ChatServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -2242,8 +2243,8 @@ pub mod chat_service_server {
             request: tonic::Request<super::SendMsgRequest>,
         ) -> std::result::Result<tonic::Response<super::MsgResponse>, tonic::Status>;
     }
-    /// / chat service, receive message then generate message id and send message to mq;
-    /// / response operation result;
+    /// / chat service, receive message then generate message id and send message to
+    /// / mq; response operation result;
     #[derive(Debug)]
     pub struct ChatServiceServer<T: ChatService> {
         inner: _Inner<T>,
