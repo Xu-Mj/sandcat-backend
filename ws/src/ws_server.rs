@@ -121,7 +121,7 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, PlatformType)>,
+        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, i32)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
@@ -135,6 +135,7 @@ impl WsServer {
             return (StatusCode::UNAUTHORIZED, error_response).into_response();
         }
 
+        let platform = PlatformType::try_from(platform).unwrap_or_default();
         ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, platform, socket, state))
     }
 
