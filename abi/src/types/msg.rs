@@ -15,6 +15,15 @@ impl From<Status> for MsgResponse {
     }
 }
 
+impl Msg {
+    pub fn knock_off() -> Self {
+        let t = MsgType::KnockOff as i32;
+        Self {
+            msg_type: t,
+            ..Default::default()
+        }
+    }
+}
 /// maybe there is the performance issue
 impl TryFrom<Document> for Msg {
     type Error = Error;

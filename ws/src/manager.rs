@@ -8,14 +8,13 @@ use tracing::{debug, error, info};
 use crate::client::Client;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
+use abi::message::{ContentType, Msg, MsgResponse, MsgType, PlatformType, SendMsgRequest};
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
 
 type UserID = String;
-type PlatformID = String;
 /// client hub
-type Hub = Arc<DashMap<UserID, DashMap<PlatformID, Client>>>;
+type Hub = Arc<DashMap<UserID, DashMap<PlatformType, Client>>>;
 
 /// manage the client
 #[derive(Clone)]
@@ -64,7 +63,7 @@ impl Manager {
         }
     }
 
-    async fn send_msg_to_clients(&self, clients: &DashMap<PlatformID, Client>, msg: &Msg) {
+    async fn send_msg_to_clients(&self, clients: &DashMap<PlatformType, Client>, msg: &Msg) {
         for client in clients.iter() {
             let content = match bincode::serialize(msg) {
                 Ok(res) => res,
@@ -82,24 +81,20 @@ impl Manager {
     }
 
     // 注册客户端
-    // todo check platform id, if existed already, kick offline
     pub async fn register(&mut self, id: String, client: Client) {
-        if let Some(cli) = self.hub.get_mut(&id) {
-            cli.insert(client.platform_id.clone(), client);
-        } else {
-            let dash_map = DashMap::new();
-            dash_map.insert(client.user_id.clone(), client);
-            self.hub.insert(id, dash_map);
-        }
+        self.hub
+            .entry(id)
+            .or_default()
+            .insert(client.platform, client);
     }
 
-    pub async fn unregister(&mut self, id: String, printer_id: String) {
+    pub async fn unregister(&mut self, id: String, platform: PlatformType) {
         let mut flag = false;
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
                 flag = true;
             } else {
-                clients.remove(&printer_id);
+                clients.remove(&platform);
             }
         };
         if flag {

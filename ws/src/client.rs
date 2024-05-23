@@ -3,11 +3,13 @@ use axum::extract::ws::{Message, WebSocket};
 use futures::stream::SplitSink;
 use futures::SinkExt;
 use std::sync::Arc;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 
 type ClientSender = Arc<RwLock<SplitSink<WebSocket, Message>>>;
 
 /// client
+#[derive(Debug)]
 pub struct Client {
     // hold a ws connection sender
     pub sender: ClientSender,
@@ -16,6 +18,7 @@ pub struct Client {
     // platform id
     pub platform_id: String,
     pub platform: PlatformType,
+    pub notify_sender: Sender<()>,
 }
 
 #[allow(dead_code)]
