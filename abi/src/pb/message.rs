@@ -790,6 +790,60 @@ pub struct GroupCreateResponse {
     #[prost(message, optional, tag = "1")]
     pub invitation: ::core::option::Option<GroupInvitation>,
 }
+/// / user platform which login the system
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    ::prost::Enumeration,
+)]
+#[repr(i32)]
+pub enum PlatformType {
+    Web = 0,
+    Android = 1,
+    Ios = 2,
+    Windows = 3,
+    Macos = 4,
+    Linux = 5,
+    Unknown = 6,
+}
+impl PlatformType {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            PlatformType::Web => "WEB",
+            PlatformType::Android => "ANDROID",
+            PlatformType::Ios => "IOS",
+            PlatformType::Windows => "WINDOWS",
+            PlatformType::Macos => "MACOS",
+            PlatformType::Linux => "LINUX",
+            PlatformType::Unknown => "UNKNOWN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "WEB" => Some(Self::Web),
+            "ANDROID" => Some(Self::Android),
+            "IOS" => Some(Self::Ios),
+            "WINDOWS" => Some(Self::Windows),
+            "MACOS" => Some(Self::Macos),
+            "LINUX" => Some(Self::Linux),
+            "UNKNOWN" => Some(Self::Unknown),
+            _ => None,
+        }
+    }
+}
 /// / message content type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

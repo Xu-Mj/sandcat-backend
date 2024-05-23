@@ -1,3 +1,4 @@
+use abi::message::PlatformType;
 use axum::extract::ws::{Message, WebSocket};
 use futures::stream::SplitSink;
 use futures::SinkExt;
@@ -14,6 +15,7 @@ pub struct Client {
     pub user_id: String,
     // platform id
     pub platform_id: String,
+    pub platform: PlatformType,
 }
 
 #[allow(dead_code)]
