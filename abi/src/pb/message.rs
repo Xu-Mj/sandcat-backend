@@ -807,13 +807,8 @@ pub struct GroupCreateResponse {
 )]
 #[repr(i32)]
 pub enum PlatformType {
-    Unknown = 0,
-    Android = 1,
-    Ios = 2,
-    Windows = 3,
-    Macos = 4,
-    Linux = 5,
-    Web = 6,
+    Desktop = 0,
+    Mobile = 1,
 }
 impl PlatformType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -822,25 +817,15 @@ impl PlatformType {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            PlatformType::Unknown => "UNKNOWN",
-            PlatformType::Android => "ANDROID",
-            PlatformType::Ios => "IOS",
-            PlatformType::Windows => "WINDOWS",
-            PlatformType::Macos => "MACOS",
-            PlatformType::Linux => "LINUX",
-            PlatformType::Web => "WEB",
+            PlatformType::Desktop => "Desktop",
+            PlatformType::Mobile => "Mobile",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "UNKNOWN" => Some(Self::Unknown),
-            "ANDROID" => Some(Self::Android),
-            "IOS" => Some(Self::Ios),
-            "WINDOWS" => Some(Self::Windows),
-            "MACOS" => Some(Self::Macos),
-            "LINUX" => Some(Self::Linux),
-            "WEB" => Some(Self::Web),
+            "Desktop" => Some(Self::Desktop),
+            "Mobile" => Some(Self::Mobile),
             _ => None,
         }
     }
