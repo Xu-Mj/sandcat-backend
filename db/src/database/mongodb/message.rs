@@ -249,7 +249,7 @@ mod tests {
             seq: 0,
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
-            platform: PlatformType::Android as i32,
+            platform: PlatformType::Mobile as i32,
             // sdp: None,
             // sdp_mid: None,
             // sdp_m_index: None,
