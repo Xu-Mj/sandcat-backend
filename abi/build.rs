@@ -53,6 +53,7 @@ fn main() {
         .field_attribute("User.password", "#[serde(skip_serializing)]")
         .field_attribute("User.salt", "#[serde(skip_serializing)]")
         .with_serde(&[
+            "PlatformType",
             "Msg",
             "MsgRead",
             "MsgToDb",

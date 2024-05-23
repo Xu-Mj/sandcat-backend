@@ -1,6 +1,12 @@
 syntax = "proto3";
 package message;
 
+/// user platform which login the system
+enum PlatformType {
+  Desktop = 0;
+  Mobile = 1;
+}
+
 /// message content type
 enum ContentType {
   Default = 0;
@@ -28,7 +34,7 @@ enum FriendshipStatus {
   Deleted = 6;
 }
 
-enum MsgType{
+enum MsgType {
   MsgTypeSingleMsg = 0;
 
   MsgTypeGroupMsg = 1;
@@ -89,19 +95,24 @@ message Msg {
   ContentType content_type = 9;
   bytes content = 10;
   bool is_read = 11;
-  optional string sdp = 12;
-  optional string sdp_mid = 13;
-  optional int32 sdp_m_index = 14;
+  // it is unnecessary to put those out of content
+  // optional string sdp = 12;
+  // optional string sdp_mid = 13;
+  // optional int32 sdp_m_index = 14;
+
   string group_id = 15;
+
+  // platform of the sender
+  PlatformType platform = 16;
 }
 
-message MsgRead{
+message MsgRead {
   string msg_id = 1;
   string user_id = 2;
   string seq = 3;
 }
 
-message Candidate{
+message Candidate {
   string candidate = 1;
   optional string sdp_mid = 2;
   optional int32 sdp_m_index = 3;
@@ -112,30 +123,20 @@ enum SingleCallInviteType {
   SingleVideo = 1;
 }
 
-message AgreeSingleCall{
-  string sdp = 1;
-}
+message AgreeSingleCall { string sdp = 1; }
 
-message SingleCallInvite {
-  SingleCallInviteType invite_type = 1;
-}
+message SingleCallInvite { SingleCallInviteType invite_type = 1; }
 
 message SingleCallInviteAnswer {
   bool agree = 1;
   SingleCallInviteType invite_type = 2;
 }
 
-message SingleCallInviteNotAnswer {
-  SingleCallInviteType invite_type = 1;
-}
+message SingleCallInviteNotAnswer { SingleCallInviteType invite_type = 1; }
 
-message SingleCallInviteCancel {
-  SingleCallInviteType invite_type = 2;
-}
+message SingleCallInviteCancel { SingleCallInviteType invite_type = 2; }
 
-message SingleCallOffer {
-  string sdp = 1;
-}
+message SingleCallOffer { string sdp = 1; }
 
 message Hangup {
   SingleCallInviteType invite_type = 1;
@@ -154,13 +155,13 @@ message Single {
 }
 
 /// user and group id
-message UserAndGroupID{
+message UserAndGroupID {
   string user_id = 1;
   string group_id = 2;
 }
 
 /// group invitation include group information and group member information
-message GroupInvitation{
+message GroupInvitation {
   GroupInfo info = 1;
   repeated GroupMember members = 2;
 }
@@ -194,7 +195,7 @@ message GroupMember {
 }
 
 /// create group object
-message GroupCreate{
+message GroupCreate {
   string id = 1;
   string owner = 2;
   string avatar = 3;
@@ -202,13 +203,13 @@ message GroupCreate{
   repeated string members_id = 5;
 }
 
-message GroupInviteNew{
+message GroupInviteNew {
   string user_id = 1;
   string group_id = 2;
   repeated string members = 3;
 }
 
-message GroupUpdate{
+message GroupUpdate {
   string id = 1;
   string name = 2;
   string avatar = 3;
@@ -217,7 +218,7 @@ message GroupUpdate{
   int64 update_time = 6;
 }
 
-message User{
+message User {
   string id = 1;
   string name = 2;
   string account = 3;
@@ -236,7 +237,7 @@ message User{
   string signature = 16;
 }
 
-message UserUpdate{
+message UserUpdate {
   string id = 1;
   string name = 2;
   string avatar = 3;
@@ -249,7 +250,7 @@ message UserUpdate{
   optional string signature = 10;
 }
 
-message UserWithMatchType{
+message UserWithMatchType {
   string id = 1;
   string name = 2;
   string account = 3;
@@ -264,7 +265,7 @@ message UserWithMatchType{
   bool is_friend = 12;
 }
 
-message Friendship{
+message Friendship {
   string id = 1;
   string user_id = 2;
   string friend_id = 3;
@@ -278,7 +279,7 @@ message Friendship{
   int64 accept_time = 11;
 }
 
-message FriendshipWithUser{
+message FriendshipWithUser {
   string fs_id = 1;
   string user_id = 2;
   string name = 3;
@@ -295,7 +296,7 @@ message FriendshipWithUser{
   optional string email = 14;
 }
 
-message Friend{
+message Friend {
   string fs_id = 1;
   string name = 2;
   string avatar = 3;
@@ -314,9 +315,7 @@ message Friend{
   optional string email = 16;
 }
 
-message FsCreateRequest {
-  FsCreate fs_create = 1;
-}
+message FsCreateRequest { FsCreate fs_create = 1; }
 
 message FsCreate {
   string user_id = 1;
@@ -326,50 +325,42 @@ message FsCreate {
   string source = 5;
 }
 
-message FsCreateResponse{
+message FsCreateResponse {
   FriendshipWithUser fs_req = 1;
   FriendshipWithUser fs_send = 2;
 }
 
-message FsAgreeRequest {
-  AgreeReply fs_reply = 1;
-}
+message FsAgreeRequest { AgreeReply fs_reply = 1; }
 
 message FsAgreeResponse {
   Friend req = 1;
   Friend send = 2;
 }
 
-message UpdateRemarkRequest{
+message UpdateRemarkRequest {
   string user_id = 1;
   string friend_id = 2;
   string remark = 3;
 }
 
-message UpdateRemarkResponse{
-}
+message UpdateRemarkResponse {}
 
-message DeleteFriendRequest{
+message DeleteFriendRequest {
   string user_id = 1;
   string friend_id = 2;
 }
 
-message DeleteFriendResponse{
-}
+message DeleteFriendResponse {}
 
 message AgreeReply {
   string fs_id = 1;
   optional string resp_msg = 2;
-  optional  string resp_remark = 3;
+  optional string resp_remark = 3;
 }
 
-message FsListRequest {
-  string user_id = 1;
-}
+message FsListRequest { string user_id = 1; }
 
-message FriendListRequest {
-  string user_id = 1;
-}
+message FriendListRequest { string user_id = 1; }
 
 /// only for update friend apply request
 message FsUpdate {
@@ -378,33 +369,19 @@ message FsUpdate {
   string req_remark = 3;
 }
 
-message FsUpdateRequest{
-  FsUpdate fs_update = 1;
-}
+message FsUpdateRequest { FsUpdate fs_update = 1; }
 
-message FsListResponse {
-  repeated FriendshipWithUser friendships = 1;
-}
+message FsListResponse { repeated FriendshipWithUser friendships = 1; }
 
-message FriendListResponse {
-  repeated Friend friends = 1;
-}
+message FriendListResponse { repeated Friend friends = 1; }
 
-message GroupInviteNewRequest{
-  GroupInviteNew group_invite = 1;
-}
+message GroupInviteNewRequest { GroupInviteNew group_invite = 1; }
 
-message GroupInviteNewResp{
-  repeated GroupMember members = 1;
-}
+message GroupInviteNewResp { repeated GroupMember members = 1; }
 
-message GroupUpdateRequest {
-  GroupUpdate group = 1;
-}
+message GroupUpdateRequest { GroupUpdate group = 1; }
 
-message GroupUpdateResponse {
-  GroupInfo group = 1;
-}
+message GroupUpdateResponse { GroupInfo group = 1; }
 
 message GroupDeleteRequest {
   string group_id = 1;
@@ -420,37 +397,21 @@ message GroupMemberExitResponse {
   //  repeated string members_id = 1;
 }
 
-message GroupMembersIdRequest {
-  string group_id = 1;
-}
+message GroupMembersIdRequest { string group_id = 1; }
 
-message GroupMembersIdResponse {
-  repeated string members_id = 1;
-}
+message GroupMembersIdResponse { repeated string members_id = 1; }
 
-message CreateUserRequest {
-  User user = 1;
-}
+message CreateUserRequest { User user = 1; }
 
-message CreateUserResponse {
-  User user = 1;
-}
+message CreateUserResponse { User user = 1; }
 
-message GetUserRequest {
-  string user_id = 1;
-}
+message GetUserRequest { string user_id = 1; }
 
-message GetUserResponse {
-  User user = 1;
-}
+message GetUserResponse { User user = 1; }
 
-message UpdateUserRequest {
-  UserUpdate user = 1;
-}
+message UpdateUserRequest { UserUpdate user = 1; }
 
-message UpdateUserResponse {
-  User user = 1;
-}
+message UpdateUserResponse { User user = 1; }
 
 message UpdateRegionRequest {
   string user_id = 1;
@@ -464,9 +425,7 @@ message SearchUserRequest {
   string pattern = 2;
 }
 
-message SearchUserResponse {
-  UserWithMatchType user = 1;
-}
+message SearchUserResponse { UserWithMatchType user = 1; }
 
 message VerifyPwdRequest {
   /// could be account, email or phone number
@@ -474,13 +433,9 @@ message VerifyPwdRequest {
   string password = 2;
 }
 
-message VerifyPwdResponse {
-  User user = 1;
-}
+message VerifyPwdResponse { User user = 1; }
 
-message SendMsgRequest {
-  Msg message = 1;
-}
+message SendMsgRequest { Msg message = 1; }
 
 message SendGroupMsgRequest {
   Msg message = 1;
@@ -492,7 +447,7 @@ message SendMsgResponse {}
 message MsgResponse {
   string local_id = 1;
   string server_id = 2;
-  int64  send_time = 3;
+  int64 send_time = 3;
   string err = 4;
 }
 
@@ -517,25 +472,18 @@ message GetDbMsgRequest {
   int64 end = 3;
 }
 
-message GetMsgResp{
-  repeated Msg messages = 1;
-}
+message GetMsgResp { repeated Msg messages = 1; }
 
 message DelMsgRequest {
   string user_id = 1;
   repeated string msg_id = 2;
 }
 
-message DelMsgResp{
-}
+message DelMsgResp {}
 
-message GroupCreateRequest {
-  GroupCreate group = 1;
-}
+message GroupCreateRequest { GroupCreate group = 1; }
 
-message GroupCreateResponse {
-  GroupInvitation invitation = 1;
-}
+message GroupCreateResponse { GroupInvitation invitation = 1; }
 
 service MsgService {
   // send message through rpc
@@ -546,11 +494,9 @@ service MsgService {
   rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
 }
 
-/// chat service, receive message then generate message id and send message to mq;
-/// response operation result;
-service ChatService {
-  rpc SendMsg(SendMsgRequest) returns (MsgResponse);
-}
+/// chat service, receive message then generate message id and send message to
+/// mq; response operation result;
+service ChatService { rpc SendMsg(SendMsgRequest) returns (MsgResponse); }
 
 /// db interface think about if it is necessary to put api interface together.
 service DbService {

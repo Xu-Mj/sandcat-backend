@@ -174,7 +174,7 @@ impl MsgRecBoxRepo for MsgBox {
 mod tests {
     use std::ops::Deref;
 
-    use abi::message::MsgType;
+    use abi::message::{MsgType, PlatformType};
     use utils::mongodb_tester::MongoDbTester;
 
     use super::*;
@@ -249,9 +249,10 @@ mod tests {
             seq: 0,
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
-            sdp: None,
-            sdp_mid: None,
-            sdp_m_index: None,
+            platform: PlatformType::Mobile as i32,
+            // sdp: None,
+            // sdp_mid: None,
+            // sdp_m_index: None,
             group_id: "".to_string(),
         }
     }

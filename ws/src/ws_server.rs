@@ -20,7 +20,7 @@ use tracing::{error, info};
 
 use abi::config::Config;
 use abi::errors::Error;
-use abi::message::Msg;
+use abi::message::{Msg, PlatformType};
 
 use crate::client::Client;
 use crate::manager::Manager;
@@ -79,17 +79,17 @@ impl WsServer {
             manager: hub.clone(),
             jwt_secret: config.server.jwt_secret.clone(),
         };
-        // 直接启动axum server
+
+        // run axum server
         let router = Router::new()
             .route(
-                "/ws/:user_id/conn/:token/:pointer_id",
+                "/ws/:user_id/conn/:token/:pointer_id/:platform",
                 get(Self::websocket_handler),
             )
             .with_state(app_state);
         let addr = format!("{}:{}", config.websocket.host, config.websocket.port);
 
         let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-        tracing::debug!("listening on {}", listener.local_addr().unwrap());
         let mut ws = tokio::spawn(async move {
             info!("start websocket server on {}", addr);
             axum::serve(listener, router).await.unwrap();
@@ -121,7 +121,7 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        Path((user_id, token, pointer_id)): Path<(String, String, String)>,
+        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, i32)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
@@ -135,12 +135,14 @@ impl WsServer {
             return (StatusCode::UNAUTHORIZED, error_response).into_response();
         }
 
-        ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, socket, state))
+        let platform = PlatformType::try_from(platform).unwrap_or_default();
+        ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, platform, socket, state))
     }
 
     pub async fn websocket(
         user_id: String,
         pointer_id: String,
+        platform: PlatformType,
         ws: WebSocket,
         app_state: AppState,
     ) {
@@ -156,6 +158,7 @@ impl WsServer {
             user_id: user_id.clone(),
             platform_id: pointer_id.clone(),
             sender: shared_tx.clone(),
+            platform,
         };
         hub.register(user_id.clone(), client).await;
 

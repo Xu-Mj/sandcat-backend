@@ -35,10 +35,11 @@ impl TryFrom<Document> for Msg {
             msg_type: value.get_i32("msg_type").unwrap_or_default(),
             is_read: value.get_bool("is_read").unwrap_or_default(),
             group_id: value.get_str("group_id").unwrap_or_default().to_string(),
+            platform: value.get_i32("platform").unwrap_or_default(),
             // those do not save to mongodb
-            sdp: None,
-            sdp_mid: None,
-            sdp_m_index: None,
+            // sdp: None,
+            // sdp_mid: None,
+            // sdp_m_index: None,
         })
     }
 }
