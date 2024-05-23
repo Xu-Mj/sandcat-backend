@@ -5241,6 +5241,7 @@ dependencies = [
  "cache",
  "dashmap",
  "futures",
+ "jsonwebtoken",
  "nanoid",
  "serde",
  "serde_json",

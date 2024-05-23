@@ -2,13 +2,17 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::{Path, State, WebSocketUpgrade};
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::get;
+use axum::Json;
 use axum::{
     extract::ws::{Message, WebSocket},
     Router,
 };
 use futures::{SinkExt, StreamExt};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
 use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::{mpsc, RwLock};
 use tonic::transport::Channel;
@@ -27,6 +31,14 @@ pub const HEART_BEAT_INTERVAL: u64 = 30;
 #[derive(Clone)]
 pub struct AppState {
     manager: Manager,
+    jwt_secret: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: u64,
+    pub iat: u64,
 }
 
 pub struct WsServer;
@@ -65,6 +77,7 @@ impl WsServer {
         });
         let app_state = AppState {
             manager: hub.clone(),
+            jwt_secret: config.server.jwt_secret.clone(),
         };
         // 直接启动axum server
         let router = Router::new()
@@ -96,13 +109,32 @@ impl WsServer {
         }
     }
 
+    fn verify_token(token: String, jwt_secret: &String) -> Result<(), Error> {
+        if let Err(err) = decode::<Claims>(
+            &token,
+            &DecodingKey::from_secret(jwt_secret.as_bytes()),
+            &Validation::default(),
+        ) {
+            return Err(Error::UnAuthorized(err.to_string(), "/ws".to_string()));
+        }
+        Ok(())
+    }
+
     pub async fn websocket_handler(
         Path((user_id, token, pointer_id)): Path<(String, String, String)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
         // validate token
-        tracing::debug!("token is {}", token);
+        if let Err(err) = Self::verify_token(token, &state.jwt_secret) {
+            let error_response = Json({
+                let error_msg = format!("Token verification failed: {}", err);
+                error!("{}", error_msg);
+                serde_json::json!({ "error": error_msg })
+            });
+            return (StatusCode::UNAUTHORIZED, error_response).into_response();
+        }
+
         ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, socket, state))
     }
 
