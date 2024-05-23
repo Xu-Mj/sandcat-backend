@@ -13,7 +13,6 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 use tokio::sync::{mpsc, RwLock};
 use tonic::transport::Channel;
 use tracing::{error, info};
@@ -21,6 +20,7 @@ use tracing::{error, info};
 use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{Msg, PlatformType};
+use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 
 use crate::client::Client;
 use crate::manager::Manager;
@@ -68,6 +68,26 @@ impl WsServer {
         Ok(())
     }
 
+    async fn test(State(state): State<AppState>) -> Result<String, Error> {
+        let mut description = String::new();
+
+        state.manager.hub.iter().for_each(|entry| {
+            let user_id = entry.key();
+            let platforms = entry.value();
+            description.push_str(&format!("UserID: {}\n", user_id));
+            platforms.iter().for_each(|platform_entry| {
+                let platform_type = platform_entry.key();
+                let client = platform_entry.value();
+                description.push_str(&format!(
+                    "  Platform: {:?}, PlatformID: {}, Sender: ..., NotifySender: ...\n",
+                    platform_type,
+                    client.platform_id // sender 和 notify_sender 难以直接显示，因此这里使用省略号
+                ));
+            });
+        });
+        Ok(description)
+    }
+
     pub async fn start(config: Config) {
         let (tx, rx) = mpsc::channel(1024);
         let hub = Manager::new(tx, &config).await;
@@ -86,6 +106,7 @@ impl WsServer {
                 "/ws/:user_id/conn/:token/:pointer_id/:platform",
                 get(Self::websocket_handler),
             )
+            .route("/test", get(Self::test))
             .with_state(app_state);
         let addr = format!("{}:{}", config.websocket.host, config.websocket.port);
 
@@ -154,11 +175,13 @@ impl WsServer {
         let mut hub = app_state.manager.clone();
         let (ws_tx, mut ws_rx) = ws.split();
         let shared_tx = Arc::new(RwLock::new(ws_tx));
+        let (notify_sender, mut notify_receiver) = tokio::sync::mpsc::channel(1);
         let client = Client {
             user_id: user_id.clone(),
             platform_id: pointer_id.clone(),
             sender: shared_tx.clone(),
             platform,
+            notify_sender,
         };
         hub.register(user_id.clone(), client).await;
 
@@ -177,6 +200,27 @@ impl WsServer {
                     break;
                 }
                 tokio::time::sleep(Duration::from_secs(HEART_BEAT_INTERVAL)).await;
+            }
+        });
+
+        let shared_clone = shared_tx.clone();
+        // watch knock off signal
+        let mut watch_task = tokio::spawn(async move {
+            if notify_receiver.recv().await.is_none() {
+                info!("client {} knock off", pointer_id);
+                // send knock off signal to ws server
+                let msg = Msg::knock_off();
+                match bincode::serialize(&msg) {
+                    Ok(msg) => {
+                        if let Err(e) = shared_clone.write().await.send(Message::Binary(msg)).await
+                        {
+                            error!("send knock off signal to ws server error: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        error!("serialize message error:{:?}", e);
+                    }
+                }
             }
         });
 
@@ -241,12 +285,13 @@ impl WsServer {
         });
 
         tokio::select! {
-            _ = (&mut ping_task) => rec_task.abort(),
-            _ = (&mut rec_task) => ping_task.abort(),
+            _ = (&mut ping_task) => {rec_task.abort(); watch_task.abort();},
+            _ = (&mut watch_task) => {rec_task.abort(); ping_task.abort();},
+            _ = (&mut rec_task) => {ping_task.abort(); watch_task.abort();},
         }
 
         // lost the connection, remove the client from hub
-        hub.unregister(user_id, pointer_id).await;
+        hub.unregister(user_id, platform).await;
         tracing::debug!("client thread exit {}", hub.hub.iter().count());
     }
 }

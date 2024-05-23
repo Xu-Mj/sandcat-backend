@@ -3,19 +3,18 @@ use std::sync::Arc;
 use abi::config::Config;
 use dashmap::DashMap;
 use tokio::sync::mpsc;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::client::Client;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::{ContentType, Msg, MsgResponse, MsgType, SendMsgRequest};
+use abi::message::{ContentType, Msg, MsgResponse, MsgType, PlatformType, SendMsgRequest};
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
 
 type UserID = String;
-type PlatformID = String;
 /// client hub
-type Hub = Arc<DashMap<UserID, DashMap<PlatformID, Client>>>;
+type Hub = Arc<DashMap<UserID, DashMap<PlatformType, Client>>>;
 
 /// manage the client
 #[derive(Clone)]
@@ -42,9 +41,10 @@ impl Manager {
     }
 
     pub async fn send_group(&self, obj_ids: &Vec<String>, mut msg: Msg) {
+        self.send_to_self(&msg.send_id, &msg).await;
+
         for id in obj_ids {
             if let Some(clients) = self.hub.get(id) {
-                // need to query the users seq
                 let seq = match self.cache.get_seq(id).await {
                     Ok(seq) => seq,
                     Err(e) => {
@@ -52,8 +52,35 @@ impl Manager {
                         continue;
                     }
                 };
+
+                // Modify only the seq in the message and serialize it.
                 msg.seq = seq;
+
+                // Send message to all clients
                 self.send_msg_to_clients(&clients, &msg).await;
+            }
+        }
+    }
+
+    async fn send_to_self(&self, id: &str, msg: &Msg) {
+        if let Some(client) = self.hub.get(id) {
+            // send to self which another platform client
+            let platform = if msg.platform == PlatformType::Mobile as i32 {
+                PlatformType::Desktop
+            } else {
+                PlatformType::Mobile
+            };
+            if let Some(sender) = client.get(&platform) {
+                let content = match bincode::serialize(msg) {
+                    Ok(res) => res,
+                    Err(_) => {
+                        error!("msg serialize error");
+                        return;
+                    }
+                };
+                if let Err(e) = sender.send_binary(content).await {
+                    error!("send to self error: {}", e)
+                }
             }
         }
     }
@@ -62,44 +89,65 @@ impl Manager {
         if let Some(clients) = self.hub.get(obj_id) {
             self.send_msg_to_clients(&clients, msg).await;
         }
+        self.send_to_self(&msg.send_id, msg).await;
     }
 
-    async fn send_msg_to_clients(&self, clients: &DashMap<PlatformID, Client>, msg: &Msg) {
-        for client in clients.iter() {
-            let content = match bincode::serialize(msg) {
-                Ok(res) => res,
-                Err(_) => {
-                    error!("msg serialize error");
-                    return;
+    async fn send_msg_to_clients(&self, clients: &DashMap<PlatformType, Client>, msg: &Msg) {
+        match clients.len() {
+            0 => error!("no client found"),
+            1 => {
+                let content = match bincode::serialize(msg) {
+                    Ok(res) => res,
+                    Err(e) => {
+                        error!("msg serialize error: {}", e);
+                        return;
+                    }
+                };
+                if let Some(client) = clients.iter().next() {
+                    if let Err(e) = client.value().send_binary(content).await {
+                        error!("send message error: {}", e);
+                    }
                 }
-            };
-            if let Err(e) = client.value().send_binary(content).await {
-                error!("msg send error: {:?}", e);
-            } else {
-                // debug!("message send success--{:?}", client.id.clone());
             }
+            2 => {
+                let content = match bincode::serialize(msg) {
+                    Ok(res) => res,
+                    Err(e) => {
+                        error!("msg serialize error: {}", e);
+                        return;
+                    }
+                };
+                let mut iter = clients.iter();
+                if let Some(first_client) = iter.next() {
+                    if let Err(e) = first_client.value().send_binary(content.clone()).await {
+                        error!("send message error: {}", e);
+                    }
+                }
+                if let Some(second_client) = iter.next() {
+                    if let Err(e) = second_client.value().send_binary(content).await {
+                        error!("send message error: {}", e);
+                    }
+                }
+            }
+            _ => warn!("Unexpected number of clients: {}", clients.len()),
         }
     }
 
     // 注册客户端
-    // todo check platform id, if existed already, kick offline
     pub async fn register(&mut self, id: String, client: Client) {
-        if let Some(cli) = self.hub.get_mut(&id) {
-            cli.insert(client.platform_id.clone(), client);
-        } else {
-            let dash_map = DashMap::new();
-            dash_map.insert(client.user_id.clone(), client);
-            self.hub.insert(id, dash_map);
-        }
+        self.hub
+            .entry(id)
+            .or_default()
+            .insert(client.platform, client);
     }
 
-    pub async fn unregister(&mut self, id: String, printer_id: String) {
+    pub async fn unregister(&mut self, id: String, platform: PlatformType) {
         let mut flag = false;
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
                 flag = true;
             } else {
-                clients.remove(&printer_id);
+                clients.remove(&platform);
             }
         };
         if flag {
