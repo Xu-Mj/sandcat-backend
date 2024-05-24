@@ -71,7 +71,6 @@ enum MsgType {
 
   /// friend delete
   MsgTypeFriendDelete = 25;
-  MsgTypeKnockOff = 26;
 }
 
 /// decode message content by content type

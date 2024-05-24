@@ -1,6 +1,8 @@
+use std::borrow::Cow;
 use std::sync::Arc;
 use std::time::Duration;
 
+use axum::extract::ws::CloseFrame;
 use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -27,6 +29,7 @@ use crate::manager::Manager;
 use crate::rpc::MsgRpcService;
 
 pub const HEART_BEAT_INTERVAL: u64 = 30;
+pub const KNOCK_OFF_CODE: u16 = 4001;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -209,17 +212,16 @@ impl WsServer {
             if notify_receiver.recv().await.is_none() {
                 info!("client {} knock off", pointer_id);
                 // send knock off signal to ws server
-                let msg = Msg::knock_off();
-                match bincode::serialize(&msg) {
-                    Ok(msg) => {
-                        if let Err(e) = shared_clone.write().await.send(Message::Binary(msg)).await
-                        {
-                            error!("send knock off signal to ws server error: {}", e);
-                        }
-                    }
-                    Err(e) => {
-                        error!("serialize message error:{:?}", e);
-                    }
+                if let Err(e) = shared_clone
+                    .write()
+                    .await
+                    .send(Message::Close(Some(CloseFrame {
+                        code: KNOCK_OFF_CODE,
+                        reason: Cow::Owned("knock off".to_string()),
+                    })))
+                    .await
+                {
+                    error!("send knock off signal to ws server error: {}", e);
                 }
             }
         });
@@ -283,15 +285,17 @@ impl WsServer {
                 }
             }
         });
-
+        let mut need_unregister = true;
         tokio::select! {
             _ = (&mut ping_task) => {rec_task.abort(); watch_task.abort();},
-            _ = (&mut watch_task) => {rec_task.abort(); ping_task.abort();},
+            _ = (&mut watch_task) => {need_unregister = false; rec_task.abort(); ping_task.abort();},
             _ = (&mut rec_task) => {ping_task.abort(); watch_task.abort();},
         }
 
         // lost the connection, remove the client from hub
-        hub.unregister(user_id, platform).await;
+        if need_unregister {
+            hub.unregister(user_id, platform).await;
+        }
         tracing::debug!("client thread exit {}", hub.hub.iter().count());
     }
 }
