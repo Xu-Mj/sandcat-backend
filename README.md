@@ -54,6 +54,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Group Message Sequencing**: The sequence for group messages is incremented at the consumer module, and we need to obtain the sequence in the WebSocket/mongoDB module. Is there a more effective way to do this?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
 - **Friendship Read Status**: we should delete the Friendship related message after user read it.
+- knock off desk from the mobile
 
 ## Development
 
