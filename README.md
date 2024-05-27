@@ -55,6 +55,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
 - **Friendship Read Status**: we should delete the Friendship related message after user read it.
 - knock off desk from the mobile
+- delete minio file by period
 
 ## Development
 

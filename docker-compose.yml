@@ -55,14 +55,14 @@ services:
   minio:
     image: 'minio/minio:latest'
     ports:
-      - '9000:9000'
+      - '9000:9000' # 将MinIO API端口映射到主机的9000端口
+      - '9001:9001' # 将MinIO Console管理界面映射到主机的9001端口
     environment:
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-    command: server /data
+      MINIO_ROOT_USER: minioadmin # 最新的MinIO版本中推荐使用MINIO_ROOT_USER和MINIO_ROOT_PASSWORD
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001" # 添加控制台地址的映射
     volumes:
       - 'miniodata:/data'
-
 volumes:
   mongodata:
   miniodata:
