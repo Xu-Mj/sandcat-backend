@@ -179,6 +179,7 @@ impl ConsumerService {
         if need_increase_seq {
             let (cur_seq, max_seq) = self.increase_seq(&msg.receiver_id).await?;
             msg.seq = cur_seq;
+            // this actually means that the postgres seq is updated earlier than the cache
             if cur_seq >= max_seq - 1 {
                 db_rpc
                     .save_max_seq(SaveMaxSeqRequest {

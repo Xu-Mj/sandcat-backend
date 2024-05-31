@@ -34,7 +34,7 @@ impl DbRepo {
         let seq_step = config.redis.seq_step;
 
         let msg = Box::new(postgres::PostgresMessage::new(pool.clone()));
-        let user = Box::new(postgres::PostgresUser::new(pool.clone()));
+        let user = Box::new(postgres::PostgresUser::new(pool.clone(), seq_step));
         let friend = Box::new(postgres::PostgresFriend::new(pool.clone()));
         let group = Box::new(postgres::PostgresGroup::new(pool.clone()));
         let seq = Box::new(postgres::PostgresSeq::new(pool, seq_step));
