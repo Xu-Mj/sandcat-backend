@@ -45,6 +45,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 ## Unresolved questions
 
 - **Storing Message Sequences in Redis**: We currently increment the sequence numbers simply, without confirming their accuracy. There's a need to ensure the correctness of this sequence. -- group message sequence not handled yet
+- utilize the shared number segments to reduce database operational presure and significantly decrease data loading on redis restart.
 - **Integrating Member ID Retrieval from Cache into DB Service**: Whether the method for retrieving member IDs from the cache should be integrated into the DB service is under consideration.
 - **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.

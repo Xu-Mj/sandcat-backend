@@ -66,7 +66,7 @@ impl RedisCache {
         if max_seq == false then
             max_seq = tonumber(ARGV[1])
         end
-        if tonumber(cur_seq) >= tonumber(max_seq) then
+        if tonumber(cur_seq) > tonumber(max_seq) then
             max_seq = tonumber(cur_seq) + tonumber(ARGV[1])
             redis.call('HSET', KEYS[1], 'max_seq', max_seq)
         end
