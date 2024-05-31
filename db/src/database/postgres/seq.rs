@@ -6,20 +6,21 @@ use crate::database::seq::SeqRepo;
 
 pub struct PostgresSeq {
     pool: PgPool,
+    seq_step: i32,
 }
 
 impl PostgresSeq {
-    pub fn new(pool: PgPool) -> Self {
-        PostgresSeq { pool }
+    pub fn new(pool: PgPool, seq_step: i32) -> Self {
+        PostgresSeq { pool, seq_step }
     }
 }
 
 #[async_trait]
 impl SeqRepo for PostgresSeq {
-    async fn save_max_seq(&self, user_id: &str, seq_step: i32) -> Result<i64, Error> {
+    async fn save_max_seq(&self, user_id: &str) -> Result<i64, Error> {
         let max_seq =
             sqlx::query("UPDATE sequence SET seq = seq + $1 WHERE user_id = $2 RETURNING seq")
-                .bind(seq_step)
+                .bind(self.seq_step)
                 .bind(user_id)
                 .fetch_one(&self.pool)
                 .await?

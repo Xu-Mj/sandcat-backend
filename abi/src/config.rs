@@ -199,7 +199,7 @@ fn url(https: bool, host: &str, port: u16) -> String {
 pub struct RedisConfig {
     pub host: String,
     pub port: u16,
-    pub seq_step: u32,
+    pub seq_step: i32,
 }
 
 impl RedisConfig {

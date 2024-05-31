@@ -20,11 +20,11 @@ const CUR_SEQ_KEY: &str = "cur_seq";
 #[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
-    seq_step: u32,
+    seq_step: i32,
     seq_exe_sha: String,
 }
 
-const DEFAULT_SEQ_STEP: u32 = 5000;
+const DEFAULT_SEQ_STEP: i32 = 5000;
 const EVALSHA: &str = "EVALSHA";
 
 impl RedisCache {
