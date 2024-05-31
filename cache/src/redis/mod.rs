@@ -15,6 +15,8 @@ const REGISTER_CODE_EXPIRE: i64 = 300;
 
 const USER_ONLINE_SET: &str = "user_online_set";
 
+const CUR_SEQ_KEY: &str = "cur_seq";
+
 #[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
@@ -61,8 +63,11 @@ impl RedisCache {
         let script = r#"
         local cur_seq = redis.call('HINCRBY', KEYS[1], 'cur_seq', 1)
         local max_seq = redis.call('HGET', KEYS[1], 'max_seq')
-        if tonumber(cur_seq) == tonumber(max_seq) then
-            max_seq = tonumber(max_seq) + ARGV[1]
+        if max_seq == false then
+            max_seq = tonumber(ARGV[1])
+        end
+        if tonumber(cur_seq) >= tonumber(max_seq) then
+            max_seq = tonumber(cur_seq) + tonumber(ARGV[1])
             redis.call('HSET', KEYS[1], 'max_seq', max_seq)
         end
         return {cur_seq, max_seq}
@@ -82,7 +87,8 @@ impl Cache for RedisCache {
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // get seq
-        let seq: i64 = conn.get(&key).await.unwrap_or_default();
+        // let seq: i64 = conn.get(&key).await.unwrap_or_default();
+        let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await?;
         Ok(seq)
     }
 
