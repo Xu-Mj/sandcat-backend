@@ -16,10 +16,10 @@ use abi::message::{
     GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
     GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
     GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
-    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse,
-    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
-    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqRequest, SaveMaxSeqResponse,
+    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
+    UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse,
+    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -93,6 +93,13 @@ impl DbService for DbRpcService {
             .delete_messages(&req.user_id, req.msg_id)
             .await?;
         Ok(Response::new(DelMsgResp {}))
+    }
+
+    async fn save_max_seq(
+        &self,
+        _request: Request<SaveMaxSeqRequest>,
+    ) -> Result<Response<SaveMaxSeqResponse>, Status> {
+        Ok(Response::new(SaveMaxSeqResponse {}))
     }
 
     async fn group_create(
