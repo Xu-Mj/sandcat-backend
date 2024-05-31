@@ -92,11 +92,11 @@ impl Cache for RedisCache {
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // increase seq
-        let arg = vec![key, self.seq_step.to_string()];
         let seq = redis::cmd(EVALSHA)
             .arg(&self.seq_exe_sha)
             .arg(1)
-            .arg(&arg)
+            .arg(&key)
+            .arg(self.seq_step)
             .query_async(&mut conn)
             .await?;
         Ok(seq)
@@ -108,7 +108,12 @@ impl Cache for RedisCache {
         let mut pipe = redis::pipe();
         for member in members {
             let key = format!("seq:{}", member);
-            pipe.incr(&key, 1);
+            pipe.cmd(EVALSHA)
+                .arg(&self.seq_exe_sha)
+                .arg(1)
+                .arg(&key)
+                .arg(self.seq_step)
+                .ignore();
         }
         pipe.query_async(&mut conn).await?;
         Ok(())
