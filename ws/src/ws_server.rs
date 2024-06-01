@@ -145,7 +145,7 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, i32)>,
+        Path((user_id, token, pointer_id, platform)): Path<(i64, String, String, i32)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
@@ -164,7 +164,7 @@ impl WsServer {
     }
 
     pub async fn websocket(
-        user_id: String,
+        user_id: i64,
         pointer_id: String,
         platform: PlatformType,
         ws: WebSocket,
@@ -172,7 +172,7 @@ impl WsServer {
     ) {
         tracing::info!(
             "client {} connected, user id : {}",
-            user_id.clone(),
+            user_id,
             pointer_id.clone()
         );
         let mut hub = app_state.manager.clone();
@@ -180,13 +180,13 @@ impl WsServer {
         let shared_tx = Arc::new(RwLock::new(ws_tx));
         let (notify_sender, mut notify_receiver) = tokio::sync::mpsc::channel(1);
         let client = Client {
-            user_id: user_id.clone(),
+            user_id,
             platform_id: pointer_id.clone(),
             sender: shared_tx.clone(),
             platform,
             notify_sender,
         };
-        hub.register(user_id.clone(), client).await;
+        hub.register(user_id, client).await;
 
         // send ping message to client
         let cloned_tx = shared_tx.clone();

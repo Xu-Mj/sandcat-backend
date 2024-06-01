@@ -19,7 +19,7 @@ impl GroupUpdateRequest {
 }
 
 impl GroupDeleteRequest {
-    pub fn new(group_id: String, user_id: String) -> Self {
+    pub fn new(group_id: String, user_id: i64) -> Self {
         Self { group_id, user_id }
     }
 }

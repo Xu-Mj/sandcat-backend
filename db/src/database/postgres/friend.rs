@@ -26,11 +26,11 @@ impl FriendRepo for PostgresFriend {
         &self,
         fs: FsCreate,
     ) -> Result<(FriendshipWithUser, FriendshipWithUser), Error> {
-        let user_id = fs.user_id.clone();
+        let user_id = fs.user_id;
         let now = chrono::Local::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
         debug!("create_fs: {:?}", &fs);
-        let fs_id: (String,) = sqlx::query_as(
+        let (fs_id, ): (String,) = sqlx::query_as(
             "INSERT INTO friendships
                 (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time)
              VALUES
@@ -42,8 +42,8 @@ impl FriendRepo for PostgresFriend {
              RETURNING id",
         )
         .bind(&nanoid!())
-        .bind(&fs.user_id)
-        .bind(&fs.friend_id)
+        .bind(fs.user_id)
+        .bind(fs.friend_id)
         .bind(&FriendshipStatus::Pending.to_string())
         .bind(&fs.apply_msg)
         .bind(&fs.req_remark)
@@ -54,8 +54,8 @@ impl FriendRepo for PostgresFriend {
 
         // select user information
         let mut users: Vec<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1 OR id = $2")
-            .bind(&fs.user_id)
-            .bind(&fs.friend_id)
+            .bind(fs.user_id)
+            .bind(fs.friend_id)
             .fetch_all(&mut *transaction)
             .await?;
         transaction.commit().await?;
@@ -68,14 +68,14 @@ impl FriendRepo for PostgresFriend {
         };
 
         let mut fs_req = FriendshipWithUser::from(friend);
-        fs_req.fs_id.clone_from(&fs_id.0);
+        fs_req.fs_id.clone_from(&fs_id);
         fs_req.status = FriendshipStatus::Pending as i32;
         fs_req.source.clone_from(&fs.source);
         fs_req.create_time = now;
         fs_req.remark = fs.req_remark;
 
         let fs_send = FriendshipWithUser {
-            fs_id: fs_id.0,
+            fs_id,
             user_id,
             name: user.name,
             avatar: user.avatar,
@@ -108,7 +108,7 @@ impl FriendRepo for PostgresFriend {
     // }
 
     /// need to return the friendship with user information
-    async fn get_fs_list(&self, user_id: &str) -> Result<Vec<FriendshipWithUser>, Error> {
+    async fn get_fs_list(&self, user_id: i64) -> Result<Vec<FriendshipWithUser>, Error> {
         // let mut fs = sqlx::query_as("SELECT * FROM friendships WHERE user_id = $1")
         //     .bind(user_id)
         //     .fetch(&self.pool);
@@ -155,8 +155,8 @@ impl FriendRepo for PostgresFriend {
 
     async fn update_friend_remark(
         &self,
-        user_id: &str,
-        friend_id: &str,
+        user_id: i64,
+        friend_id: i64,
         remark: &str,
     ) -> Result<Friendship, Error> {
         let fs = sqlx::query_as(
@@ -183,8 +183,8 @@ impl FriendRepo for PostgresFriend {
 
     async fn update_friend_status(
         &self,
-        user_id: &str,
-        friend_id: &str,
+        user_id: i64,
+        friend_id: i64,
         status: FriendshipStatus,
     ) -> Result<Friendship, Error> {
         let fs = sqlx::query_as(
@@ -200,7 +200,7 @@ impl FriendRepo for PostgresFriend {
         Ok(fs)
     }
 
-    async fn get_friend_list(&self, user_id: &str) -> Result<Vec<Friend>, Error> {
+    async fn get_friend_list(&self, user_id: i64) -> Result<Vec<Friend>, Error> {
         let list = sqlx::query_as(
             "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
                         f.id as fs_id, f.status, f.source, f.create_time, f.accept_time,
@@ -255,8 +255,8 @@ impl FriendRepo for PostgresFriend {
 
         // select user information
         let mut users: Vec<User> = sqlx::query_as("SELECT * from users WHERE id = $1 OR id = $2")
-            .bind(&friendship.user_id)
-            .bind(&friendship.friend_id)
+            .bind(friendship.user_id)
+            .bind(friendship.friend_id)
             .fetch_all(&mut *transaction)
             .await?;
         transaction.commit().await?;
@@ -307,7 +307,7 @@ impl FriendRepo for PostgresFriend {
         Ok((req, send))
     }
 
-    async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error> {
+    async fn delete_friend(&self, user_id: i64, friend_id: i64) -> Result<(), Error> {
         sqlx::query(
             "WITH updated AS (
             UPDATE friendships

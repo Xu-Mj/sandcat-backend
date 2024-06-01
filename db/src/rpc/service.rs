@@ -2,7 +2,6 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::Stream;
-use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
 use tonic::{async_trait, Request, Response, Status};
 use tracing::debug;
@@ -67,7 +66,7 @@ impl DbService for DbRpcService {
         let req = request.into_inner();
         let result = self
             .msg_rec_box
-            .get_messages_stream(&req.user_id, req.start, req.end)
+            .get_messages_stream(req.user_id, req.start, req.end)
             .await?;
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
@@ -79,7 +78,7 @@ impl DbService for DbRpcService {
         let req = request.into_inner();
         let result = self
             .msg_rec_box
-            .get_messages(&req.user_id, req.start, req.end)
+            .get_messages(req.user_id, req.start, req.end)
             .await?;
         Ok(Response::new(GetMsgResp { messages: result }))
     }
@@ -90,7 +89,7 @@ impl DbService for DbRpcService {
     ) -> Result<Response<DelMsgResp>, Status> {
         let req = request.into_inner();
         self.msg_rec_box
-            .delete_messages(&req.user_id, req.msg_id)
+            .delete_messages(req.user_id, req.msg_id)
             .await?;
         Ok(Response::new(DelMsgResp {}))
     }
@@ -100,7 +99,7 @@ impl DbService for DbRpcService {
         request: Request<SaveMaxSeqRequest>,
     ) -> Result<Response<SaveMaxSeqResponse>, Status> {
         let req = request.into_inner();
-        if let Err(e) = self.db.seq.save_max_seq(&req.user_id).await {
+        if let Err(e) = self.db.seq.save_max_seq(req.user_id).await {
             return Err(Status::internal(e.to_string()));
         };
         Ok(Response::new(SaveMaxSeqResponse {}))
@@ -121,7 +120,7 @@ impl DbService for DbRpcService {
         let members_id = invitation.members.iter().fold(
             Vec::with_capacity(invitation.members.len()),
             |mut acc, member| {
-                acc.push(member.user_id.clone());
+                acc.push(member.user_id);
                 acc
             },
         );
@@ -186,11 +185,11 @@ impl DbService for DbRpcService {
         let req = request.into_inner();
         let user_id = req.user_id;
         let group_id = req.group_id;
-        if user_id.is_empty() || group_id.is_empty() {
+        if user_id == 0 || group_id.is_empty() {
             return Err(Status::invalid_argument("user_id or group_id is empty"));
         }
 
-        let group = self.db.group.delete_group(&group_id, &user_id).await?;
+        let group = self.db.group.delete_group(&group_id, user_id).await?;
 
         // WE CAN NOT DELETE THE CACHE HERE, CONSUMER NEED IT TO SEND MESSAGE TO USERS
         // delete from cache, and return the members id, this is performance than db
@@ -205,17 +204,14 @@ impl DbService for DbRpcService {
         request: Request<UserAndGroupId>,
     ) -> Result<Response<GroupMemberExitResponse>, Status> {
         let req = request.into_inner();
-        if req.user_id.is_empty() || req.group_id.is_empty() {
+        if req.user_id == 0 || req.group_id.is_empty() {
             return Err(Status::invalid_argument("user_id or group_id is empty"));
         }
-        self.db
-            .group
-            .exit_group(&req.user_id, &req.group_id)
-            .await?;
+        self.db.group.exit_group(req.user_id, &req.group_id).await?;
 
         // delete from cache, also get the members id
         self.cache
-            .remove_group_member_id(&req.group_id, &req.user_id)
+            .remove_group_member_id(&req.group_id, req.user_id)
             .await?;
         let response = GroupMemberExitResponse {};
         Ok(Response::new(response))
@@ -241,11 +237,10 @@ impl DbService for DbRpcService {
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
         debug!("receive create user request: {:?}", request);
-        let mut user = request
+        let user = request
             .into_inner()
             .user
             .ok_or_else(|| Status::invalid_argument("user is empty"))?;
-        user.id = nanoid!();
 
         let user = self.db.user.create_user(user).await?;
         Ok(Response::new(CreateUserResponse { user: Some(user) }))
@@ -256,10 +251,10 @@ impl DbService for DbRpcService {
         request: Request<GetUserRequest>,
     ) -> Result<Response<GetUserResponse>, Status> {
         let user_id = request.into_inner().user_id;
-        if user_id.is_empty() {
+        if user_id == 0 {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let user = self.db.user.get_user_by_id(&user_id).await?;
+        let user = self.db.user.get_user_by_id(user_id).await?;
         Ok(Response::new(GetUserResponse { user }))
     }
 
@@ -284,7 +279,7 @@ impl DbService for DbRpcService {
 
         self.db
             .user
-            .update_region(&inner.user_id, &inner.region)
+            .update_region(inner.user_id, &inner.region)
             .await?;
         Ok(Response::new(UpdateRegionResponse {}))
     }
@@ -297,7 +292,7 @@ impl DbService for DbRpcService {
         if pattern.is_empty() || pattern.chars().count() > 32 {
             return Err(Status::invalid_argument("keyword is empty or too long"));
         }
-        let user = self.db.user.search_user(&user_id, &pattern).await?;
+        let user = self.db.user.search_user(user_id, &pattern).await?;
         Ok(Response::new(SearchUserResponse { user }))
     }
 
@@ -350,10 +345,10 @@ impl DbService for DbRpcService {
         request: Request<FsListRequest>,
     ) -> Result<Response<FsListResponse>, Status> {
         let user_id = request.into_inner().user_id;
-        if user_id.is_empty() {
+        if user_id == 0 {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let list = self.db.friend.get_fs_list(&user_id).await?;
+        let list = self.db.friend.get_fs_list(user_id).await?;
         Ok(Response::new(FsListResponse { friendships: list }))
     }
 
@@ -364,10 +359,10 @@ impl DbService for DbRpcService {
         request: Request<FriendListRequest>,
     ) -> Result<Response<FriendListResponse>, Status> {
         let user_id = request.into_inner().user_id;
-        if user_id.is_empty() {
+        if user_id == 0 {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let friends = self.db.friend.get_friend_list(&user_id).await?;
+        let friends = self.db.friend.get_friend_list(user_id).await?;
         Ok(Response::new(FriendListResponse { friends }))
         // Ok(Response::new(Box::pin(TonicReceiverStream::new(receiver))))
     }
@@ -379,7 +374,7 @@ impl DbService for DbRpcService {
         let req = request.into_inner();
         self.db
             .friend
-            .update_friend_remark(&req.user_id, &req.friend_id, &req.remark)
+            .update_friend_remark(req.user_id, req.friend_id, &req.remark)
             .await?;
         Ok(Response::new(UpdateRemarkResponse {}))
     }
@@ -391,7 +386,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         self.db
             .friend
-            .delete_friend(&inner.user_id, &inner.friend_id)
+            .delete_friend(inner.user_id, inner.friend_id)
             .await?;
         Ok(Response::new(DeleteFriendResponse {}))
     }

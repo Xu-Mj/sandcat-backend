@@ -17,7 +17,7 @@ pub trait GroupStoreRepo: Sync + Send {
     #[allow(dead_code)]
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error>;
 
-    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error>;
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<i64>, Error>;
 
     #[allow(dead_code)]
     async fn query_group_members_by_group_id(
@@ -27,7 +27,7 @@ pub trait GroupStoreRepo: Sync + Send {
 
     async fn update_group(&self, group: &GroupUpdate) -> Result<GroupInfo, Error>;
 
-    async fn exit_group(&self, user_id: &str, group_id: &str) -> Result<(), Error>;
+    async fn exit_group(&self, user_id: i64, group_id: &str) -> Result<(), Error>;
 
-    async fn delete_group(&self, group_id: &str, owner: &str) -> Result<GroupInfo, Error>;
+    async fn delete_group(&self, group_id: &str, owner: i64) -> Result<GroupInfo, Error>;
 }

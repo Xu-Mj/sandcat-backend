@@ -35,7 +35,7 @@ impl GroupStoreRepo for PostgresGroup {
                  RETURNING *",
         )
         .bind(&group.id)
-        .bind(&group.owner)
+        .bind(group.owner)
         .bind(&group.group_name)
         .bind(&group.avatar)
         .bind(now)
@@ -74,7 +74,7 @@ impl GroupStoreRepo for PostgresGroup {
     async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error> {
         sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2")
             .bind(&group.group_id)
-            .bind(&group.user_id)
+            .bind(group.user_id)
             .fetch_one(&self.pool)
             .await?;
 
@@ -108,8 +108,8 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(info)
     }
 
-    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
-        let result: Vec<(String,)> =
+    async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<i64>, Error> {
+        let result: Vec<(i64,)> =
             sqlx::query_as("SELECT user_id FROM group_members WHERE group_id = $1")
                 .bind(group_id)
                 .fetch_all(&self.pool)
@@ -155,7 +155,7 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(group)
     }
 
-    async fn exit_group(&self, user_id: &str, group_id: &str) -> Result<(), Error> {
+    async fn exit_group(&self, user_id: i64, group_id: &str) -> Result<(), Error> {
         sqlx::query("DELETE FROM group_members WHERE user_id = $1 AND group_id = $2")
             .bind(user_id)
             .bind(group_id)
@@ -164,7 +164,7 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(())
     }
 
-    async fn delete_group(&self, group_id: &str, owner: &str) -> Result<GroupInfo, Error> {
+    async fn delete_group(&self, group_id: &str, owner: i64) -> Result<GroupInfo, Error> {
         // delete group and group members
         let mut tx = self.pool.begin().await?;
         let group = sqlx::query_as("DELETE FROM groups WHERE id = $1 and owner = $2 RETURNING *")

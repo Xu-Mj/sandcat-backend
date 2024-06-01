@@ -80,9 +80,9 @@ enum MsgType {
 /// other message type, the content is bincode::serialize(&T)
 message Msg {
   // must have
-  string send_id = 1;
+  int64 send_id = 1;
   // must have
-  string receiver_id = 2;
+  int64 receiver_id = 2;
   // must have
   string local_id = 3;
   string server_id = 4;
@@ -108,7 +108,7 @@ message Msg {
 
 message MsgRead {
   string msg_id = 1;
-  string user_id = 2;
+  int64 user_id = 2;
   string seq = 3;
 }
 
@@ -156,7 +156,7 @@ message Single {
 
 /// user and group id
 message UserAndGroupID {
-  string user_id = 1;
+  int64 user_id = 1;
   string group_id = 2;
 }
 
@@ -169,7 +169,7 @@ message GroupInvitation {
 /// group information also related to database
 message GroupInfo {
   string id = 1;
-  string owner = 2;
+  int64 owner = 2;
   string name = 3;
   string avatar = 4;
   string description = 5;
@@ -183,7 +183,7 @@ message GroupInfo {
 message GroupMember {
   int32 age = 1;
   string group_id = 2;
-  string user_id = 3;
+  int64 user_id = 3;
   string group_name = 4;
   string avatar = 5;
   int64 joined_at = 6;
@@ -197,16 +197,16 @@ message GroupMember {
 /// create group object
 message GroupCreate {
   string id = 1;
-  string owner = 2;
+  int64 owner = 2;
   string avatar = 3;
   string group_name = 4;
-  repeated string members_id = 5;
+  repeated int64 members_id = 5;
 }
 
 message GroupInviteNew {
-  string user_id = 1;
+  int64 user_id = 1;
   string group_id = 2;
-  repeated string members = 3;
+  repeated int64 members = 3;
 }
 
 message GroupUpdate {
@@ -219,7 +219,7 @@ message GroupUpdate {
 }
 
 message User {
-  string id = 1;
+  int64 id = 1;
   string name = 2;
   string account = 3;
   string password = 4;
@@ -238,7 +238,7 @@ message User {
 }
 
 message UserUpdate {
-  string id = 1;
+  int64 id = 1;
   string name = 2;
   string avatar = 3;
   string gender = 4;
@@ -251,7 +251,7 @@ message UserUpdate {
 }
 
 message UserWithMatchType {
-  string id = 1;
+  int64 id = 1;
   string name = 2;
   string account = 3;
   string avatar = 4;
@@ -267,8 +267,8 @@ message UserWithMatchType {
 
 message Friendship {
   string id = 1;
-  string user_id = 2;
-  string friend_id = 3;
+  int64 user_id = 2;
+  int64 friend_id = 3;
   FriendshipStatus status = 4;
   optional string apply_msg = 5;
   optional string req_remark = 6;
@@ -281,7 +281,7 @@ message Friendship {
 
 message FriendshipWithUser {
   string fs_id = 1;
-  string user_id = 2;
+  int64 user_id = 2;
   string name = 3;
   string avatar = 4;
   string gender = 5;
@@ -298,18 +298,18 @@ message FriendshipWithUser {
 
 message Friend {
   string fs_id = 1;
-  string name = 2;
-  string avatar = 3;
-  string gender = 4;
-  int32 age = 5;
-  optional string region = 6;
-  FriendshipStatus status = 7;
-  optional string hello = 8;
-  optional string remark = 9;
-  string source = 10;
-  int64 accept_time = 11;
-  string account = 12;
-  string friend_id = 13;
+  int64 friend_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string region = 7;
+  FriendshipStatus status = 8;
+  optional string hello = 9;
+  optional string remark = 10;
+  string source = 11;
+  int64 accept_time = 12;
+  string account = 13;
   string signature = 14;
   int64 create_time = 15;
   optional string email = 16;
@@ -318,8 +318,8 @@ message Friend {
 message FsCreateRequest { FsCreate fs_create = 1; }
 
 message FsCreate {
-  string user_id = 1;
-  string friend_id = 2;
+  int64 user_id = 1;
+  int64 friend_id = 2;
   optional string apply_msg = 3;
   optional string req_remark = 4;
   string source = 5;
@@ -338,16 +338,16 @@ message FsAgreeResponse {
 }
 
 message UpdateRemarkRequest {
-  string user_id = 1;
-  string friend_id = 2;
+  int64 user_id = 1;
+  int64 friend_id = 2;
   string remark = 3;
 }
 
 message UpdateRemarkResponse {}
 
 message DeleteFriendRequest {
-  string user_id = 1;
-  string friend_id = 2;
+  int64 user_id = 1;
+  int64 friend_id = 2;
 }
 
 message DeleteFriendResponse {}
@@ -358,9 +358,9 @@ message AgreeReply {
   optional string resp_remark = 3;
 }
 
-message FsListRequest { string user_id = 1; }
+message FsListRequest { int64 user_id = 1; }
 
-message FriendListRequest { string user_id = 1; }
+message FriendListRequest { int64 user_id = 1; }
 
 /// only for update friend apply request
 message FsUpdate {
@@ -385,7 +385,7 @@ message GroupUpdateResponse { GroupInfo group = 1; }
 
 message GroupDeleteRequest {
   string group_id = 1;
-  string user_id = 2;
+  int64 user_id = 2;
 }
 
 message GroupDeleteResponse {
@@ -399,13 +399,13 @@ message GroupMemberExitResponse {
 
 message GroupMembersIdRequest { string group_id = 1; }
 
-message GroupMembersIdResponse { repeated string members_id = 1; }
+message GroupMembersIdResponse { repeated int64 members_id = 1; }
 
 message CreateUserRequest { User user = 1; }
 
 message CreateUserResponse { User user = 1; }
 
-message GetUserRequest { string user_id = 1; }
+message GetUserRequest { int64 user_id = 1; }
 
 message GetUserResponse { User user = 1; }
 
@@ -414,14 +414,14 @@ message UpdateUserRequest { UserUpdate user = 1; }
 message UpdateUserResponse { User user = 1; }
 
 message UpdateRegionRequest {
-  string user_id = 1;
+  int64 user_id = 1;
   string region = 2;
 }
 
 message UpdateRegionResponse {}
 
 message SearchUserRequest {
-  string user_id = 1;
+  int64 user_id = 1;
   string pattern = 2;
 }
 
@@ -439,7 +439,7 @@ message SendMsgRequest { Msg message = 1; }
 
 message SendGroupMsgRequest {
   Msg message = 1;
-  repeated string members_id = 2;
+  repeated int64 members_id = 2;
 }
 
 message SendMsgResponse {}
@@ -461,13 +461,13 @@ message SaveMessageResponse {}
 message SaveGroupMsgRequest {
   Msg message = 1;
   bool need_to_history = 2;
-  repeated string members_id = 3;
+  repeated int64 members_id = 3;
 }
 
 message SaveGroupMsgResponse {}
 
 message GetDbMsgRequest {
-  string user_id = 1;
+  int64 user_id = 1;
   int64 start = 2;
   int64 end = 3;
 }
@@ -475,7 +475,7 @@ message GetDbMsgRequest {
 message GetMsgResp { repeated Msg messages = 1; }
 
 message DelMsgRequest {
-  string user_id = 1;
+  int64 user_id = 1;
   repeated string msg_id = 2;
 }
 
@@ -484,7 +484,7 @@ message DelMsgResp {}
 message GroupCreateRequest { GroupCreate group = 1; }
 
 message GroupCreateResponse { GroupInvitation invitation = 1; }
-message SaveMaxSeqRequest { string user_id = 1; }
+message SaveMaxSeqRequest { int64 user_id = 1; }
 message SaveMaxSeqResponse {}
 
 service MsgService {

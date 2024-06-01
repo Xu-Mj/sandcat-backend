@@ -21,11 +21,11 @@ pub trait MsgRecBoxRepo: Sync + Send {
 
     /// save message to message receive box
     /// need the group members id
-    async fn save_group_msg(&self, message: Msg, members: Vec<String>) -> Result<(), Error>;
+    async fn save_group_msg(&self, message: Msg, members: Vec<i64>) -> Result<(), Error>;
 
     async fn delete_message(&self, message_id: &str) -> Result<(), Error>;
 
-    async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error>;
+    async fn delete_messages(&self, user_id: i64, message_ids: Vec<String>) -> Result<(), Error>;
 
     #[allow(dead_code)]
     async fn get_message(&self, message_id: &str) -> Result<Option<Msg>, Error>;
@@ -34,10 +34,10 @@ pub trait MsgRecBoxRepo: Sync + Send {
     /// use stream? or use pagination? prefer stream
     async fn get_messages_stream(
         &self,
-        user_id: &str,
+        user_id: i64,
         start: i64,
         end: i64,
     ) -> Result<mpsc::Receiver<Result<Msg, Error>>, Error>;
 
-    async fn get_messages(&self, user_id: &str, start: i64, end: i64) -> Result<Vec<Msg>, Error>;
+    async fn get_messages(&self, user_id: i64, start: i64, end: i64) -> Result<Vec<Msg>, Error>;
 }

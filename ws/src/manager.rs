@@ -12,7 +12,7 @@ use abi::message::{ContentType, Msg, MsgResponse, MsgType, PlatformType, SendMsg
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
 
-type UserID = String;
+type UserID = i64;
 /// client hub
 type Hub = Arc<DashMap<UserID, DashMap<PlatformType, Client>>>;
 
@@ -40,12 +40,12 @@ impl Manager {
         }
     }
 
-    pub async fn send_group(&self, obj_ids: &Vec<String>, mut msg: Msg) {
-        self.send_to_self(&msg.send_id, &msg).await;
+    pub async fn send_group(&self, obj_ids: &Vec<i64>, mut msg: Msg) {
+        self.send_to_self(msg.send_id, &msg).await;
 
         for id in obj_ids {
             if let Some(clients) = self.hub.get(id) {
-                let seq = match self.cache.get_seq(id).await {
+                let seq = match self.cache.get_seq(*id).await {
                     Ok(seq) => seq,
                     Err(e) => {
                         error!("get seq error: {:?}", e);
@@ -62,8 +62,8 @@ impl Manager {
         }
     }
 
-    async fn send_to_self(&self, id: &str, msg: &Msg) {
-        if let Some(client) = self.hub.get(id) {
+    async fn send_to_self(&self, id: i64, msg: &Msg) {
+        if let Some(client) = self.hub.get(&id) {
             // send to self which another platform client
             let platform = if msg.platform == PlatformType::Mobile as i32 {
                 PlatformType::Desktop
@@ -85,11 +85,11 @@ impl Manager {
         }
     }
 
-    pub async fn send_single_msg(&self, obj_id: &str, msg: &Msg) {
-        if let Some(clients) = self.hub.get(obj_id) {
+    pub async fn send_single_msg(&self, obj_id: i64, msg: &Msg) {
+        if let Some(clients) = self.hub.get(&obj_id) {
             self.send_msg_to_clients(&clients, msg).await;
         }
-        self.send_to_self(&msg.send_id, msg).await;
+        self.send_to_self(msg.send_id, msg).await;
     }
 
     async fn send_msg_to_clients(&self, clients: &DashMap<PlatformType, Client>, msg: &Msg) {
@@ -134,14 +134,14 @@ impl Manager {
     }
 
     // 注册客户端
-    pub async fn register(&mut self, id: String, client: Client) {
+    pub async fn register(&mut self, id: i64, client: Client) {
         self.hub
             .entry(id)
             .or_default()
             .insert(client.platform, client);
     }
 
-    pub async fn unregister(&mut self, id: String, platform: PlatformType) {
+    pub async fn unregister(&mut self, id: i64, platform: PlatformType) {
         let mut flag = false;
         if let Some(clients) = self.hub.get_mut(&id) {
             if clients.len() == 1 {
@@ -191,7 +191,7 @@ impl Manager {
 
             // reply result to sender
             debug!("reply message:{:?}", message);
-            self.send_single_msg(&message.send_id, &message).await;
+            self.send_single_msg(message.send_id, &message).await;
         }
     }
 

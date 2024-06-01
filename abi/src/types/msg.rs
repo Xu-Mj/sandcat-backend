@@ -29,8 +29,8 @@ impl TryFrom<Document> for Msg {
             content: value
                 .get_binary_generic("content")
                 .map_or(vec![], |v| v.to_vec()),
-            send_id: value.get_str("send_id").unwrap_or_default().to_string(),
-            receiver_id: value.get_str("receiver_id").unwrap_or_default().to_string(),
+            send_id: value.get_i64("send_id").unwrap_or_default(),
+            receiver_id: value.get_i64("receiver_id").unwrap_or_default(),
             seq: value.get_i64("seq").unwrap_or_default(),
             msg_type: value.get_i32("msg_type").unwrap_or_default(),
             is_read: value.get_bool("is_read").unwrap_or_default(),
@@ -45,7 +45,7 @@ impl TryFrom<Document> for Msg {
 }
 
 impl SendMsgRequest {
-    pub fn new_with_friend_del(send_id: String, receiver_id: String) -> Self {
+    pub fn new_with_friend_del(send_id: i64, receiver_id: i64) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
@@ -57,7 +57,7 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_req(send_id: String, receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_req(send_id: i64, receiver_id: i64, fs: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
@@ -70,7 +70,7 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_resp(receiver_id: i64, fs: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
                 receiver_id,
@@ -84,16 +84,11 @@ impl SendMsgRequest {
 
     /// when dismiss group, send id is the owner id,
     /// when member exit group, send id is the member id
-    pub fn new_with_group_operation(
-        send_id: String,
-        receiver_id: String,
-        msg_type: MsgType,
-    ) -> Self {
+    pub fn new_with_group_operation(send_id: i64, group_id: String, msg_type: MsgType) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
-                group_id: receiver_id.clone(),
-                receiver_id,
+                group_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: msg_type as i32,
                 ..Default::default()
@@ -101,16 +96,11 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_group_invitation(
-        send_id: String,
-        receiver_id: String,
-        invitation: Vec<u8>,
-    ) -> Self {
+    pub fn new_with_group_invitation(send_id: i64, group_id: String, invitation: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
-                group_id: receiver_id.clone(),
-                receiver_id,
+                group_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupInvitation as i32,
                 content: invitation,
@@ -119,16 +109,11 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_group_invite_new(
-        send_id: String,
-        receiver_id: String,
-        invitation: Vec<u8>,
-    ) -> Self {
+    pub fn new_with_group_invite_new(send_id: i64, group_id: String, invitation: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
-                group_id: receiver_id.clone(),
-                receiver_id,
+                group_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupInviteNew as i32,
                 content: invitation,
@@ -137,12 +122,11 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_group_update(send_id: String, receiver_id: String, msg: Vec<u8>) -> Self {
+    pub fn new_with_group_update(send_id: i64, group_id: String, msg: Vec<u8>) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
-                group_id: receiver_id.clone(),
-                receiver_id,
+                group_id,
                 send_time: chrono::Local::now().timestamp_millis(),
                 msg_type: MsgType::GroupUpdate as i32,
                 content: msg,
@@ -153,14 +137,14 @@ impl SendMsgRequest {
 }
 
 impl UserAndGroupId {
-    pub fn new(user_id: String, group_id: String) -> Self {
+    pub fn new(user_id: i64, group_id: String) -> Self {
         Self { user_id, group_id }
     }
 }
 
 impl GetDbMsgRequest {
     pub fn validate(&self) -> Result<(), Error> {
-        if self.user_id.is_empty() {
+        if self.user_id == 0 {
             return Err(Error::BadRequest("user_id is empty".to_string()));
         }
         if self.start < 0 {

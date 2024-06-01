@@ -26,10 +26,9 @@ impl UserRepo for PostgresUser {
         let mut tx = self.pool.begin().await?;
         let result = sqlx::query_as(
             "INSERT INTO users
-            (id, name, account, password, avatar, gender, age, phone, email, address, region, salt, signature, create_time, update_time)
+            (name, account, password, avatar, gender, age, phone, email, address, region, salt, signature, create_time, update_time)
             VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
-            .bind(&user.id)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
             .bind(&user.name)
             .bind(&user.account)
             .bind(&user.password)
@@ -48,7 +47,7 @@ impl UserRepo for PostgresUser {
             .await?;
         // insert into sequence
         sqlx::query("INSERT INTO sequence (user_id, max_seq) VALUES ($1, $2)")
-            .bind(&user.id)
+            .bind(user.id)
             .bind(self.init_max_seq)
             .execute(&mut *tx)
             .await?;
@@ -56,7 +55,7 @@ impl UserRepo for PostgresUser {
         Ok(result)
     }
 
-    async fn get_user_by_id(&self, id: &str) -> Result<Option<User>, Error> {
+    async fn get_user_by_id(&self, id: i64) -> Result<Option<User>, Error> {
         let user = sqlx::query_as("SELECT * FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
@@ -67,7 +66,7 @@ impl UserRepo for PostgresUser {
     /// not allow to use username
     async fn search_user(
         &self,
-        user_id: &str,
+        user_id: i64,
         pattern: &str,
     ) -> Result<Option<UserWithMatchType>, Error> {
         let user = sqlx::query_as(
@@ -103,7 +102,7 @@ impl UserRepo for PostgresUser {
             WHERE id = $1
             RETURNING *",
         )
-        .bind(&user.id)
+        .bind(user.id)
         .bind(&user.name)
         .bind(&user.avatar)
         .bind(&user.gender)
@@ -119,7 +118,7 @@ impl UserRepo for PostgresUser {
         Ok(user)
     }
 
-    async fn update_region(&self, user_id: &str, region: &str) -> Result<(), Error> {
+    async fn update_region(&self, user_id: i64, region: &str) -> Result<(), Error> {
         sqlx::query("UPDATE users SET region = $2 WHERE id = $1")
             .bind(user_id)
             .bind(region)

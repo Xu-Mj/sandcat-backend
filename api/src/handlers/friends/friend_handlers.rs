@@ -12,7 +12,7 @@ use crate::AppState;
 
 pub async fn get_friends_list_by_user_id(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<i64>,
 ) -> Result<Json<Vec<Friend>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = FriendListRequest { user_id };
@@ -26,7 +26,7 @@ pub async fn get_friends_list_by_user_id(
 // 获取好友申请列表
 pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<i64>,
 ) -> Result<Json<Vec<FriendshipWithUser>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let response = db_rpc
@@ -43,7 +43,7 @@ pub async fn create_friendship(
     JsonWithAuthExtractor(new_friend): JsonWithAuthExtractor<FsCreate>,
 ) -> Result<Json<FriendshipWithUser>, Error> {
     tracing::debug!("{:?}", &new_friend);
-    let receiver_id = new_friend.friend_id.clone();
+    let receiver_id = new_friend.friend_id;
     let mut db_rpc = app_state.db_rpc.clone();
     let response = db_rpc
         .create_friendship(FsCreateRequest {
@@ -100,7 +100,7 @@ pub async fn agree(
     let mut chat_rpc = app_state.chat_rpc.clone();
     chat_rpc
         .send_msg(SendMsgRequest::new_with_friend_ship_resp(
-            req.friend_id.clone(),
+            req.friend_id,
             friend,
         ))
         .await
@@ -128,15 +128,15 @@ pub async fn delete_friend(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<DeleteFriendRequest>,
 ) -> Result<(), Error> {
-    if req.user_id.is_empty() {
+    if req.user_id == 0 {
         return Err(Error::BadRequest(String::from("user id is none")));
     }
-    if req.friend_id.is_empty() {
+    if req.friend_id == 0 {
         return Err(Error::BadRequest(String::from("friend id is none")));
     }
 
-    let user_id = req.user_id.clone();
-    let friend_id = req.friend_id.clone();
+    let user_id = req.user_id;
+    let friend_id = req.friend_id;
 
     let mut db_rpc = app_state.db_rpc.clone();
     db_rpc

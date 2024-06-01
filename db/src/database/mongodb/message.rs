@@ -62,12 +62,12 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn save_group_msg(&self, mut message: Msg, members: Vec<String>) -> Result<(), Error> {
+    async fn save_group_msg(&self, mut message: Msg, members: Vec<i64>) -> Result<(), Error> {
         let mut messages = Vec::with_capacity(members.len());
         // modify message receiver id
         for id in members {
             // increase members sequence
-            let seq = self.cache.get_seq(&id).await?;
+            let seq = self.cache.get_seq(id).await?;
             message.seq = seq;
 
             message.receiver_id = id;
@@ -84,7 +84,7 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error> {
+    async fn delete_messages(&self, user_id: i64, message_ids: Vec<String>) -> Result<(), Error> {
         let query = doc! {"receiver_id": user_id, "server_id": {"$in": message_ids}};
         self.mb.delete_many(query, None).await?;
 
@@ -104,7 +104,7 @@ impl MsgRecBoxRepo for MsgBox {
 
     async fn get_messages_stream(
         &self,
-        user_id: &str,
+        user_id: i64,
         start: i64,
         end: i64,
     ) -> Result<mpsc::Receiver<Result<Msg, Error>>, Error> {
@@ -139,7 +139,7 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(rx)
     }
 
-    async fn get_messages(&self, user_id: &str, start: i64, end: i64) -> Result<Vec<Msg>, Error> {
+    async fn get_messages(&self, user_id: i64, start: i64, end: i64) -> Result<Vec<Msg>, Error> {
         let query = doc! {
             "receiver_id": user_id,
             "seq": {
@@ -244,8 +244,8 @@ mod tests {
             send_time: chrono::Local::now().timestamp(),
             content_type: 0,
             content: "test".to_string().into_bytes(),
-            send_id: "123".to_string(),
-            receiver_id: "111".to_string(),
+            send_id: 1,
+            receiver_id: 2,
             seq: 0,
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
@@ -271,10 +271,7 @@ mod tests {
         msg_box.save_message(&msg).await.unwrap();
 
         // delete it
-        msg_box
-            .delete_messages("111", msg_id.clone())
-            .await
-            .unwrap();
+        msg_box.delete_messages(1, msg_id.clone()).await.unwrap();
 
         let msg = msg_box.get_message(&msg_id[0]).await.unwrap();
         assert!(msg.is_none());

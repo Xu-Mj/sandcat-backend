@@ -17,7 +17,7 @@ impl PostgresSeq {
 
 #[async_trait]
 impl SeqRepo for PostgresSeq {
-    async fn save_max_seq(&self, user_id: &str) -> Result<i64, Error> {
+    async fn save_max_seq(&self, user_id: i64) -> Result<i64, Error> {
         let max_seq =
             sqlx::query("UPDATE sequence SET seq = seq + $1 WHERE user_id = $2 RETURNING seq")
                 .bind(self.seq_step)

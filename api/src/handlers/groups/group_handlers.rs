@@ -17,16 +17,16 @@ use crate::AppState;
 /// create a new record handler
 pub async fn create_group_handler(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<i64>,
     JsonWithAuthExtractor(mut new_group): JsonWithAuthExtractor<GroupCreate>,
 ) -> Result<Json<GroupInvitation>, Error> {
     // filter the empty item
-    new_group.members_id.retain(|v| !v.is_empty());
+    new_group.members_id.retain(|v| *v != 0);
 
     let group_id = nanoid!();
     new_group.id.clone_from(&group_id);
     // put the owner to the group members
-    new_group.members_id.push(user_id.clone());
+    new_group.members_id.push(user_id);
 
     // send rpc request
     let request = GroupCreateRequest::new(new_group);
@@ -60,7 +60,7 @@ pub async fn create_group_handler(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GroupInviteNewResponse {
-    pub user_id: String,
+    pub user_id: i64,
     pub group_id: String,
     pub members: Vec<GroupMember>,
 }
@@ -69,7 +69,7 @@ pub async fn invite_new_members(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(invitation): JsonWithAuthExtractor<GroupInviteNew>,
 ) -> Result<(), Error> {
-    let user_id = invitation.user_id.clone();
+    let user_id = invitation.user_id;
     let group_id = invitation.group_id.clone();
     // update members
     let mut db_rpc = app_state.db_rpc.clone();
@@ -107,7 +107,7 @@ pub async fn invite_new_members(
 
 pub async fn update_group_handler(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<i64>,
     JsonWithAuthExtractor(group_info): JsonWithAuthExtractor<GroupUpdate>,
 ) -> Result<Json<GroupInfo>, Error> {
     // send rpc request to update group
@@ -141,7 +141,7 @@ pub async fn update_group_handler(
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct DeleteGroupRequest {
-    pub user_id: String,
+    pub user_id: i64,
     pub group_id: String,
     pub is_dismiss: bool,
 }
@@ -152,7 +152,7 @@ pub async fn delete_group_handler(
 ) -> Result<(), Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let msg = if group.is_dismiss {
-        let req = GroupDeleteRequest::new(group.group_id.clone(), group.user_id.clone());
+        let req = GroupDeleteRequest::new(group.group_id.clone(), group.user_id);
         db_rpc.group_delete(req).await.map_err(|e| {
             Error::InternalServer(format!(
                 "procedure db rpc service error: group_delete {:?}",
@@ -162,7 +162,7 @@ pub async fn delete_group_handler(
         MsgType::GroupDismiss
     } else {
         // exit group
-        let req = UserAndGroupId::new(group.user_id.clone(), group.group_id.clone());
+        let req = UserAndGroupId::new(group.user_id, group.group_id.clone());
         //todo if the group already dismissed, return success directly
         db_rpc.group_member_exit(req.clone()).await.map_err(|e| {
             Error::InternalServer(format!(

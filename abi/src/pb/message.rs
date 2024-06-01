@@ -9,11 +9,11 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Msg {
     /// must have
-    #[prost(string, tag = "1")]
-    pub send_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub send_id: i64,
     /// must have
-    #[prost(string, tag = "2")]
-    pub receiver_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub receiver_id: i64,
     /// must have
     #[prost(string, tag = "3")]
     pub local_id: ::prost::alloc::string::String,
@@ -51,8 +51,8 @@ pub struct Msg {
 pub struct MsgRead {
     #[prost(string, tag = "1")]
     pub msg_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub user_id: i64,
     #[prost(string, tag = "3")]
     pub seq: ::prost::alloc::string::String,
 }
@@ -140,8 +140,8 @@ pub struct Single {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserAndGroupId {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
 }
@@ -162,8 +162,8 @@ pub struct GroupInvitation {
 pub struct GroupInfo {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub owner: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub owner: i64,
     #[prost(string, tag = "3")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
@@ -187,8 +187,8 @@ pub struct GroupMember {
     pub age: i32,
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "3")]
+    pub user_id: i64,
     #[prost(string, tag = "4")]
     pub group_name: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
@@ -213,25 +213,25 @@ pub struct GroupMember {
 pub struct GroupCreate {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub owner: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub owner: i64,
     #[prost(string, tag = "3")]
     pub avatar: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub group_name: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "5")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "5")]
+    pub members_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupInviteNew {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub members: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "3")]
+    pub members: ::prost::alloc::vec::Vec<i64>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -254,8 +254,8 @@ pub struct GroupUpdate {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct User {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -293,8 +293,8 @@ pub struct User {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserUpdate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -318,8 +318,8 @@ pub struct UserUpdate {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserWithMatchType {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -349,10 +349,10 @@ pub struct UserWithMatchType {
 pub struct Friendship {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub friend_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub user_id: i64,
+    #[prost(int64, tag = "3")]
+    pub friend_id: i64,
     #[prost(enumeration = "FriendshipStatus", tag = "4")]
     pub status: i32,
     #[prost(string, optional, tag = "5")]
@@ -376,8 +376,8 @@ pub struct Friendship {
 pub struct FriendshipWithUser {
     #[prost(string, tag = "1")]
     pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub user_id: i64,
     #[prost(string, tag = "3")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
@@ -409,30 +409,30 @@ pub struct FriendshipWithUser {
 pub struct Friend {
     #[prost(string, tag = "1")]
     pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub friend_id: i64,
     #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
+    pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "5")]
+    #[prost(int32, tag = "6")]
     pub age: i32,
-    #[prost(string, optional, tag = "6")]
+    #[prost(string, optional, tag = "7")]
     pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(enumeration = "FriendshipStatus", tag = "7")]
+    #[prost(enumeration = "FriendshipStatus", tag = "8")]
     pub status: i32,
-    #[prost(string, optional, tag = "8")]
-    pub hello: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "9")]
+    pub hello: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "10")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "10")]
+    #[prost(string, tag = "11")]
     pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "11")]
+    #[prost(int64, tag = "12")]
     pub accept_time: i64,
-    #[prost(string, tag = "12")]
-    pub account: ::prost::alloc::string::String,
     #[prost(string, tag = "13")]
-    pub friend_id: ::prost::alloc::string::String,
+    pub account: ::prost::alloc::string::String,
     #[prost(string, tag = "14")]
     pub signature: ::prost::alloc::string::String,
     #[prost(int64, tag = "15")]
@@ -451,10 +451,10 @@ pub struct FsCreateRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsCreate {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
+    #[prost(int64, tag = "2")]
+    pub friend_id: i64,
     #[prost(string, optional, tag = "3")]
     pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "4")]
@@ -488,10 +488,10 @@ pub struct FsAgreeResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateRemarkRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
+    #[prost(int64, tag = "2")]
+    pub friend_id: i64,
     #[prost(string, tag = "3")]
     pub remark: ::prost::alloc::string::String,
 }
@@ -502,10 +502,10 @@ pub struct UpdateRemarkResponse {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteFriendRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
+    #[prost(int64, tag = "2")]
+    pub friend_id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -525,14 +525,14 @@ pub struct AgreeReply {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsListRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FriendListRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
 }
 /// / only for update friend apply request
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -594,8 +594,8 @@ pub struct GroupUpdateResponse {
 pub struct GroupDeleteRequest {
     #[prost(string, tag = "1")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub user_id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -617,8 +617,8 @@ pub struct GroupMembersIdRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupMembersIdResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "1")]
+    pub members_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -635,8 +635,8 @@ pub struct CreateUserResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetUserRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -659,8 +659,8 @@ pub struct UpdateUserResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateRegionRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(string, tag = "2")]
     pub region: ::prost::alloc::string::String,
 }
@@ -670,8 +670,8 @@ pub struct UpdateRegionResponse {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchUserRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(string, tag = "2")]
     pub pattern: ::prost::alloc::string::String,
 }
@@ -707,8 +707,8 @@ pub struct SendMsgRequest {
 pub struct SendGroupMsgRequest {
     #[prost(message, optional, tag = "1")]
     pub message: ::core::option::Option<Msg>,
-    #[prost(string, repeated, tag = "2")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "2")]
+    pub members_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -744,8 +744,8 @@ pub struct SaveGroupMsgRequest {
     pub message: ::core::option::Option<Msg>,
     #[prost(bool, tag = "2")]
     pub need_to_history: bool,
-    #[prost(string, repeated, tag = "3")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "3")]
+    pub members_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -754,8 +754,8 @@ pub struct SaveGroupMsgResponse {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDbMsgRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(int64, tag = "2")]
     pub start: i64,
     #[prost(int64, tag = "3")]
@@ -771,8 +771,8 @@ pub struct GetMsgResp {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DelMsgRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
     #[prost(string, repeated, tag = "2")]
     pub msg_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -794,8 +794,8 @@ pub struct GroupCreateResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMaxSeqRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub user_id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

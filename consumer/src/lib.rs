@@ -137,7 +137,7 @@ impl ConsumerService {
 
     /// all single and group message need to increase seq,
     /// because we use the same message receive box
-    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
+    async fn increase_seq(&self, user_id: i64) -> Result<(i64, i64), Error> {
         match self.cache.increase_seq(user_id).await {
             Ok(seq) => Ok(seq),
             Err(err) => {
@@ -149,7 +149,7 @@ impl ConsumerService {
 
     /// query members id from cache
     /// if not found, query from db
-    async fn get_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
+    async fn get_members_id(&self, group_id: &str) -> Result<Vec<i64>, Error> {
         match self.cache.query_group_members_id(group_id).await {
             Ok(list) if !list.is_empty() => Ok(list),
             Ok(_) => {
@@ -177,13 +177,13 @@ impl ConsumerService {
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
         if need_increase_seq {
-            let (cur_seq, max_seq) = self.increase_seq(&msg.receiver_id).await?;
+            let (cur_seq, max_seq) = self.increase_seq(msg.receiver_id).await?;
             msg.seq = cur_seq;
             // this actually means that the postgres seq is updated earlier than the cache
             if cur_seq >= max_seq {
                 db_rpc
                     .save_max_seq(SaveMaxSeqRequest {
-                        user_id: msg.receiver_id.clone(),
+                        user_id: msg.receiver_id,
                     })
                     .await
                     .map_err(|e| Error::InternalServer(e.to_string()))?;
@@ -194,10 +194,10 @@ impl ConsumerService {
         let mut members = vec![];
         if msg_type == MsgType2::Group {
             // query group members id from the cache
-            members = self.get_members_id(&msg.receiver_id).await?;
+            members = self.get_members_id(&msg.group_id).await?;
 
             // retain the members id
-            members.retain(|id| id != &msg.send_id);
+            members.retain(|id| *id != msg.send_id);
 
             // increase the members seq
             self.cache.incr_group_seq(&members).await?;
@@ -206,10 +206,10 @@ impl ConsumerService {
             // we should delete the cache data if the type is group dismiss
             // update the cache if the type is group member exit
             if msg.msg_type == MsgType::GroupDismiss as i32 {
-                self.cache.del_group_members(&msg.receiver_id).await?;
+                self.cache.del_group_members(&msg.group_id).await?;
             } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
                 self.cache
-                    .remove_group_member_id(&msg.receiver_id, &msg.send_id)
+                    .remove_group_member_id(&msg.group_id, msg.send_id)
                     .await?;
             }
         }
@@ -262,7 +262,7 @@ impl ConsumerService {
         msg: Msg,
         msg_type: MsgType2,
         need_to_history: bool,
-        members: Vec<String>,
+        members: Vec<i64>,
     ) -> Result<(), Error> {
         // don't send it if data type is call xxx
         let mut send_flag = true;
@@ -327,7 +327,7 @@ impl ConsumerService {
     async fn send_group_to_pusher(
         pusher: &mut PushServiceClient<LbWithServiceDiscovery>,
         msg: Msg,
-        members_id: Vec<String>,
+        members_id: Vec<i64>,
     ) -> Result<(), Error> {
         pusher
             .push_group_msg(SendGroupMsgRequest {
@@ -341,7 +341,7 @@ impl ConsumerService {
 
     /// query members id from database
     /// and set it to cache
-    async fn query_group_members_id_from_db(&self, group_id: &str) -> Result<Vec<String>, Error> {
+    async fn query_group_members_id_from_db(&self, group_id: &str) -> Result<Vec<i64>, Error> {
         let request = GroupMembersIdRequest {
             group_id: group_id.to_string(),
         };

@@ -73,7 +73,7 @@ pub async fn create_user(
     let id = nanoid!();
     // convert user to db user
     let user2db = User {
-        id: id.clone(),
+        id: 0,
         name: new_user.name,
         account: id,
         password,
@@ -126,7 +126,7 @@ pub async fn update_user(
 
 pub async fn get_user_by_id(
     State(app_state): State<AppState>,
-    PathExtractor(id): PathExtractor<String>,
+    PathExtractor(id): PathExtractor<i64>,
 ) -> Result<Json<User>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = GetUserRequest { user_id: id };
@@ -142,7 +142,7 @@ pub async fn get_user_by_id(
 
 pub async fn search_user(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor((user_id, pattern)): PathWithAuthExtractor<(String, String)>,
+    PathWithAuthExtractor((user_id, pattern)): PathWithAuthExtractor<(i64, String)>,
 ) -> Result<Json<Option<UserWithMatchType>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = SearchUserRequest { user_id, pattern };
@@ -157,9 +157,9 @@ pub async fn search_user(
 
 pub async fn logout(
     State(app_state): State<AppState>,
-    PathExtractor(uuid): PathExtractor<String>,
+    PathExtractor(uuid): PathExtractor<i64>,
 ) -> Result<(), Error> {
-    app_state.cache.user_logout(&uuid).await?;
+    app_state.cache.user_logout(uuid).await?;
     Ok(())
 }
 
@@ -192,7 +192,7 @@ pub async fn login(
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
-    app_state.cache.user_login(&user.account).await?;
+    app_state.cache.user_login(user.id).await?;
 
     // get websocket service address
     // let ws_lb = Arc::get_mut(&mut app_state.ws_lb).unwrap();
@@ -219,7 +219,7 @@ pub async fn login(
     if user.region.is_some() {
         // update user region
         let request = UpdateRegionRequest {
-            user_id: user.id.clone(),
+            user_id: user.id,
             region: user.region.as_ref().unwrap().clone(),
         };
         let _ = db_rpc

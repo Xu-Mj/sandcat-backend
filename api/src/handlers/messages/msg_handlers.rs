@@ -67,9 +67,9 @@ pub struct Seq {
 
 pub async fn get_seq(
     State(state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<i64>,
 ) -> Result<Json<Seq>, Error> {
-    let seq = state.cache.get_seq(&user_id).await?;
+    let seq = state.cache.get_seq(user_id).await?;
     Ok(Json(Seq { seq }))
 }
 

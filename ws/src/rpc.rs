@@ -76,7 +76,7 @@ impl MsgService for MsgRpcService {
             .message
             .ok_or_else(|| Status::invalid_argument("message is empty"))?;
         debug!("send message to user: {:?}", msg);
-        self.manager.send_single_msg(&msg.receiver_id, &msg).await;
+        self.manager.send_single_msg(msg.receiver_id, &msg).await;
         let response = Response::new(SendMsgResponse {});
         Ok(response)
     }

@@ -14,7 +14,7 @@ pub struct Client {
     // hold a ws connection sender
     pub sender: ClientSender,
     // user id
-    pub user_id: String,
+    pub user_id: i64,
     // platform id
     pub platform_id: String,
     pub platform: PlatformType,

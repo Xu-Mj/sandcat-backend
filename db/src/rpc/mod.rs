@@ -103,7 +103,7 @@ impl DbRpcService {
         &self,
         message: Msg,
         need_to_history: bool,
-        members_id: Vec<String>,
+        members_id: Vec<i64>,
     ) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
