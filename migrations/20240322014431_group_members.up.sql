@@ -2,7 +2,7 @@ CREATE TABLE group_members
 (
 --     id           BIGSERIAL PRIMARY KEY,
     group_id     VARCHAR NOT NULL,
-    user_id      VARCHAR NOT NULL,
+    user_id      BIGINT  NOT NULL,
     group_name   VARCHAR(128),
     group_remark VARCHAR(128),
     joined_at    BIGINT  NOT NULL,

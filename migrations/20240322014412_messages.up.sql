@@ -1,7 +1,7 @@
 CREATE TABLE messages
 (
-    send_id      VARCHAR NOT NULL,
-    receiver_id  VARCHAR NOT NULL,
+    send_id      BIGINT  NOT NULL,
+    receiver_id  BIGINT  NOT NULL,
     local_id     VARCHAR NOT NULL,
     server_id    VARCHAR NOT NULL,
     send_time    BIGINT  NOT NULL,

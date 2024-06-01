@@ -3,7 +3,7 @@
 CREATE TABLE groups
 (
     id           VARCHAR PRIMARY KEY,
-    owner        VARCHAR(256) NOT NULL,
+    owner        BIGINT NOT NULL,
     name         VARCHAR(256) NOT NULL,
     avatar       TEXT         NOT NULL,
     description  TEXT         NOT NULL DEFAULT '',

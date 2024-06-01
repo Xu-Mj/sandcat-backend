@@ -2,8 +2,8 @@ CREATE TYPE friend_request_status AS ENUM ('Pending', 'Accepted', 'Rejected', 'B
 create table friendships
 (
     id          VARCHAR primary key,
-    user_id     VARCHAR               NOT NULL,
-    friend_id   VARCHAR               NOT NULL,
+    user_id     BIGINT                NOT NULL,
+    friend_id   BIGINT                NOT NULL,
     status      friend_request_status NOT NULL DEFAULT 'Pending',
     apply_msg   VARCHAR,
     req_remark  VARCHAR,
