@@ -1,8 +1,11 @@
+mod load_seq;
+
 use abi::config::{Component, Config};
 use chat::ChatRpcService;
 use clap::{command, Arg};
 use consumer::ConsumerService;
 use db::rpc::DbRpcService;
+use load_seq::load_seq;
 use pusher::PusherRpcService;
 use tracing::{error, info};
 use ws::ws_server::WsServer;
@@ -57,6 +60,8 @@ async fn main() {
             .with_max_level(config.log.level())
             .init();
     }
+    // check if redis need to load seq
+    load_seq(&config).await;
 
     match config.component {
         Component::Chat => ChatRpcService::start(&config).await,

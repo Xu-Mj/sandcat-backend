@@ -10,12 +10,17 @@ mod redis;
 
 #[async_trait]
 pub trait Cache: Sync + Send + Debug {
+    async fn check_seq_loaded(&self) -> Result<bool, Error>;
+    async fn set_seq_loaded(&self) -> Result<(), Error>;
+
+    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+
     /// query sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
-    async fn increase_seq(&self, user_id: &str) -> Result<i64, Error>;
+    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
 
     /// INCREASE GROUP MEMBERS SEQUENCE
-    async fn incr_group_seq(&self, members: &[String]) -> Result<(), Error>;
+    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error>;
 
     /// query group members id
     async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error>;

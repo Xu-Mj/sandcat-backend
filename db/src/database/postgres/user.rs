@@ -10,11 +10,12 @@ use crate::database::user::UserRepo;
 #[derive(Debug)]
 pub struct PostgresUser {
     pool: PgPool,
+    init_max_seq: i32,
 }
 
 impl PostgresUser {
-    pub fn new(pool: PgPool) -> Self {
-        PostgresUser { pool }
+    pub fn new(pool: PgPool, init_max_seq: i32) -> Self {
+        PostgresUser { pool, init_max_seq }
     }
 }
 
@@ -22,6 +23,7 @@ impl PostgresUser {
 impl UserRepo for PostgresUser {
     async fn create_user(&self, user: User) -> Result<User, Error> {
         let now = chrono::Local::now().timestamp_millis();
+        let mut tx = self.pool.begin().await?;
         let result = sqlx::query_as(
             "INSERT INTO users
             (id, name, account, password, avatar, gender, age, phone, email, address, region, salt, signature, create_time, update_time)
@@ -42,8 +44,17 @@ impl UserRepo for PostgresUser {
             .bind(&user.signature)
             .bind(now)
             .bind(now)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
+
+        // insert into sequence
+        sqlx::query("INSERT INTO sequence (user_id, max_seq) VALUES ($1, $2)")
+            .bind(&user.id)
+            .bind(self.init_max_seq)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
         Ok(result)
     }
 

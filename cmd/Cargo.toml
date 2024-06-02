@@ -10,6 +10,7 @@ edition = "2021"
 abi = { version = "0.1.0", path = "../abi" }
 api = { version = "0.1.0", path = "../api" }
 chat = { version = "0.1.0", path = "../chat" }
+cache = { version = "0.1.0", path = "../cache" }
 consumer = { version = "0.1.0", path = "../consumer" }
 db = { version = "0.1.0", path = "../db" }
 pusher = { version = "0.1.0", path = "../pusher" }

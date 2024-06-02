@@ -9,8 +9,8 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMessageRequest,
-    SendGroupMsgRequest, SendMsgRequest,
+    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqBatchRequest,
+    SaveMaxSeqRequest, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
@@ -135,18 +135,6 @@ impl ConsumerService {
         (msg_type, need_increase_seq, need_history)
     }
 
-    /// all single and group message need to increase seq,
-    /// because we use the same message receive box
-    async fn increase_seq(&self, user_id: &str) -> Result<i64, Error> {
-        match self.cache.increase_seq(user_id).await {
-            Ok(seq) => Ok(seq),
-            Err(err) => {
-                error!("failed to get seq, error: {:?}", err);
-                Err(err)
-            }
-        }
-    }
-
     /// query members id from cache
     /// if not found, query from db
     async fn get_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
@@ -177,7 +165,16 @@ impl ConsumerService {
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
         if need_increase_seq {
-            msg.seq = self.increase_seq(&msg.receiver_id).await?;
+            let (cur_seq, _, updated) = self.cache.increase_seq(&msg.receiver_id).await?;
+            msg.seq = cur_seq;
+            if updated {
+                db_rpc
+                    .save_max_seq(SaveMaxSeqRequest {
+                        user_id: msg.receiver_id.clone(),
+                    })
+                    .await
+                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+            }
         }
 
         // query members id from cache if the message type is group
@@ -190,7 +187,26 @@ impl ConsumerService {
             members.retain(|id| id != &msg.send_id);
 
             // increase the members seq
-            self.cache.incr_group_seq(&members).await?;
+            let seq = self.cache.incr_group_seq(&members).await?;
+
+            // handle group members max_seq
+            let need_update = seq
+                .into_iter()
+                .enumerate()
+                .filter_map(|(index, item)| {
+                    if item.2 {
+                        members.get(index).cloned()
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<String>>();
+            db_rpc
+                .save_max_seq_batch(SaveMaxSeqBatchRequest {
+                    user_ids: need_update,
+                })
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
 
             // judge the message type;
             // we should delete the cache data if the type is group dismiss
