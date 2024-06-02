@@ -137,7 +137,7 @@ impl ConsumerService {
 
     /// all single and group message need to increase seq,
     /// because we use the same message receive box
-    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
+    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
         match self.cache.increase_seq(user_id).await {
             Ok(seq) => Ok(seq),
             Err(err) => {
@@ -177,9 +177,9 @@ impl ConsumerService {
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
         if need_increase_seq {
-            let (cur_seq, max_seq) = self.increase_seq(&msg.receiver_id).await?;
+            let (cur_seq, _, updated) = self.increase_seq(&msg.receiver_id).await?;
             msg.seq = cur_seq;
-            if cur_seq >= max_seq - 1 {
+            if updated {
                 db_rpc
                     .save_max_seq(SaveMaxSeqRequest {
                         user_id: msg.receiver_id.clone(),
@@ -206,7 +206,7 @@ impl ConsumerService {
                 .into_iter()
                 .enumerate()
                 .filter_map(|(index, item)| {
-                    if item.0 >= item.1 {
+                    if item.2 {
                         members.get(index).cloned()
                     } else {
                         None

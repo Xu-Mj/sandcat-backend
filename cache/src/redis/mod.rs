@@ -57,15 +57,17 @@ impl RedisCache {
         let script = r#"
         local cur_seq = redis.call('HINCRBY', KEYS[1], 'cur_seq', 1)
         local max_seq = redis.call('HGET', KEYS[1], 'max_seq')
+        local updated = false
         if max_seq == false then
             max_seq = tonumber(ARGV[1])
             redis.call('HSET', KEYS[1], 'max_seq', max_seq)
-        end
+            end
         if tonumber(cur_seq) > tonumber(max_seq) then
             max_seq = tonumber(max_seq) + ARGV[1]
             redis.call('HSET', KEYS[1], 'max_seq', max_seq)
+            updated = true
         end
-        return {cur_seq, max_seq}
+        return {cur_seq, max_seq, updated}
         "#;
         redis::Script::new(script)
             .prepare_invoke()
@@ -86,7 +88,7 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
+    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
         // generate key
         let key = format!("seq:{}", user_id);
 
@@ -102,7 +104,7 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64)>, Error> {
+    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // use pipe to increase the group members seq
         let mut pipe = redis::pipe();
@@ -115,7 +117,7 @@ impl Cache for RedisCache {
                 .arg(self.seq_step)
                 .ignore();
         }
-        let seq: Vec<(i64, i64)> = pipe.query_async(&mut conn).await?;
+        let seq: Vec<(i64, i64, bool)> = pipe.query_async(&mut conn).await?;
         Ok(seq)
     }
 
@@ -267,7 +269,7 @@ mod tests {
         let user_id = "test";
         let cache = TestRedis::new();
         let seq = cache.increase_seq(user_id).await.unwrap();
-        assert_eq!(seq, (1, DEFAULT_SEQ_STEP as i64));
+        assert_eq!(seq, (1, DEFAULT_SEQ_STEP as i64, false));
     }
 
     #[tokio::test]
