@@ -44,6 +44,12 @@ pub struct Msg {
     /// platform of the sender
     #[prost(enumeration = "PlatformType", tag = "16")]
     pub platform: i32,
+    /// user avatar
+    #[prost(string, tag = "17")]
+    pub avatar: ::prost::alloc::string::String,
+    /// user nickname
+    #[prost(string, tag = "18")]
+    pub nickname: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

@@ -104,6 +104,11 @@ message Msg {
 
   // platform of the sender
   PlatformType platform = 16;
+
+  // user avatar
+  string avatar = 17;
+  // user nickname
+  string nickname = 18;
 }
 
 message MsgRead {

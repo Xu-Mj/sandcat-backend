@@ -36,10 +36,8 @@ impl TryFrom<Document> for Msg {
             is_read: value.get_bool("is_read").unwrap_or_default(),
             group_id: value.get_str("group_id").unwrap_or_default().to_string(),
             platform: value.get_i32("platform").unwrap_or_default(),
-            // those do not save to mongodb
-            // sdp: None,
-            // sdp_mid: None,
-            // sdp_m_index: None,
+            avatar: value.get_str("avatar").unwrap_or_default().to_string(),
+            nickname: value.get_str("nickname").unwrap_or_default().to_string(),
         })
     }
 }
