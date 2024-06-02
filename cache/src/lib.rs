@@ -10,6 +10,8 @@ mod redis;
 
 #[async_trait]
 pub trait Cache: Sync + Send + Debug {
+    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+
     /// query sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;

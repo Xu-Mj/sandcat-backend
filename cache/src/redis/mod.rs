@@ -78,6 +78,18 @@ impl RedisCache {
 
 #[async_trait]
 impl Cache for RedisCache {
+    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let mut pipe = redis::pipe();
+        for (user_id, max_seq) in max_seq {
+            let key = format!("seq:{}", user_id);
+            pipe.hset(&key, "cur_seq", max_seq);
+            pipe.hset(&key, "max_seq", max_seq);
+        }
+        pipe.query_async(&mut conn).await?;
+        Ok(())
+    }
+
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error> {
         // generate key
         let key = format!("seq:{}", user_id);
