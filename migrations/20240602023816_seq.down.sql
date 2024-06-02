@@ -1,0 +1,1 @@
+DELETE TABLE sequence IF EXISTS;
