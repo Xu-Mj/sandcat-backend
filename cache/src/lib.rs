@@ -10,6 +10,9 @@ mod redis;
 
 #[async_trait]
 pub trait Cache: Sync + Send + Debug {
+    async fn check_seq_loaded(&self) -> Result<bool, Error>;
+    async fn set_seq_loaded(&self) -> Result<(), Error>;
+
     async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
 
     /// query sequence by user id

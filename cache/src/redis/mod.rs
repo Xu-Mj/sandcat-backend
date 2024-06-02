@@ -14,8 +14,19 @@ const REGISTER_CODE_KEY: &str = "register_code";
 const REGISTER_CODE_EXPIRE: i64 = 300;
 
 const USER_ONLINE_SET: &str = "user_online_set";
+
 const DEFAULT_SEQ_STEP: i32 = 5000;
+
 const EVALSHA: &str = "EVALSHA";
+
+const CUR_SEQ_KEY: &str = "cur_seq";
+
+const MAX_SEQ_KEY: &str = "max_seq";
+
+const IS_LOADED: &str = "seq_need_load";
+
+const SEQ_NO_NEED_LOAD: &str = "false";
+
 #[derive(Debug)]
 pub struct RedisCache {
     client: redis::Client,
@@ -78,13 +89,30 @@ impl RedisCache {
 
 #[async_trait]
 impl Cache for RedisCache {
+    async fn check_seq_loaded(&self) -> Result<bool, Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+
+        // redis.get::<K,U>() K is a key, U is a type of returned value
+        let need_load = conn.get::<_, Option<String>>(IS_LOADED).await;
+        match need_load {
+            Ok(Some(value)) if value == SEQ_NO_NEED_LOAD => return Ok(false),
+            _ => return Ok(true),
+        }
+    }
+
+    async fn set_seq_loaded(&self) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        conn.set(IS_LOADED, SEQ_NO_NEED_LOAD).await?;
+        Ok(())
+    }
+
     async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         let mut pipe = redis::pipe();
         for (user_id, max_seq) in max_seq {
             let key = format!("seq:{}", user_id);
-            pipe.hset(&key, "cur_seq", max_seq);
-            pipe.hset(&key, "max_seq", max_seq);
+            pipe.hset(&key, CUR_SEQ_KEY, max_seq);
+            pipe.hset(&key, MAX_SEQ_KEY, max_seq);
         }
         pipe.query_async(&mut conn).await?;
         Ok(())
