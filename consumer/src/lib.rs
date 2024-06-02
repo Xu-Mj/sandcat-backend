@@ -9,8 +9,8 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMessageRequest,
-    SendGroupMsgRequest, SendMsgRequest,
+    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqRequest,
+    SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
@@ -179,7 +179,14 @@ impl ConsumerService {
         if need_increase_seq {
             let (cur_seq, max_seq) = self.increase_seq(&msg.receiver_id).await?;
             msg.seq = cur_seq;
-            if cur_seq >= max_seq {}
+            if cur_seq >= max_seq - 1 {
+                db_rpc
+                    .save_max_seq(SaveMaxSeqRequest {
+                        user_id: msg.receiver_id.clone(),
+                    })
+                    .await
+                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+            }
         }
 
         // query members id from cache if the message type is group

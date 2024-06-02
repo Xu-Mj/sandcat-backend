@@ -485,10 +485,7 @@ message GroupCreateRequest { GroupCreate group = 1; }
 
 message GroupCreateResponse { GroupInvitation invitation = 1; }
 
-message SaveMaxSeqRequest {
-  string user_id = 1;
-  int32 seq_step = 2;
-}
+message SaveMaxSeqRequest { string user_id = 1; }
 
 message SaveMaxSeqResponse {}
 

@@ -100,7 +100,7 @@ impl DbService for DbRpcService {
         request: Request<SaveMaxSeqRequest>,
     ) -> Result<Response<SaveMaxSeqResponse>, Status> {
         let req = request.into_inner();
-        if let Err(e) = self.db.seq.save_max_seq(&req.user_id, req.seq_step).await {
+        if let Err(e) = self.db.seq.save_max_seq(&req.user_id).await {
             return Err(Status::internal(e.to_string()));
         };
         Ok(Response::new(SaveMaxSeqResponse {}))
