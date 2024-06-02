@@ -135,18 +135,6 @@ impl ConsumerService {
         (msg_type, need_increase_seq, need_history)
     }
 
-    /// all single and group message need to increase seq,
-    /// because we use the same message receive box
-    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
-        match self.cache.increase_seq(user_id).await {
-            Ok(seq) => Ok(seq),
-            Err(err) => {
-                error!("failed to get seq, error: {:?}", err);
-                Err(err)
-            }
-        }
-    }
-
     /// query members id from cache
     /// if not found, query from db
     async fn get_members_id(&self, group_id: &str) -> Result<Vec<String>, Error> {
@@ -177,7 +165,7 @@ impl ConsumerService {
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
         if need_increase_seq {
-            let (cur_seq, _, updated) = self.increase_seq(&msg.receiver_id).await?;
+            let (cur_seq, _, updated) = self.cache.increase_seq(&msg.receiver_id).await?;
             msg.seq = cur_seq;
             if updated {
                 db_rpc

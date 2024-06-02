@@ -31,18 +31,21 @@ const SEQ_NO_NEED_LOAD: &str = "false";
 pub struct RedisCache {
     client: redis::Client,
     seq_step: i32,
-    seq_exe_sha: String,
+    single_seq_exe_sha: String,
+    group_seq_exe_sha: String,
 }
 
 impl RedisCache {
     #[allow(dead_code)]
     pub fn new(client: redis::Client) -> Self {
-        let seq_exe_sha = Self::script_load(&client);
+        let seq_exe_sha = Self::single_script_load(&client);
+        let group_seq_exe_sha = Self::group_script_load(&client);
         let seq_step = DEFAULT_SEQ_STEP;
         Self {
             client,
-            seq_exe_sha,
+            single_seq_exe_sha: seq_exe_sha,
             seq_step,
+            group_seq_exe_sha,
         }
     }
     pub fn from_config(config: &Config) -> Self {
@@ -50,7 +53,8 @@ impl RedisCache {
         // Program should panic if unable to connect to Redis, as it's critical for operation.
         let client = redis::Client::open(config.redis.url()).unwrap();
         // init redis
-        let seq_exe_sha = Self::script_load(&client);
+        let seq_exe_sha = Self::single_script_load(&client);
+        let group_seq_exe_sha = Self::group_script_load(&client);
         let mut seq_step = DEFAULT_SEQ_STEP;
         if config.redis.seq_step != 0 {
             seq_step = config.redis.seq_step;
@@ -58,11 +62,12 @@ impl RedisCache {
         Self {
             client,
             seq_step,
-            seq_exe_sha,
+            single_seq_exe_sha: seq_exe_sha,
+            group_seq_exe_sha,
         }
     }
 
-    fn script_load(client: &redis::Client) -> String {
+    fn single_script_load(client: &redis::Client) -> String {
         let mut conn = client.get_connection().unwrap();
 
         let script = r#"
@@ -79,6 +84,40 @@ impl RedisCache {
             updated = true
         end
         return {cur_seq, max_seq, updated}
+        "#;
+        redis::Script::new(script)
+            .prepare_invoke()
+            .load(&mut conn)
+            .unwrap()
+    }
+
+    fn group_script_load(client: &redis::Client) -> String {
+        let mut conn = client.get_connection().unwrap();
+
+        let script = r#"
+        local seq_step = tonumber(ARGV[1])
+        local result = {}
+
+        for i=2,#ARGV do
+            local key = "seq:" .. ARGV[i]
+            local cur_seq = redis.call('HINCRBY', key, 'cur_seq', 1)
+            local max_seq = redis.call('HGET', key, 'max_seq')
+            local updated = false
+            if max_seq == false then
+                max_seq = seq_step
+                redis.call('HSET', key, 'max_seq', max_seq)
+            else
+                max_seq = tonumber(max_seq)
+            end
+            if cur_seq > max_seq then
+                max_seq = max_seq + seq_step
+                redis.call('HSET', key, 'max_seq', max_seq)
+                updated = true
+            end
+            table.insert(result, {cur_seq, max_seq, updated})
+        end
+
+        return result
         "#;
         redis::Script::new(script)
             .prepare_invoke()
@@ -135,7 +174,7 @@ impl Cache for RedisCache {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // increase seq
         let seq = redis::cmd(EVALSHA)
-            .arg(&self.seq_exe_sha)
+            .arg(&self.single_seq_exe_sha)
             .arg(1)
             .arg(&key)
             .arg(self.seq_step)
@@ -146,18 +185,31 @@ impl Cache for RedisCache {
 
     async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        // use pipe to increase the group members seq
-        let mut pipe = redis::pipe();
-        for member in members {
-            let key = format!("seq:{}", member);
-            pipe.cmd(EVALSHA)
-                .arg(&self.seq_exe_sha)
-                .arg(1)
-                .arg(&key)
-                .arg(self.seq_step)
-                .ignore();
+
+        let mut cmd = redis::cmd("EVALSHA");
+        cmd.arg(&self.group_seq_exe_sha).arg(0).arg(self.seq_step);
+
+        for member in members.iter() {
+            cmd.arg(member);
         }
-        let seq: Vec<(i64, i64, bool)> = pipe.query_async(&mut conn).await?;
+
+        let response: Vec<redis::Value> = cmd.query_async(&mut conn).await?;
+
+        let mut seq = Vec::with_capacity(members.len());
+        for item in response {
+            if let redis::Value::Bulk(bulk_item) = item {
+                if bulk_item.len() == 3 {
+                    if let (
+                        redis::Value::Int(cur_seq),
+                        redis::Value::Int(max_seq),
+                        redis::Value::Int(updated),
+                    ) = (&bulk_item[0], &bulk_item[1], &bulk_item[2])
+                    {
+                        seq.push((*cur_seq, *max_seq, *updated != 0));
+                    }
+                }
+            }
+        }
         Ok(seq)
     }
 
