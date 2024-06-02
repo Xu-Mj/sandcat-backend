@@ -12,7 +12,7 @@ mod redis;
 pub trait Cache: Sync + Send + Debug {
     /// query sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
-    async fn increase_seq(&self, user_id: &str) -> Result<i64, Error>;
+    async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64), Error>;
 
     /// INCREASE GROUP MEMBERS SEQUENCE
     async fn incr_group_seq(&self, members: &[String]) -> Result<(), Error>;
