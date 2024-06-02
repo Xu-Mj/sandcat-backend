@@ -38,15 +38,13 @@ This project provides an implementation of a backend for an Instant Messaging (I
    - **Consul:** For service registration and discovery.
    - **MinIO:** An object storage solution for handling file uploads and downloads.
 
-
-
 ## Performance and Scalability
 
    The project is designed with high performance and horizontal scalability in mind. Through asynchronous processing and a microservice architecture, the system is capable of scaling effectively by increasing the number of service instances in response to the growing load. Additionally, the project adopts a modular design philosophy that allows developers to customize or replace modules as needed.
 
 ## Unresolved questions
 
-- **Storing Message Sequences in Redis**: We currently increment the sequence numbers simply, without confirming their accuracy. There's a need to ensure the correctness of this sequence.
+- **Storing Message Sequences in Redis**: Maybe We should to utilize the shared number segments to reduce database operational presure and significantly decrease data loading on redis restart.
 - **Integrating Member ID Retrieval from Cache into DB Service**: Whether the method for retrieving member IDs from the cache should be integrated into the DB service is under consideration.
 - **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
@@ -100,6 +98,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
    cargo add rdkafka --features dynamic-linking -p consumer
    cargo add rdkafka --features dynamic-linking -p chat
    ```
+
    If you encounter problems during compilation, please try manually removing the cmake-build feature and then attempt to compile again.
 
 3. run docker compose
@@ -110,26 +109,26 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** make sure all the third service are running in docker.
 
-5. install sqlx-cli and init the database
+4. install sqlx-cli and init the database
 
    ```shell
    cargo install sqlx-cli
    sqlx migrate run
    ```
 
-6. build
+5. build
 
    ```shell
    cargo build --release
    ```
 
-7. copy the binary file to root path
+6. copy the binary file to root path
 
    ```shell
    cp target/release/cmd ./sandcat
    ```
 
-8. run
+7. run
 
    ```shell
    ./sandcat
