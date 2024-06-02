@@ -9,8 +9,8 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqRequest,
-    SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
+    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqBatchRequest,
+    SaveMaxSeqRequest, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
@@ -199,7 +199,26 @@ impl ConsumerService {
             members.retain(|id| id != &msg.send_id);
 
             // increase the members seq
-            self.cache.incr_group_seq(&members).await?;
+            let seq = self.cache.incr_group_seq(&members).await?;
+
+            // handle group members max_seq
+            let need_update = seq
+                .into_iter()
+                .enumerate()
+                .filter_map(|(index, item)| {
+                    if item.0 >= item.1 {
+                        members.get(index).cloned()
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<String>>();
+            db_rpc
+                .save_max_seq_batch(SaveMaxSeqBatchRequest {
+                    user_ids: need_update,
+                })
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
 
             // judge the message type;
             // we should delete the cache data if the type is group dismiss

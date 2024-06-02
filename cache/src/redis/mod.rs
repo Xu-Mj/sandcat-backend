@@ -102,7 +102,7 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn incr_group_seq(&self, members: &[String]) -> Result<(), Error> {
+    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64)>, Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // use pipe to increase the group members seq
         let mut pipe = redis::pipe();
@@ -115,8 +115,8 @@ impl Cache for RedisCache {
                 .arg(self.seq_step)
                 .ignore();
         }
-        pipe.query_async(&mut conn).await?;
-        Ok(())
+        let seq: Vec<(i64, i64)> = pipe.query_async(&mut conn).await?;
+        Ok(seq)
     }
 
     /// the group members id in redis is a set, with group_members_id:group_id as key
