@@ -18,13 +18,14 @@ impl PostgresSeq {
 #[async_trait]
 impl SeqRepo for PostgresSeq {
     async fn save_max_seq(&self, user_id: &str) -> Result<i64, Error> {
-        let max_seq =
-            sqlx::query("UPDATE sequence SET seq = seq + $1 WHERE user_id = $2 RETURNING seq")
-                .bind(self.seq_step)
-                .bind(user_id)
-                .fetch_one(&self.pool)
-                .await?
-                .try_get(0)?;
+        let max_seq = sqlx::query(
+            "UPDATE sequence SET max_seq = max_seq + $1 WHERE user_id = $2 RETURNING max_seq",
+        )
+        .bind(self.seq_step)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?
+        .try_get(0)?;
         Ok(max_seq)
     }
 }
