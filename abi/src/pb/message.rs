@@ -799,6 +799,12 @@ pub struct SaveMaxSeqRequest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SaveMaxSeqBatchRequest {
+    #[prost(string, repeated, tag = "1")]
+    pub user_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMaxSeqResponse {}
 /// / user platform which login the system
 #[derive(
@@ -1504,6 +1510,25 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "SaveMaxSeq"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / save message max sequence batch
+        pub async fn save_max_seq_batch(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SaveMaxSeqBatchRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveMaxSeqResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/SaveMaxSeqBatch");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "SaveMaxSeqBatch"));
             self.inner.unary(req, path, codec).await
         }
         /// / create group
@@ -2451,6 +2476,11 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::SaveMaxSeqRequest>,
         ) -> std::result::Result<tonic::Response<super::SaveMaxSeqResponse>, tonic::Status>;
+        /// / save message max sequence batch
+        async fn save_max_seq_batch(
+            &self,
+            request: tonic::Request<super::SaveMaxSeqBatchRequest>,
+        ) -> std::result::Result<tonic::Response<super::SaveMaxSeqResponse>, tonic::Status>;
         /// / create group
         async fn group_create(
             &self,
@@ -2850,6 +2880,48 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = SaveMaxSeqSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/SaveMaxSeqBatch" => {
+                    #[allow(non_camel_case_types)]
+                    struct SaveMaxSeqBatchSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::SaveMaxSeqBatchRequest>
+                        for SaveMaxSeqBatchSvc<T>
+                    {
+                        type Response = super::SaveMaxSeqResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SaveMaxSeqBatchRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::save_max_seq_batch(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SaveMaxSeqBatchSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

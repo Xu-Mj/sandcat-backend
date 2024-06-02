@@ -487,6 +487,8 @@ message GroupCreateResponse { GroupInvitation invitation = 1; }
 
 message SaveMaxSeqRequest { string user_id = 1; }
 
+message SaveMaxSeqBatchRequest { repeated string user_ids = 1; }
+
 message SaveMaxSeqResponse {}
 
 service MsgService {
@@ -515,6 +517,8 @@ service DbService {
   rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
   /// save message max sequence
   rpc SaveMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
+  /// save message max sequence batch
+  rpc SaveMaxSeqBatch(SaveMaxSeqBatchRequest) returns (SaveMaxSeqResponse);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member

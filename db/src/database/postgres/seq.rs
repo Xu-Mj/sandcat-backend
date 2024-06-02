@@ -28,4 +28,14 @@ impl SeqRepo for PostgresSeq {
         .try_get(0)?;
         Ok(max_seq)
     }
+
+    /// update max_seq in batch
+    async fn save_max_seq_batch(&self, user_ids: &[String]) -> Result<(), Error> {
+        sqlx::query("UPDATE sequence SET max_seq = max_seq + $1 WHERE user_id = ANY($2)")
+            .bind(self.seq_step)
+            .bind(user_ids as &[_])
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 }

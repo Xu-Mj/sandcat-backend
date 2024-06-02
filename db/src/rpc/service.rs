@@ -16,10 +16,11 @@ use abi::message::{
     GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
     GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
     GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
-    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqRequest, SaveMaxSeqResponse,
-    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
-    UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse,
-    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
+    SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
+    SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
+    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
+    VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -101,6 +102,17 @@ impl DbService for DbRpcService {
     ) -> Result<Response<SaveMaxSeqResponse>, Status> {
         let req = request.into_inner();
         if let Err(e) = self.db.seq.save_max_seq(&req.user_id).await {
+            return Err(Status::internal(e.to_string()));
+        };
+        Ok(Response::new(SaveMaxSeqResponse {}))
+    }
+
+    async fn save_max_seq_batch(
+        &self,
+        request: Request<SaveMaxSeqBatchRequest>,
+    ) -> Result<Response<SaveMaxSeqResponse>, Status> {
+        let req = request.into_inner();
+        if let Err(e) = self.db.seq.save_max_seq_batch(&req.user_ids).await {
             return Err(Status::internal(e.to_string()));
         };
         Ok(Response::new(SaveMaxSeqResponse {}))
