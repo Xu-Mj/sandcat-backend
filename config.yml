@@ -90,7 +90,7 @@ rpc:
 redis:
   host: localhost
   port: 6379
-  seq_step: 1000
+  seq_step: 10000
 
 kafka:
   hosts:
