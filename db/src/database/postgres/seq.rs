@@ -1,6 +1,9 @@
 use abi::errors::Error;
+use futures::TryStreamExt;
 use sqlx::{PgPool, Row};
+use tokio::sync::mpsc::{self, Receiver};
 use tonic::async_trait;
+use tracing::error;
 
 use crate::database::seq::SeqRepo;
 
@@ -40,5 +43,17 @@ impl SeqRepo for PostgresSeq {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+    async fn get_max_seq(&self) -> Result<Receiver<(String, i64)>, Error> {
+        let mut result = sqlx::query("SELECT user_id, max_seq FROM sequence").fetch(&self.pool);
+        let (tx, rx) = mpsc::channel(1024);
+        while let Some(item) = result.try_next().await? {
+            let user_id: String = item.try_get(0)?;
+            let max_seq: i64 = item.try_get(1)?;
+            if let Err(e) = tx.send((user_id, max_seq)).await {
+                error!("send error: {}", e);
+            };
+        }
+        Ok(rx)
     }
 }
