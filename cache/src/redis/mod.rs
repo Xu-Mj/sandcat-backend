@@ -57,6 +57,10 @@ impl RedisCache {
         let script = r#"
         local cur_seq = redis.call('HINCRBY', KEYS[1], 'cur_seq', 1)
         local max_seq = redis.call('HGET', KEYS[1], 'max_seq')
+        if max_seq == false then
+            max_seq = tonumber(ARGV[1])
+            redis.call('HSET', KEYS[1], 'max_seq', max_seq)
+        end
         if tonumber(cur_seq) > tonumber(max_seq) then
             max_seq = tonumber(max_seq) + ARGV[1]
             redis.call('HSET', KEYS[1], 'max_seq', max_seq)
