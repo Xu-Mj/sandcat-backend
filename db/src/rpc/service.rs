@@ -5,17 +5,18 @@ use futures::Stream;
 use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
 use tonic::{async_trait, Request, Response, Status};
-use tracing::debug;
+use tracing::{debug, info};
 
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
 use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
-    DeleteFriendResponse, FriendListRequest, FriendListResponse, FsAgreeRequest, FsAgreeResponse,
-    FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse, GetDbMsgRequest, GetMsgResp,
-    GetUserRequest, GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
-    GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
-    GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
+    DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
+    FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
+    GetDbMsgRequest, GetMsgResp, GetUserRequest, GetUserResponse, GroupCreateRequest,
+    GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
+    GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
+    GroupUpdateRequest, GroupUpdateResponse, Msg, QueryFriendInfoRequest, QueryFriendInfoResponse,
     SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
     SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
     SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
@@ -406,6 +407,33 @@ impl DbService for DbRpcService {
             .delete_friend(&inner.user_id, &inner.friend_id)
             .await?;
         Ok(Response::new(DeleteFriendResponse {}))
+    }
+
+    async fn query_friend_info(
+        &self,
+        request: Request<QueryFriendInfoRequest>,
+    ) -> Result<Response<QueryFriendInfoResponse>, Status> {
+        let inner = request.into_inner();
+        info!("query friend info: {:?}", inner);
+        let user = self
+            .db
+            .user
+            .get_user_by_id(&inner.user_id)
+            .await?
+            .ok_or(Status::not_found("user not found"))?;
+        let friend = FriendInfo {
+            name: user.name,
+            region: user.region,
+            gender: user.gender,
+            avatar: user.avatar,
+            account: user.account,
+            signature: user.signature,
+            email: user.email,
+            age: user.age,
+        };
+        Ok(Response::new(QueryFriendInfoResponse {
+            friend: Some(friend),
+        }))
     }
 }
 

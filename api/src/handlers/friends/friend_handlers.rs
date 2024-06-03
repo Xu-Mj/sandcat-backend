@@ -3,8 +3,9 @@ use axum::Json;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, DeleteFriendRequest, Friend, FriendListRequest, FriendshipWithUser, FsAgreeRequest,
-    FsCreate, FsCreateRequest, FsListRequest, SendMsgRequest, UpdateRemarkRequest,
+    AgreeReply, DeleteFriendRequest, Friend, FriendInfo, FriendListRequest, FriendshipWithUser,
+    FsAgreeRequest, FsCreate, FsCreateRequest, FsListRequest, QueryFriendInfoRequest,
+    SendMsgRequest, UpdateRemarkRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -167,4 +168,17 @@ pub async fn update_friend_remark(
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     Ok(())
+}
+
+pub async fn query_friend_info(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+) -> Result<Json<FriendInfo>, Error> {
+    let mut db_rpc = app_state.db_rpc.clone();
+    let friend = db_rpc
+        .query_friend_info(QueryFriendInfoRequest { user_id })
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    let friend = friend.into_inner().friend.ok_or(Error::NotFound)?;
+    Ok(Json(friend))
 }

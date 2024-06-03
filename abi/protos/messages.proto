@@ -320,6 +320,17 @@ message Friend {
   optional string email = 16;
 }
 
+message FriendInfo {
+  string name = 1;
+  string avatar = 2;
+  string gender = 3;
+  int32 age = 4;
+  optional string region = 5;
+  string account = 6;
+  string signature = 7;
+  optional string email = 8;
+}
+
 message FsCreateRequest { FsCreate fs_create = 1; }
 
 message FsCreate {
@@ -496,6 +507,10 @@ message SaveMaxSeqBatchRequest { repeated string user_ids = 1; }
 
 message SaveMaxSeqResponse {}
 
+message QueryFriendInfoRequest { string user_id = 1; }
+
+message QueryFriendInfoResponse { FriendInfo friend = 1; }
+
 service MsgService {
   // send message through rpc
   rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
@@ -560,6 +575,7 @@ service DbService {
   rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
   /// delete friend by user id and friend id
   rpc DeleteFriend(DeleteFriendRequest) returns (DeleteFriendResponse);
+  rpc QueryFriendInfo(QueryFriendInfoRequest) returns (QueryFriendInfoResponse);
 }
 
 service PushService {

@@ -65,6 +65,7 @@ fn main() {
             "UserUpdate",
             "UserWithMatchType",
             "Friend",
+            "FriendInfo",
             "Friendship",
             "FriendshipWithUser",
             "FsCreate",
