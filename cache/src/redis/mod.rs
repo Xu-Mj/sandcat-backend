@@ -162,8 +162,7 @@ impl Cache for RedisCache {
         let key = format!("seq:{}", user_id);
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        // increase seq
-        let (seq, _): (i64, i64) = conn.get(&key).await.unwrap_or_default();
+        let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
         Ok(seq)
     }
 

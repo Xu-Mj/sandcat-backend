@@ -254,6 +254,8 @@ mod tests {
             // sdp_mid: None,
             // sdp_m_index: None,
             group_id: "".to_string(),
+            avatar: "".to_string(),
+            nickname: "".to_string(),
         }
     }
     #[tokio::test]
