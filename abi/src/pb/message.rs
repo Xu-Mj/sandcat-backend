@@ -451,20 +451,22 @@ pub struct Friend {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FriendInfo {
     #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
+    pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub avatar: ::prost::alloc::string::String,
+    pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "4")]
+    #[prost(int32, tag = "5")]
     pub age: i32,
-    #[prost(string, optional, tag = "5")]
+    #[prost(string, optional, tag = "6")]
     pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "6")]
-    pub account: ::prost::alloc::string::String,
     #[prost(string, tag = "7")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "8")]
     pub signature: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "8")]
+    #[prost(string, optional, tag = "9")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]

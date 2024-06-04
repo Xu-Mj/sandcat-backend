@@ -321,14 +321,15 @@ message Friend {
 }
 
 message FriendInfo {
-  string name = 1;
-  string avatar = 2;
-  string gender = 3;
-  int32 age = 4;
-  optional string region = 5;
-  string account = 6;
-  string signature = 7;
-  optional string email = 8;
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string gender = 4;
+  int32 age = 5;
+  optional string region = 6;
+  string account = 7;
+  string signature = 8;
+  optional string email = 9;
 }
 
 message FsCreateRequest { FsCreate fs_create = 1; }

@@ -422,6 +422,7 @@ impl DbService for DbRpcService {
             .await?
             .ok_or(Status::not_found("user not found"))?;
         let friend = FriendInfo {
+            id: user.id,
             name: user.name,
             region: user.region,
             gender: user.gender,
