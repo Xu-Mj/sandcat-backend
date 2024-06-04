@@ -66,6 +66,7 @@ pub struct OssConfig {
     pub access_key: String,
     pub secret_key: String,
     pub bucket: String,
+    pub avatar_bucket: String,
     pub region: String,
 }
 

@@ -13,6 +13,10 @@ pub trait Oss: Debug + Send + Sync {
     async fn upload_file(&self, key: &str, content: Vec<u8>) -> Result<(), Error>;
     async fn download_file(&self, key: &str) -> Result<Bytes, Error>;
     async fn delete_file(&self, key: &str) -> Result<(), Error>;
+
+    async fn upload_avatar(&self, key: &str, content: Vec<u8>) -> Result<(), Error>;
+    async fn download_avatar(&self, key: &str) -> Result<Bytes, Error>;
+    async fn delete_avatar(&self, key: &str) -> Result<(), Error>;
 }
 
 pub async fn oss(config: &Config) -> Arc<dyn Oss> {
