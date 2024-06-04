@@ -50,65 +50,67 @@ impl S3Client {
     }
 
     async fn check_bucket_exists(&self) -> Result<bool, Error> {
-        let file_bucket_exist = match self.client.head_bucket().bucket(&self.bucket).send().await {
-            Ok(_response) => true,
+        match self.client.head_bucket().bucket(&self.bucket).send().await {
+            Ok(_response) => Ok(true),
             Err(SdkError::ServiceError(e)) => {
                 if e.raw().status().as_u16() == 404 {
-                    false
+                    Ok(false)
                 } else {
-                    return Err(Error::InternalServer(
+                    Err(Error::InternalServer(
                         "check_bucket_exists error".to_string(),
-                    ));
+                    ))
                 }
             }
             Err(e) => {
                 error!("check_bucket_exists error: {:?}", e);
-                return Err(Error::InternalServer(e.to_string()));
+                Err(Error::InternalServer(e.to_string()))
             }
-        };
+        }
+    }
 
-        let avatar_bucket_exist = match self
+    async fn check_avatar_bucket_exits(&self) -> Result<bool, Error> {
+        match self
             .client
             .head_bucket()
             .bucket(&self.avatar_bucket)
             .send()
             .await
         {
-            Ok(_response) => true,
+            Ok(_response) => Ok(true),
             Err(SdkError::ServiceError(e)) => {
                 if e.raw().status().as_u16() == 404 {
-                    false
+                    Ok(false)
                 } else {
-                    return Err(Error::InternalServer(
+                    Err(Error::InternalServer(
                         "check avatar_bucket exists error".to_string(),
-                    ));
+                    ))
                 }
             }
             Err(e) => {
                 error!("check avatar_bucket exists error: {:?}", e);
-                return Err(Error::InternalServer(e.to_string()));
+                Err(Error::InternalServer(e.to_string()))
             }
-        };
-        Ok(file_bucket_exist && avatar_bucket_exist)
+        }
     }
-
     async fn create_bucket(&self) -> Result<(), Error> {
         let is_exist = self.check_bucket_exists().await?;
-        if is_exist {
-            return Ok(());
+        if !is_exist {
+            self.client
+                .create_bucket()
+                .bucket(&self.bucket)
+                .send()
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
         }
-        self.client
-            .create_bucket()
-            .bucket(&self.bucket)
-            .send()
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
-        self.client
-            .create_bucket()
-            .bucket(&self.avatar_bucket)
-            .send()
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        if !self.check_avatar_bucket_exits().await? {
+            self.client
+                .create_bucket()
+                .bucket(&self.avatar_bucket)
+                .send()
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
+        }
         Ok(())
     }
 }

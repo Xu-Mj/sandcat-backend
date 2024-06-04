@@ -48,3 +48,43 @@ pub async fn get_file_by_name(
     );
     Ok((headers, bytes.into()))
 }
+
+pub async fn get_avatar_by_name(
+    State(state): State<AppState>,
+    PathExtractor(filename): PathExtractor<String>,
+) -> Result<(HeaderMap, Vec<u8>), Error> {
+    let bytes = state.oss.download_avatar(&filename).await?;
+    let mut headers = HeaderMap::with_capacity(1);
+    headers.insert(
+        "Cache-Control",
+        "private, max-age=31536000".parse().unwrap(),
+    );
+    Ok((headers, bytes.into()))
+}
+
+pub async fn upload_avatar(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<String, Error> {
+    let mut filename = String::new();
+    if let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|err| Error::InternalServer(err.to_string()))?
+    {
+        filename = field.file_name().unwrap_or_default().to_string();
+        let extension = Path::new(&filename).extension().and_then(OsStr::to_str);
+        filename = match extension {
+            None => nanoid!(),
+            Some(e) => format!("{}.{}", nanoid!(), e),
+        };
+
+        let data = field
+            .bytes()
+            .await
+            .map_err(|_e| Error::InternalServer(_e.to_string()))?;
+        state.oss.upload_avatar(&filename, data.into()).await?;
+    }
+
+    Ok(filename)
+}
