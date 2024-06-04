@@ -44,6 +44,12 @@ pub struct Msg {
     /// platform of the sender
     #[prost(enumeration = "PlatformType", tag = "16")]
     pub platform: i32,
+    /// user avatar
+    #[prost(string, tag = "17")]
+    pub avatar: ::prost::alloc::string::String,
+    /// user nickname
+    #[prost(string, tag = "18")]
+    pub nickname: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -443,6 +449,29 @@ pub struct Friend {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendInfo {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "5")]
+    pub age: i32,
+    #[prost(string, optional, tag = "6")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "7")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "8")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "9")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FsCreateRequest {
     #[prost(message, optional, tag = "1")]
     pub fs_create: ::core::option::Option<FsCreate>,
@@ -806,6 +835,18 @@ pub struct SaveMaxSeqBatchRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveMaxSeqResponse {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryFriendInfoRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryFriendInfoResponse {
+    #[prost(message, optional, tag = "1")]
+    pub friend: ::core::option::Option<FriendInfo>,
+}
 /// / user platform which login the system
 #[derive(
     serde::Serialize,
@@ -1869,6 +1910,24 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "DeleteFriend"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn query_friend_info(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryFriendInfoRequest>,
+        ) -> std::result::Result<tonic::Response<super::QueryFriendInfoResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/QueryFriendInfo");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "QueryFriendInfo"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated client implementations.
@@ -2571,6 +2630,10 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::DeleteFriendRequest>,
         ) -> std::result::Result<tonic::Response<super::DeleteFriendResponse>, tonic::Status>;
+        async fn query_friend_info(
+            &self,
+            request: tonic::Request<super::QueryFriendInfoRequest>,
+        ) -> std::result::Result<tonic::Response<super::QueryFriendInfoResponse>, tonic::Status>;
     }
     /// / db interface think about if it is necessary to put api interface together.
     #[derive(Debug)]
@@ -3646,6 +3709,48 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = DeleteFriendSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/QueryFriendInfo" => {
+                    #[allow(non_camel_case_types)]
+                    struct QueryFriendInfoSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::QueryFriendInfoRequest>
+                        for QueryFriendInfoSvc<T>
+                    {
+                        type Response = super::QueryFriendInfoResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryFriendInfoRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::query_friend_info(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = QueryFriendInfoSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
