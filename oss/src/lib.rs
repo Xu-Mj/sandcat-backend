@@ -2,6 +2,7 @@ use abi::config::Config;
 use abi::errors::Error;
 use async_trait::async_trait;
 use bytes::Bytes;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -21,4 +22,21 @@ pub trait Oss: Debug + Send + Sync {
 
 pub async fn oss(config: &Config) -> Arc<dyn Oss> {
     Arc::new(client::S3Client::new(config).await)
+}
+
+pub fn default_avatars() -> HashMap<String, String> {
+    HashMap::from([
+        (
+            String::from("./oss/default_avatar/avatar1.png"),
+            String::from("avatar1.png"),
+        ),
+        (
+            String::from("./oss/default_avatar/avatar2.png"),
+            String::from("avatar2.png"),
+        ),
+        (
+            String::from("./oss/default_avatar/avatar3.png"),
+            String::from("avatar3.png"),
+        ),
+    ])
 }

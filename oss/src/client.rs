@@ -1,4 +1,3 @@
-use crate::Oss;
 use abi::config::Config;
 use abi::errors::Error;
 use async_trait::async_trait;
@@ -6,7 +5,10 @@ use aws_sdk_s3::config::{Builder, Credentials, Region};
 use aws_sdk_s3::Client;
 use aws_smithy_runtime_api::client::result::SdkError;
 use bytes::Bytes;
+use tokio::fs;
 use tracing::error;
+
+use crate::{default_avatars, Oss};
 
 #[derive(Debug, Clone)]
 pub(crate) struct S3Client {
@@ -46,6 +48,7 @@ impl S3Client {
         };
 
         self_.create_bucket().await.unwrap();
+        self_.check_default_avatars().await.unwrap();
         self_
     }
 
@@ -92,6 +95,18 @@ impl S3Client {
             }
         }
     }
+
+    async fn check_default_avatars(&self) -> Result<(), Error> {
+        for (path, name) in default_avatars().into_iter() {
+            if !self.exists_by_name(&self.avatar_bucket, &name).await {
+                if let Ok(data) = fs::read(&path).await {
+                    self.upload_avatar(&name, data).await?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     async fn create_bucket(&self) -> Result<(), Error> {
         let is_exist = self.check_bucket_exists().await?;
         if !is_exist {
@@ -117,26 +132,8 @@ impl S3Client {
 
 #[async_trait]
 impl Oss for S3Client {
-    async fn file_exists(&self, key: &str, local_md5: &str) -> Result<bool, Error> {
-        match self
-            .client
-            .head_object()
-            .bucket(&self.bucket)
-            .key(key)
-            .send()
-            .await
-        {
-            Ok(resp) => {
-                if let Some(etag) = resp.e_tag() {
-                    // remove the double quotes
-                    let etag = etag.trim_matches('"');
-                    Ok(etag == local_md5)
-                } else {
-                    Ok(false)
-                }
-            }
-            Err(_) => Ok(false),
-        }
+    async fn file_exists(&self, key: &str, _local_md5: &str) -> Result<bool, Error> {
+        Ok(self.exists_by_name(&self.bucket, key).await)
     }
 
     async fn upload_file(&self, key: &str, content: Vec<u8>) -> Result<(), Error> {
@@ -163,6 +160,36 @@ impl Oss for S3Client {
 }
 
 impl S3Client {
+    async fn exists_by_name(&self, bucket: &str, key: &str) -> bool {
+        self.client
+            .head_object()
+            .bucket(bucket)
+            .key(key)
+            .send()
+            .await
+            .is_ok()
+        // match self
+        //     .client
+        //     .head_object()
+        //     .bucket(bucket)
+        //     .key(key)
+        //     .send()
+        //     .await
+        // {
+        //     Ok(_resp) => {
+        //         /* if let Some(etag) = resp.e_tag() {
+        //             // remove the double quotes
+        //             let etag = etag.trim_matches('"');
+        //             Ok(etag == local_md5)
+        //         } else {
+        //             Ok(false)
+        //         } */
+        //         true
+        //     }
+        //     Err(_) => false,
+        // }
+    }
+
     async fn upload(&self, bucket: &str, key: &str, content: Vec<u8>) -> Result<(), Error> {
         self.client
             .put_object()
@@ -171,7 +198,10 @@ impl S3Client {
             .body(content.into())
             .send()
             .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .map_err(|e| {
+                error!("{:?}", e);
+                Error::InternalServer(e.to_string())
+            })?;
         Ok(())
     }
 
