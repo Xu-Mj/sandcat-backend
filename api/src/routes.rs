@@ -2,7 +2,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
-use crate::handlers::files::file::{get_file_by_name, upload};
+use crate::handlers::files::file::{get_avatar_by_name, get_file_by_name, upload, upload_avatar};
 use crate::handlers::friends::friend_handlers::{
     agree, create_friendship, delete_friend, get_apply_list_by_user_id,
     get_friends_list_by_user_id, query_friend_info, update_friend_remark,
@@ -67,6 +67,11 @@ fn file_routes(state: AppState) -> Router {
             post(upload).layer(DefaultBodyLimit::max(MAX_FILE_UPLOAD_SIZE)),
         )
         .route("/get/:filename", get(get_file_by_name))
+        .route(
+            "/avatar/upload",
+            post(upload_avatar).layer(DefaultBodyLimit::max(MAX_FILE_UPLOAD_SIZE)),
+        )
+        .route("/avatar/get/:filename", get(get_avatar_by_name))
         .with_state(state)
 }
 
