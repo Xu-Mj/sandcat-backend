@@ -287,7 +287,7 @@ pub async fn send_email(
 
     let creds = Credentials::new(state.mail_config.account, state.mail_config.password);
 
-    // Open a remote connection to gmail
+    // Open a remote connection to mail
     let mailer = SmtpTransport::relay(&state.mail_config.server)
         .map_err(|err| Error::InternalServer(err.to_string()))?
         .credentials(creds)
