@@ -104,7 +104,7 @@ impl WsServer {
         // run axum server
         let router = Router::new()
             .route(
-                "/ws/:user_id/conn/:token/:pointer_id/:platform",
+                "/ws/:user_id/conn/:pointer_id/:platform/:token",
                 get(Self::websocket_handler),
             )
             .route("/test", get(Self::test))
@@ -143,7 +143,7 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, i32)>,
+        Path((user_id, pointer_id, platform, token)): Path<(String, String, i32, String)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
