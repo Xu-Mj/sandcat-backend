@@ -128,7 +128,7 @@ where
             ) {
                 return Err((
                     StatusCode::UNAUTHORIZED,
-                    Error::InternalServer(err.to_string()),
+                    Error::UnAuthorized(err.to_string(), path),
                 ));
             }
 

@@ -29,7 +29,7 @@ use super::REFRESH_EXPIRES;
 /// refresh auth token
 pub async fn refresh_token(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor((token, is_refresh)): PathWithAuthExtractor<(String, bool)>,
+    PathExtractor((token, is_refresh)): PathExtractor<(String, bool)>,
 ) -> Result<String, Error> {
     let claim = match decode::<Claims>(
         &token,
