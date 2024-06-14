@@ -22,6 +22,7 @@ pub struct UserRegister {
 pub struct Token {
     user: User,
     token: String,
+    refresh_token: String,
     ws_addr: String,
 }
 
@@ -44,6 +45,8 @@ impl LoginRequest {
         Ok(())
     }
 }
+
+pub const REFRESH_EXPIRES: u64 = 24 * 60 * 60;
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {

@@ -24,6 +24,8 @@ use crate::api_utils::ip_region::parse_region;
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
+use super::REFRESH_EXPIRES;
+
 /// refresh auth token
 pub async fn refresh_token(
     State(app_state): State<AppState>,
@@ -184,9 +186,16 @@ pub async fn login(
         .ok_or_else(|| Error::AccountOrPassword)?;
 
     // generate token
-    let claims = Claims::new(user.name.clone());
+    let mut claims = Claims::new(user.name.clone());
 
     let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+    )
+    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    claims.exp += REFRESH_EXPIRES;
+    let refresh_token = encode(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
@@ -230,6 +239,7 @@ pub async fn login(
     Ok(Json(Token {
         user,
         token,
+        refresh_token,
         ws_addr,
     }))
 }
