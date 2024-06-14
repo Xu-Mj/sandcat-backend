@@ -48,18 +48,18 @@ impl LoginRequest {
 
 pub const REFRESH_EXPIRES: u64 = 24 * 60 * 60;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
     pub exp: u64,
     pub iat: u64,
 }
 
-const EXPIRES: u64 = 3_600_000 * 48;
+const EXPIRES: u64 = 60 * 60;
 
 impl Claims {
     pub fn new(sub: String) -> Self {
-        let now = chrono::Local::now().timestamp_millis() as u64;
+        let now = chrono::Utc::now().timestamp() as u64;
         let exp = now + EXPIRES;
         Self { sub, exp, iat: now }
     }
