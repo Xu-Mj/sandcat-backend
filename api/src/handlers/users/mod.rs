@@ -46,8 +46,7 @@ impl LoginRequest {
     }
 }
 
-pub const REFRESH_EXPIRES: u64 = 24;
-// pub const REFRESH_EXPIRES: u64 = 24 * 60 * 60;
+pub const REFRESH_EXPIRES: u64 = 24 * 60 * 60;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -56,7 +55,7 @@ pub struct Claims {
     pub iat: u64,
 }
 
-const EXPIRES: u64 = 10;
+const EXPIRES: u64 = 60 * 60 * 4;
 
 impl Claims {
     pub fn new(sub: String) -> Self {
