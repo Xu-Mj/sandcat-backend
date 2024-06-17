@@ -23,3 +23,8 @@ tokio = { version = "1.36.0", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["time"]}
 tracing-appender = "0.2.3"
+
+[features]
+default = ["dynamic"]
+dynamic = ["chat/dynamic", "consumer/dynamic"]
+static = ["chat/static", "consumer/static"]
