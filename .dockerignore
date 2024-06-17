@@ -1,0 +1,6 @@
+target
+.dockerignore
+Cargo.lock
+.idea
+.git
+.gitignore

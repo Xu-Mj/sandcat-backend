@@ -1,23 +1,57 @@
+networks:
+  sandcat-net:
+    driver: host
 services:
-
-  zookeeper:
-    image: 'bitnami/zookeeper:latest'
-    ports:
-      - '2181:2181'
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+  # sandcat-backend:
+  #   build: .
+  #   container_name: sandcat-backend
+  #   ports:
+  #     - '50000:50000' # websocket
+  #     - '50001:50001' # server
+  #     - '50002:50002' # rpc.ws
+  #     - '50003:50003' # rpc.chat
+  #     - '50004:50004' # rpc.db
+  #     - '50005:50005' # rpc.pusher
+  #   volumes:
+  #     - './config-docker.yml:/usr/local/bin/config.yml'
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #     synapse:
+  #       condition: service_started
+  #     redis:
+  #       condition: service_started
+  #     mongodb:
+  #       condition: service_started
+  #     postgres:
+  #       condition: service_started
+  #     minio:
+  #       condition: service_started
+  #   networks:
+  #     - sandcat-net
 
   kafka:
     image: 'bitnami/kafka:latest'
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@127.0.0.1:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LOG_DIRS=/bitnami/kafka/data
+      - ALLOW_PLAINTEXT_LISTENER=yes
     ports:
       - '9092:9092'
-    environment:
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-      - ALLOW_PLAINTEXT_LISTENER=yes
-    depends_on:
-      - zookeeper
+    volumes:
+      - 'kafka_data:/bitnami/kafka/data'
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sandcat-net
 
   synapse:
     image: xuxiaomeng/synapse:latest
@@ -28,11 +62,15 @@ services:
       - SERVICE_ADDRESS=0.0.0.0:8500
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - sandcat-net
 
   redis:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+    networks:
+      - sandcat-net
 
   mongodb:
     image: 'mongo:latest'
@@ -40,6 +78,8 @@ services:
       - '27017:27017'
     volumes:
       - 'mongodata:/data/db'
+    networks:
+      - sandcat-net
 
   postgres:
     image: 'postgres:latest'
@@ -51,6 +91,8 @@ services:
       - POSTGRES_DB=im
     volumes:
       - 'postgres_data:/var/lib/postgresql/data'
+    networks:
+      - sandcat-net
 
   minio:
     image: 'minio/minio:latest'
@@ -63,7 +105,12 @@ services:
     command: server /data --console-address ":9001" # 添加控制台地址的映射
     volumes:
       - 'miniodata:/data'
+    networks:
+      - sandcat-net
+
 volumes:
   mongodata:
   miniodata:
   postgres_data:
+  kafka_data:
+    driver: local
