@@ -127,8 +127,8 @@ where
                 &Validation::default(),
             ) {
                 return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Error::InternalServer(err.to_string()),
+                    StatusCode::UNAUTHORIZED,
+                    Error::UnAuthorized(err.to_string(), path),
                 ));
             }
 

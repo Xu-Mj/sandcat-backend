@@ -1,16 +1,27 @@
 mod load_seq;
 
+use clap::{command, Arg};
+use tracing::{error, info};
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::time::FormatTime;
+
 use abi::config::{Component, Config};
 use chat::ChatRpcService;
-use clap::{command, Arg};
 use consumer::ConsumerService;
 use db::rpc::DbRpcService;
 use load_seq::load_seq;
 use pusher::PusherRpcService;
-use tracing::{error, info};
 use ws::ws_server::WsServer;
 
 const DEFAULT_CONFIG_PATH: &str = "./config.yml";
+struct LocalTimer;
+
+impl FormatTime for LocalTimer {
+    fn format_time(&self, w: &mut Writer<'_>) -> std::fmt::Result {
+        let local_time = chrono::Local::now();
+        write!(w, "{}", local_time.format("%Y-%m-%dT%H:%M:%S%.6f%:z"))
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -52,12 +63,14 @@ async fn main() {
             .with_line_number(true)
             .with_max_level(config.log.level())
             .with_writer(non_blocking)
+            .with_timer(LocalTimer)
             .init();
     } else {
         // log to console
         tracing_subscriber::FmtSubscriber::builder()
             .with_line_number(true)
             .with_max_level(config.log.level())
+            .with_timer(LocalTimer)
             .init();
     }
     // check if redis need to load seq

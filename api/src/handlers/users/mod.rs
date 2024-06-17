@@ -22,6 +22,7 @@ pub struct UserRegister {
 pub struct Token {
     user: User,
     token: String,
+    refresh_token: String,
     ws_addr: String,
 }
 
@@ -45,18 +46,20 @@ impl LoginRequest {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+pub const REFRESH_EXPIRES: i64 = 24 * 60 * 60;
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
-    pub exp: u64,
-    pub iat: u64,
+    pub exp: i64,
+    pub iat: i64,
 }
 
-const EXPIRES: u64 = 3_600_000 * 48;
+const EXPIRES: i64 = 60 * 60 * 4;
 
 impl Claims {
     pub fn new(sub: String) -> Self {
-        let now = chrono::Local::now().timestamp_millis() as u64;
+        let now = chrono::Utc::now().timestamp();
         let exp = now + EXPIRES;
         Self { sub, exp, iat: now }
     }

@@ -32,6 +32,7 @@ pub struct ConsumerService {
 
 impl ConsumerService {
     pub async fn new(config: &Config) -> Self {
+        error!("start kafka consumer{:?}", config.kafka);
         // init kafka consumer
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", &config.kafka.group)

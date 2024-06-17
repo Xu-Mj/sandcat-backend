@@ -42,7 +42,7 @@ fn user_routes(state: AppState) -> Router {
         .route("/", post(create_user))
         .route("/", put(update_user))
         .route("/:id", get(get_user_by_id))
-        .route("/refresh_token/:token", get(refresh_token))
+        .route("/refresh_token/:token/:is_refresh", get(refresh_token))
         .route("/:user_id/search/:pattern", get(search_user))
         .route("/login", post(login))
         .route("/logout/:uuid", delete(logout))

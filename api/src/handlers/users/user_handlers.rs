@@ -10,7 +10,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, SocketAddr};
 use tera::{Context, Tera};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 use xdb::search_by_ip;
 
 use abi::errors::Error;
@@ -24,10 +24,12 @@ use crate::api_utils::ip_region::parse_region;
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
+use super::REFRESH_EXPIRES;
+
 /// refresh auth token
 pub async fn refresh_token(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(token): PathWithAuthExtractor<String>,
+    PathExtractor((token, is_refresh)): PathExtractor<(String, bool)>,
 ) -> Result<String, Error> {
     let claim = match decode::<Claims>(
         &token,
@@ -43,7 +45,10 @@ pub async fn refresh_token(
             ));
         }
     };
-    let claims = Claims::new(claim.claims.sub.clone());
+    let mut claims = Claims::new(claim.claims.sub.clone());
+    if is_refresh {
+        claims.exp += REFRESH_EXPIRES;
+    }
     let token = encode(
         &Header::default(),
         &claims,
@@ -184,7 +189,7 @@ pub async fn login(
         .ok_or_else(|| Error::AccountOrPassword)?;
 
     // generate token
-    let claims = Claims::new(user.name.clone());
+    let mut claims = Claims::new(user.name.clone());
 
     let token = encode(
         &Header::default(),
@@ -192,6 +197,18 @@ pub async fn login(
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
+    info!("login success token: {:?}", claims);
+    claims.exp += REFRESH_EXPIRES;
+    let refresh_token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
+    )
+    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    info!("login success claims22222: {:?}", claims);
+
+    info!("login success token: {}", token);
+    info!("login success refresh: {}", refresh_token);
     app_state.cache.user_login(&user.account).await?;
 
     // get websocket service address
@@ -230,6 +247,7 @@ pub async fn login(
     Ok(Json(Token {
         user,
         token,
+        refresh_token,
         ws_addr,
     }))
 }
@@ -287,7 +305,7 @@ pub async fn send_email(
 
     let creds = Credentials::new(state.mail_config.account, state.mail_config.password);
 
-    // Open a remote connection to gmail
+    // Open a remote connection to mail
     let mailer = SmtpTransport::relay(&state.mail_config.server)
         .map_err(|err| Error::InternalServer(err.to_string()))?
         .credentials(creds)

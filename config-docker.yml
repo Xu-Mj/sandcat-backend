@@ -1,22 +1,22 @@
 component: all # all, api, ws, rpc, db, pusher
 log:
-  level: debug
+  level: info
   output: console
 
 db:
   postgres:
-    host: 127.0.0.1
+    host: postgres
     port: 5432
     user: postgres
     password: postgres
     database: im
   mongodb:
-    host: 127.0.0.1
+    host: mongodb
     port: 27017
     user:
     password:
     database: im
-  xdb: ./api/fixtures/xdb/ip2region.xdb
+  xdb: /usr/src/sandcat-backend/api/fixtures/xdb/ip2region.xdb
 
 server:
   host: 127.0.0.1
@@ -25,7 +25,7 @@ server:
   ws_lb_strategy: RoundRobin # Random, RoundRobin
 
 service_center:
-  host: 127.0.0.1
+  host: synapse
   port: 8500
   timeout: 5000
   protocol: http
@@ -88,13 +88,13 @@ rpc:
       interval: 30000 # second
 
 redis:
-  host: 127.0.0.1
+  host: redis
   port: 6379
   seq_step: 10000
 
 kafka:
   hosts:
-    - 127.0.0.1:9092
+    - kafka:9092
   topic: sandcat-chat
   group: chat
   connect_timeout: 5000 # milliseconds
@@ -109,7 +109,7 @@ kafka:
 
 
 oss:
-  endpoint: http://127.0.0.1:9000
+  endpoint: minio:9000
   access_key: minioadmin
   secret_key: minioadmin
   bucket: sandcat

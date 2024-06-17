@@ -4,10 +4,8 @@ use std::time::Duration;
 
 use axum::extract::ws::CloseFrame;
 use axum::extract::{Path, State, WebSocketUpgrade};
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Json;
 use axum::{
     extract::ws::{Message, WebSocket},
     Router,
@@ -17,7 +15,7 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, RwLock};
 use tonic::transport::Channel;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use abi::config::Config;
 use abi::errors::Error;
@@ -30,6 +28,7 @@ use crate::rpc::MsgRpcService;
 
 pub const HEART_BEAT_INTERVAL: u64 = 30;
 pub const KNOCK_OFF_CODE: u16 = 4001;
+pub const UNAUTHORIZED_CODE: u16 = 4002;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -82,9 +81,8 @@ impl WsServer {
                 let platform_type = platform_entry.key();
                 let client = platform_entry.value();
                 description.push_str(&format!(
-                    "  Platform: {:?}, PlatformID: {}, Sender: ..., NotifySender: ...\n",
-                    platform_type,
-                    client.platform_id // sender 和 notify_sender 难以直接显示，因此这里使用省略号
+                    "  Platform: {:?}, PlatformID: {}\n",
+                    platform_type, client.platform_id
                 ));
             });
         });
@@ -106,7 +104,7 @@ impl WsServer {
         // run axum server
         let router = Router::new()
             .route(
-                "/ws/:user_id/conn/:token/:pointer_id/:platform",
+                "/ws/:user_id/conn/:pointer_id/:platform/:token",
                 get(Self::websocket_handler),
             )
             .route("/test", get(Self::test))
@@ -145,27 +143,20 @@ impl WsServer {
     }
 
     pub async fn websocket_handler(
-        Path((user_id, token, pointer_id, platform)): Path<(String, String, String, i32)>,
+        Path((user_id, pointer_id, platform, token)): Path<(String, String, i32, String)>,
         ws: WebSocketUpgrade,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
-        // validate token
-        if let Err(err) = Self::verify_token(token, &state.jwt_secret) {
-            let error_response = Json({
-                let error_msg = format!("Token verification failed: {}", err);
-                error!("{}", error_msg);
-                serde_json::json!({ "error": error_msg })
-            });
-            return (StatusCode::UNAUTHORIZED, error_response).into_response();
-        }
-
         let platform = PlatformType::try_from(platform).unwrap_or_default();
-        ws.on_upgrade(move |socket| Self::websocket(user_id, pointer_id, platform, socket, state))
+        ws.on_upgrade(move |socket| {
+            Self::websocket(user_id, pointer_id, token, platform, socket, state)
+        })
     }
 
     pub async fn websocket(
         user_id: String,
         pointer_id: String,
+        token: String,
         platform: PlatformType,
         ws: WebSocket,
         app_state: AppState,
@@ -175,10 +166,24 @@ impl WsServer {
             user_id.clone(),
             pointer_id.clone()
         );
-        let mut hub = app_state.manager.clone();
-        let (ws_tx, mut ws_rx) = ws.split();
+        let (mut ws_tx, mut ws_rx) = ws.split();
+        // validate token
+        if let Err(err) = Self::verify_token(token, &app_state.jwt_secret) {
+            warn!("verify token error: {:?}", err);
+            if let Err(e) = ws_tx
+                .send(Message::Close(Some(CloseFrame {
+                    code: UNAUTHORIZED_CODE,
+                    reason: Cow::Owned("knock off".to_string()),
+                })))
+                .await
+            {
+                error!("send verify failed to client error: {}", e);
+            }
+            return;
+        }
         let shared_tx = Arc::new(RwLock::new(ws_tx));
         let (notify_sender, mut notify_receiver) = tokio::sync::mpsc::channel(1);
+        let mut hub = app_state.manager.clone();
         let client = Client {
             user_id: user_id.clone(),
             platform_id: pointer_id.clone(),
@@ -221,7 +226,7 @@ impl WsServer {
                     })))
                     .await
                 {
-                    error!("send knock off signal to ws server error: {}", e);
+                    error!("send knock off signal to client error: {}", e);
                 }
             }
         });
@@ -262,7 +267,7 @@ impl WsServer {
                     }
                     Message::Close(info) => {
                         if let Some(info) = info {
-                            tracing::warn!("client closed {}", info.reason);
+                            warn!("client closed {}", info.reason);
                         }
                         break;
                     }
