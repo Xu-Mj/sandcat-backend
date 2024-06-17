@@ -54,6 +54,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - need to handle friendship/group operations while user desktop and mobile are both online
 - knock off desk from the mobile
 - delete minio file by period
+- add send box for sender
 
 ## Development
 
