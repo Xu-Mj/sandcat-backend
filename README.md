@@ -14,6 +14,8 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 ## Architecture Components
 
+​![architecture](rfcs/images/framework-english.png)
+
 1. **Service Layer**
 
    - **Authentication Service:** Handles user registration, login, and verification.
