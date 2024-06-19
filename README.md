@@ -89,21 +89,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
    .\vcpkg integrate install
    ```
 
-   **important:** restart your command console to make sure the environment variable has been modified successfully.
-
-   I'm struggling to configure the `cmake-build` feature for `rdkafka`. If anyone has experience with this, your guidance would be greatly appreciated.
-
-   so let's use the `dynamic-linking` feature
-
-   **modify rdkafka dependence**
-
-   ```shell
-   cargo add rdkafka --features dynamic-linking -p consumer
-   cargo add rdkafka --features dynamic-linking -p chat
-   ```
-
-   If you encounter problems during compilation, please try manually removing the cmake-build feature and then attempt to compile again.
-
 3. run docker compose
 
    ```shell
@@ -121,9 +106,17 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 5. build
 
-   ```shell
-   cargo build --release
-   ```
+   - **Linux：** use the static feature
+
+     ```shell
+     cargo build --release --features=static
+     ```
+
+   - **Windows:** use the dynamic feature
+
+     ```shell
+     cargo build --release --features=dynamic
+     ```
 
 6. copy the binary file to root path
 
