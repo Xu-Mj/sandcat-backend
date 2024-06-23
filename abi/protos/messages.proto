@@ -377,7 +377,7 @@ message AgreeReply {
 
 message FsListRequest { string user_id = 1; }
 
-message FriendListRequest { string user_id = 1; }
+message FriendListRequest { string user_id = 1;  int64 offline_time = 2;}
 
 /// only for update friend apply request
 message FsUpdate {

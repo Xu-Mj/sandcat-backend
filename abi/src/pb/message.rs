@@ -562,6 +562,8 @@ pub struct FsListRequest {
 pub struct FriendListRequest {
     #[prost(string, tag = "1")]
     pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub offline_time: i64,
 }
 /// / only for update friend apply request
 #[derive(serde::Serialize, serde::Deserialize)]

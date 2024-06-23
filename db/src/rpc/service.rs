@@ -376,11 +376,15 @@ impl DbService for DbRpcService {
         &self,
         request: Request<FriendListRequest>,
     ) -> Result<Response<FriendListResponse>, Status> {
-        let user_id = request.into_inner().user_id;
-        if user_id.is_empty() {
+        let req = request.into_inner();
+        if req.user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let friends = self.db.friend.get_friend_list(&user_id).await?;
+        let friends = self
+            .db
+            .friend
+            .get_friend_list(&req.user_id, req.offline_time)
+            .await?;
         Ok(Response::new(FriendListResponse { friends }))
         // Ok(Response::new(Box::pin(TonicReceiverStream::new(receiver))))
     }

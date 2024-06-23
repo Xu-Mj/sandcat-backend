@@ -28,7 +28,7 @@ pub(crate) fn app_routes(state: AppState) -> Router {
 fn friend_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_friendship))
-        .route("/:id", get(get_friends_list_by_user_id))
+        .route("/:id/:offline_time", get(get_friends_list_by_user_id))
         .route("/:id/apply", get(get_apply_list_by_user_id))
         .route("/agree", put(agree))
         .route("/", delete(delete_friend))

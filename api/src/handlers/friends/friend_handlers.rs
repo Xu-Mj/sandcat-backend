@@ -13,10 +13,13 @@ use crate::AppState;
 
 pub async fn get_friends_list_by_user_id(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor((user_id, offline_time)): PathWithAuthExtractor<(String, i64)>,
 ) -> Result<Json<Vec<Friend>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
-    let request = FriendListRequest { user_id };
+    let request = FriendListRequest {
+        user_id,
+        offline_time,
+    };
     let response = db_rpc
         .get_friend_list(request)
         .await

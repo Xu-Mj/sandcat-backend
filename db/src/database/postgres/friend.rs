@@ -200,7 +200,11 @@ impl FriendRepo for PostgresFriend {
         Ok(fs)
     }
 
-    async fn get_friend_list(&self, user_id: &str) -> Result<Vec<Friend>, Error> {
+    async fn get_friend_list(
+        &self,
+        user_id: &str,
+        offline_time: i64,
+    ) -> Result<Vec<Friend>, Error> {
         let list = sqlx::query_as(
             "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
                         f.id as fs_id, f.status, f.source, f.create_time, f.accept_time,
@@ -220,9 +224,11 @@ impl FriendRepo for PostgresFriend {
                       END
             WHERE (f.user_id = $1 OR f.friend_id = $1)
               AND f.status = 'Accepted'
+              AND f.accept_time > $2
               AND u.is_delete = FALSE",
         )
         .bind(user_id)
+        .bind(offline_time)
         .fetch_all(&self.pool)
         .await?;
         // let (tx, rx) = mpsc::channel(100);
