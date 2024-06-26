@@ -37,7 +37,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 4. **Infrastructure Layer**
 
    - **Docker and Docker-Compose:** Containers for building and deploying services.
-   - **Consul:** For service registration and discovery.
+   - **Synapse:** For service registration and discovery.
    - **MinIO:** An object storage solution for handling file uploads and downloads.
 
 ## Performance and Scalability
