@@ -77,8 +77,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **Windows:**
 
-   this is a painful task...
-
    ```shell
    # install vcpkg
    git clone https://github.com/microsoft/vcpkg
