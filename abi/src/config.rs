@@ -3,7 +3,7 @@
 
 use crate::errors::Error;
 use serde::{Deserialize, Serialize};
-use std::{fs, path::Path};
+use std::{fmt::Display, fs, path::Path};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
@@ -281,6 +281,15 @@ pub struct OAuth2 {
 pub enum OAuth2Type {
     Google,
     Github,
+}
+
+impl Display for OAuth2Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OAuth2Type::Google => write!(f, "google"),
+            OAuth2Type::Github => write!(f, "github"),
+        }
+    }
 }
 
 impl Config {

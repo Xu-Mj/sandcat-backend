@@ -1,6 +1,9 @@
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use oauth2::basic::BasicClient;
+use oauth2::{AuthUrl, ClientId, ClientSecret, TokenUrl};
 use synapse::service::client::ServiceClient;
 use xdb::searcher_init;
 
@@ -27,6 +30,8 @@ pub struct AppState {
     pub ws_config: WsServerConfig,
     pub mail_config: MailConfig,
     pub jwt_secret: String,
+    /// use map to store oauth2 client
+    pub oauth2_clients: Arc<HashMap<String, BasicClient>>,
 }
 
 impl AppState {
@@ -60,6 +65,8 @@ impl AppState {
             .await,
         );
 
+        let oauth2_clients = init_oauth2(config);
+
         Self {
             db_rpc,
             cache,
@@ -69,8 +76,22 @@ impl AppState {
             mail_config,
             jwt_secret: config.server.jwt_secret.clone(),
             chat_rpc,
+            oauth2_clients,
         }
     }
+}
+
+pub fn init_oauth2(config: &Config) -> Arc<HashMap<String, BasicClient>> {
+    let mut oauth2_clients = HashMap::new();
+    for oauth2_config in config.server.oauth2.iter() {
+        let client_id = ClientId::new(oauth2_config.client_id.clone());
+        let client_secret = ClientSecret::new(oauth2_config.client_secret.clone());
+        let auth_url = AuthUrl::new(oauth2_config.auth_url.clone()).unwrap();
+        let token_url = TokenUrl::new(oauth2_config.token_url.clone()).unwrap();
+        let client = BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url));
+        oauth2_clients.insert(oauth2_config.tp.to_string(), client);
+    }
+    Arc::new(oauth2_clients)
 }
 
 pub async fn start(config: Config) {
