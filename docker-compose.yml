@@ -1,6 +1,6 @@
-networks:
-  sandcat-net:
-    driver: host
+# networks:
+#   sandcat-net:
+#     driver: host
 services:
   # sandcat-backend:
   #   build: .
@@ -50,8 +50,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - sandcat-net
+    # networks:
+      # - sandcat-net
 
   synapse:
     image: xuxiaomeng/synapse:latest
@@ -62,15 +62,15 @@ services:
       - SERVICE_ADDRESS=0.0.0.0:8500
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    networks:
-      - sandcat-net
+    # networks:
+    #   - sandcat-net
 
   redis:
     image: 'redis:latest'
     ports:
       - '6379:6379'
-    networks:
-      - sandcat-net
+    # networks:
+    #   - sandcat-net
 
   mongodb:
     image: 'mongo:latest'
@@ -78,8 +78,8 @@ services:
       - '27017:27017'
     volumes:
       - 'mongodata:/data/db'
-    networks:
-      - sandcat-net
+    # networks:
+    #   - sandcat-net
 
   postgres:
     image: 'postgres:latest'
@@ -91,8 +91,8 @@ services:
       - POSTGRES_DB=im
     volumes:
       - 'postgres_data:/var/lib/postgresql/data'
-    networks:
-      - sandcat-net
+    # networks:
+    #   - sandcat-net
 
   minio:
     image: 'minio/minio:latest'
@@ -105,8 +105,8 @@ services:
     command: server /data --console-address ":9001" # 添加控制台地址的映射
     volumes:
       - 'miniodata:/data'
-    networks:
-      - sandcat-net
+    # networks:
+    #   - sandcat-net
 
 volumes:
   mongodata:
