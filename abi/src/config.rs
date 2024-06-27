@@ -263,6 +263,24 @@ pub struct ServerConfig {
     pub port: u16,
     pub jwt_secret: String,
     pub ws_lb_strategy: String,
+    pub oauth2: Vec<OAuth2>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct OAuth2 {
+    pub tp: OAuth2Type,
+    pub client_id: String,
+    pub client_secret: String,
+    // pub redirect_url: String,
+    pub auth_url: String,
+    pub token_url: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OAuth2Type {
+    Google,
+    Github,
 }
 
 impl Config {
@@ -323,6 +341,7 @@ impl ServerConfig {
             port,
             jwt_secret: self.jwt_secret.clone(),
             ws_lb_strategy: self.ws_lb_strategy.clone(),
+            oauth2: self.oauth2.clone(),
         }
     }
 }
