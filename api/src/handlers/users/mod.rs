@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 use abi::errors::Error;
 use abi::message::User;
 
+mod oauth2;
 mod user_handlers;
 
+pub use oauth2::*;
 pub use user_handlers::*;
 
 // 定义request model

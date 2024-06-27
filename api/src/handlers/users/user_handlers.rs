@@ -205,7 +205,6 @@ pub async fn login(
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
-    info!("login success claims22222: {:?}", claims);
 
     info!("login success token: {}", token);
     info!("login success refresh: {}", refresh_token);

@@ -24,16 +24,22 @@ server:
   jwt_secret: sandcat
   ws_lb_strategy: RoundRobin # Random, RoundRobin
   oauth2:
-    - tp: google
+    google:
       client_id: 1234567890
       client_secret: 1234567890
       auth_url: https://accounts.google.com/o/oauth2/v2/auth
       token_url: https://oauth2.googleapis.com/token
-    - tp: github
-      client_id: 1234567890
-      client_secret: 1234567890
+      redirect_url: http://localhost:50001/user/auth/google/callback
+      user_info_url: https://api.github.com/user
+      email_url: https://api.github.com/user/emails
+    github:
+      client_id: Ov23liLVEltedOYkqDfJ
+      client_secret: f77f680d9380ac04c4eeda646bd4c3fd14882c68
       auth_url: https://github.com/login/oauth/authorize
       token_url: https://github.com/login/oauth/access_token
+      redirect_url: http://localhost:50001/user/auth/github/callback
+      user_info_url: https://api.github.com/user
+      email_url: https://api.github.com/user/emails
 
 service_center:
   host: 127.0.0.1

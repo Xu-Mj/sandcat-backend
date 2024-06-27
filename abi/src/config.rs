@@ -3,7 +3,7 @@
 
 use crate::errors::Error;
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, fs, path::Path};
+use std::{fs, path::Path};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
@@ -263,33 +263,24 @@ pub struct ServerConfig {
     pub port: u16,
     pub jwt_secret: String,
     pub ws_lb_strategy: String,
-    pub oauth2: Vec<OAuth2>,
+    pub oauth2: OAuth2,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OAuth2 {
-    pub tp: OAuth2Type,
-    pub client_id: String,
-    pub client_secret: String,
-    // pub redirect_url: String,
-    pub auth_url: String,
-    pub token_url: String,
+    pub google: OAuth2Item,
+    pub github: OAuth2Item,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum OAuth2Type {
-    Google,
-    Github,
-}
-
-impl Display for OAuth2Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OAuth2Type::Google => write!(f, "google"),
-            OAuth2Type::Github => write!(f, "github"),
-        }
-    }
+pub struct OAuth2Item {
+    pub client_id: String,
+    pub client_secret: String,
+    pub redirect_url: String,
+    pub auth_url: String,
+    pub token_url: String,
+    pub user_info_url: String,
+    pub email_url: String,
 }
 
 impl Config {
