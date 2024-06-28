@@ -12,8 +12,8 @@ use crate::handlers::groups::group_handlers::{
 };
 use crate::handlers::messages::msg_handlers::{del_msg, get_seq, pull_offline_messages};
 use crate::handlers::users::{
-    create_user, get_user_by_id, github_callback, github_login, login, logout, refresh_token,
-    search_user, send_email, update_user, wechat_callback, wechat_login,
+    create_user, get_user_by_id, github_callback, github_login, google_callback, google_login,
+    login, logout, refresh_token, search_user, send_email, update_user,
 };
 use crate::AppState;
 
@@ -48,8 +48,8 @@ fn user_routes(state: AppState) -> Router {
         .route("/login", post(login))
         .route("/logout/:uuid", delete(logout))
         .route("/mail/send", post(send_email))
-        .route("/auth/wechat", get(wechat_login))
-        .route("/auth/wechat/callback", get(wechat_callback))
+        .route("/auth/wechat", get(google_login))
+        .route("/auth/wechat/callback", get(google_callback))
         .route("/auth/github", get(github_login))
         .route("/auth/github/callback", get(github_callback))
         .with_state(state)

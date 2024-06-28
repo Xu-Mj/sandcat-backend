@@ -60,7 +60,7 @@ pub async fn github_callback(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
 ) -> Result<Json<Token>, Error> {
-    let token_result = get_token_result(&state.oauth2_clients.github, auth.code).await;
+    let token_result = get_token_result(&state.oauth2_clients.github, auth.code).await?;
 
     let access_token = token_result.access_token().secret();
 
@@ -102,13 +102,13 @@ pub async fn github_callback(
     gen_token(&state, user_info.unwrap(), addr).await
 }
 
-pub async fn wechat_login(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn google_login(State(state): State<AppState>) -> impl IntoResponse {
     let authorize_url = get_auth_url(&state.oauth2_clients.google).await;
 
     Redirect::temporary(&authorize_url.to_string())
 }
 
-pub async fn wechat_callback(
+pub async fn google_callback(
     Query(auth): Query<AuthResp>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
@@ -128,12 +128,12 @@ async fn get_auth_url(client: &BasicClient) -> String {
 async fn get_token_result(
     client: &BasicClient,
     code: String,
-) -> StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType> {
+) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, Error> {
     client
         .exchange_code(AuthorizationCode::new(code))
         .request_async(async_http_client)
         .await
-        .unwrap()
+        .map_err(|e| Error::InternalServer(e.to_string()))
 }
 
 async fn download_avatar(url: &str, state: &AppState) -> Result<String, Error> {

@@ -89,7 +89,7 @@ impl AppState {
 }
 
 fn init_oauth2(config: &Config) -> OAuth2Clients {
-    let google = init_oauth2_client(&config.server.oauth2.wechat);
+    let google = init_oauth2_client(&config.server.oauth2.google);
     let github = init_oauth2_client(&config.server.oauth2.github);
     OAuth2Clients { github, google }
 }

@@ -268,7 +268,7 @@ pub struct ServerConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OAuth2 {
-    pub wechat: OAuth2Item,
+    pub google: OAuth2Item,
     pub github: OAuth2Item,
 }
 
