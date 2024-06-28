@@ -24,7 +24,7 @@ server:
   jwt_secret: sandcat
   ws_lb_strategy: RoundRobin # Random, RoundRobin
   oauth2:
-    google:
+    wechat:
       client_id: 1234567890
       client_secret: 1234567890
       auth_url: https://accounts.google.com/o/oauth2/v2/auth
