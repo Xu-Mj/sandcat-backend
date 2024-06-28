@@ -35,3 +35,4 @@ xdb = { git = "https://github.com/lionsoul2014/ip2region.git", branch = "master"
 synapse = { git = "https://github.com/Xu-Mj/synapse.git", branch = "main" }
 oauth2 = "4.4.2"
 reqwest = { version = "0.12.5", features = ["json"] }
+image = "0.25.1"

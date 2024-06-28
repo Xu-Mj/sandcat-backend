@@ -37,7 +37,8 @@ server:
       client_secret: f77f680d9380ac04c4eeda646bd4c3fd14882c68
       auth_url: https://github.com/login/oauth/authorize
       token_url: https://github.com/login/oauth/access_token
-      redirect_url: http://localhost:50001/user/auth/github/callback
+      # redirect_url: http://localhost:50001/user/auth/github/callback
+      redirect_url: http://localhost:8080/third_login_callback
       user_info_url: https://api.github.com/user
       email_url: https://api.github.com/user/emails
 

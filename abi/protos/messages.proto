@@ -423,6 +423,7 @@ message CreateUserRequest { User user = 1; }
 message CreateUserResponse { User user = 1; }
 
 message GetUserRequest { string user_id = 1; }
+message GetUserByEmailRequest { string email = 1; }
 
 message GetUserResponse { User user = 1; }
 
@@ -556,6 +557,8 @@ service DbService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   /// get user by id
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  /// get user by email
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
   /// update user
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   /// update user region

@@ -66,6 +66,14 @@ impl UserRepo for PostgresUser {
         Ok(user)
     }
 
+    async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, Error> {
+        let user = sqlx::query_as("SELECT * FROM users WHERE email = $1")
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(user)
+    }
+
     /// not allow to use username
     async fn search_user(
         &self,

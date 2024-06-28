@@ -8,23 +8,21 @@ use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use tera::{Context, Tera};
-use tracing::{debug, error, info};
-use xdb::search_by_ip;
+use tracing::{debug, error};
 
 use abi::errors::Error;
 use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateRegionRequest, UpdateUserRequest,
-    User, UserUpdate, UserWithMatchType, VerifyPwdRequest,
+    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User, UserUpdate,
+    UserWithMatchType, VerifyPwdRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
-use crate::api_utils::ip_region::parse_region;
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
-use super::REFRESH_EXPIRES;
+use super::{gen_token, REFRESH_EXPIRES};
 
 /// refresh auth token
 pub async fn refresh_token(
@@ -101,7 +99,7 @@ pub async fn create_user(
     let user = response
         .into_inner()
         .user
-        .ok_or_else(|| Error::InternalServer("Unknown Error".to_string()))?;
+        .ok_or(Error::InternalServer("Unknown Error".to_string()))?;
 
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
@@ -177,7 +175,7 @@ pub async fn login(
     login.decode()?;
 
     let mut db_rpc = app_state.db_rpc.clone();
-    let mut user = db_rpc
+    let user = db_rpc
         .verify_password(VerifyPwdRequest {
             account: login.account,
             password: login.password,
@@ -188,67 +186,7 @@ pub async fn login(
         .user
         .ok_or_else(|| Error::AccountOrPassword)?;
 
-    // generate token
-    let mut claims = Claims::new(user.name.clone());
-
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
-    )
-    .map_err(|err| Error::InternalServer(err.to_string()))?;
-    info!("login success token: {:?}", claims);
-    claims.exp += REFRESH_EXPIRES;
-    let refresh_token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
-    )
-    .map_err(|err| Error::InternalServer(err.to_string()))?;
-
-    info!("login success token: {}", token);
-    info!("login success refresh: {}", refresh_token);
-    app_state.cache.user_login(&user.account).await?;
-
-    // get websocket service address
-    // let ws_lb = Arc::get_mut(&mut app_state.ws_lb).unwrap();
-    let ws_addr = if let Some(addr) = app_state.ws_lb.get_service().await {
-        format!("{}://{}/ws", &app_state.ws_config.protocol, addr)
-    } else {
-        return Err(Error::InternalServer(
-            "No websocket service available".to_string(),
-        ));
-    };
-
-    // query region
-    user.region = match addr.ip() {
-        IpAddr::V4(ip) => match search_by_ip(ip) {
-            Ok(region) => parse_region(&region),
-            Err(e) => {
-                error!("search region error: {:?}", e);
-                None
-            }
-        },
-        IpAddr::V6(_) => None,
-    };
-
-    if user.region.is_some() {
-        // update user region
-        let request = UpdateRegionRequest {
-            user_id: user.id.clone(),
-            region: user.region.as_ref().unwrap().clone(),
-        };
-        let _ = db_rpc
-            .update_user_region(request)
-            .await
-            .map_err(|err| Error::InternalServer(err.message().to_string()))?;
-    }
-    Ok(Json(Token {
-        user,
-        token,
-        refresh_token,
-        ws_addr,
-    }))
+    gen_token(&app_state, user, addr).await
 }
 
 #[derive(Deserialize, Serialize, Clone)]
