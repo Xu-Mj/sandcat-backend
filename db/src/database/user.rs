@@ -11,6 +11,9 @@ pub trait UserRepo: Sync + Send + Debug {
     /// get user by id
     async fn get_user_by_id(&self, id: &str) -> Result<Option<User>, Error>;
 
+    /// get user by email
+    async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, Error>;
+
     /// search user by pattern, return users and matched method
     async fn search_user(
         &self,

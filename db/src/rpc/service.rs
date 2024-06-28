@@ -13,15 +13,15 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMsgRequest, GetMsgResp, GetUserRequest, GetUserResponse, GroupCreateRequest,
-    GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
-    GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, Msg, QueryFriendInfoRequest, QueryFriendInfoResponse,
-    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
-    SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
-    SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
-    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
-    VerifyPwdResponse,
+    GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
+    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
+    GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
+    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, QueryFriendInfoRequest,
+    QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest,
+    SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse,
+    SearchUserRequest, SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse,
+    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
+    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -273,6 +273,18 @@ impl DbService for DbRpcService {
             return Err(Status::invalid_argument("user_id is empty"));
         }
         let user = self.db.user.get_user_by_id(&user_id).await?;
+        Ok(Response::new(GetUserResponse { user }))
+    }
+
+    async fn get_user_by_email(
+        &self,
+        request: Request<GetUserByEmailRequest>,
+    ) -> Result<Response<GetUserResponse>, Status> {
+        let email = request.into_inner().email;
+        if email.is_empty() {
+            return Err(Status::invalid_argument("email is empty"));
+        }
+        let user = self.db.user.get_user_by_email(&email).await?;
         Ok(Response::new(GetUserResponse { user }))
     }
 

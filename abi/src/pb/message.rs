@@ -671,6 +671,12 @@ pub struct GetUserRequest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserByEmailRequest {
+    #[prost(string, tag = "1")]
+    pub email: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetUserResponse {
     #[prost(message, optional, tag = "1")]
     pub user: ::core::option::Option<User>,
@@ -1725,6 +1731,24 @@ pub mod db_service_client {
                 .insert(GrpcMethod::new("message.DbService", "GetUser"));
             self.inner.unary(req, path, codec).await
         }
+        /// / get user by email
+        pub async fn get_user_by_email(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetUserByEmailRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetUserResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetUserByEmail");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetUserByEmail"));
+            self.inner.unary(req, path, codec).await
+        }
         /// / update user
         pub async fn update_user(
             &mut self,
@@ -2582,6 +2606,11 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::GetUserRequest>,
         ) -> std::result::Result<tonic::Response<super::GetUserResponse>, tonic::Status>;
+        /// / get user by email
+        async fn get_user_by_email(
+            &self,
+            request: tonic::Request<super::GetUserByEmailRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetUserResponse>, tonic::Status>;
         /// / update user
         async fn update_user(
             &self,
@@ -3309,6 +3338,48 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetUserSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetUserByEmail" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetUserByEmailSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::GetUserByEmailRequest>
+                        for GetUserByEmailSvc<T>
+                    {
+                        type Response = super::GetUserResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetUserByEmailRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_user_by_email(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetUserByEmailSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
