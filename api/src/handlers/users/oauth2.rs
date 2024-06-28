@@ -26,6 +26,7 @@ use super::{gen_token, Token};
 
 const AUTHORIZATION_HEADER_PREFIX: &str = "Bearer ";
 const USER_AGENT: &str = "SandCat-Auth";
+
 pub async fn github_login(State(state): State<AppState>) -> impl IntoResponse {
     let authorize_url = get_auth_url(&state.oauth2_clients.github).await;
 
@@ -95,49 +96,9 @@ pub async fn github_callback(
 
     // if none, need to get user info from github and register
     if user_info.is_none() {
-        let user: GitHubUser = reqwest::Client::new()
-            .get(&state.oauth2_config.github.user_info_url)
-            .header(
-                header::AUTHORIZATION,
-                format!("{} {}", AUTHORIZATION_HEADER_PREFIX, access_token),
-            )
-            .header(header::USER_AGENT, USER_AGENT)
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        // download avatar from github
-
-        let avatar = download_avatar(&user.avatar_url, &state).await?;
-
-        let id = nanoid!();
-        // convert user to db user
-        let user2db = User {
-            id: id.clone(),
-            name: user.name,
-            account: id,
-            email: Some(email.email),
-            avatar,
-            ..Default::default()
-        };
-
-        // todo need to check the email is registered already
-        let request = CreateUserRequest {
-            user: Some(user2db),
-        };
-        let response = db_rpc.create_user(request).await.map_err(|err| {
-            error!("create user error: {:?}", err);
-            Error::InternalServer(err.message().to_string())
-        })?;
-
-        let user = response
-            .into_inner()
-            .user
-            .ok_or(Error::InternalServer("Unknown Error".to_string()))?;
-
-        user_info = Some(user);
+        user_info = Some(register_user(&state, email.email, access_token).await?);
     }
+
     gen_token(&state, user_info.unwrap(), addr).await
 }
 
@@ -187,4 +148,47 @@ async fn download_avatar(url: &str, state: &AppState) -> Result<String, Error> {
     let oss = state.oss.clone();
     oss.upload_avatar(&filename, content.into()).await?;
     Ok(filename)
+}
+
+async fn register_user(state: &AppState, email: String, access_token: &str) -> Result<User, Error> {
+    let user: GitHubUser = reqwest::Client::new()
+        .get(&state.oauth2_config.github.user_info_url)
+        .header(
+            header::AUTHORIZATION,
+            format!("{} {}", AUTHORIZATION_HEADER_PREFIX, access_token),
+        )
+        .header(header::USER_AGENT, USER_AGENT)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    // download avatar from github
+
+    let avatar = download_avatar(&user.avatar_url, state).await?;
+
+    let id = nanoid!();
+    // convert user to db user
+    let user2db = User {
+        id: id.clone(),
+        name: user.name,
+        account: id,
+        email: Some(email),
+        avatar,
+        ..Default::default()
+    };
+
+    let mut db_rpc = state.db_rpc.clone();
+    let request = CreateUserRequest {
+        user: Some(user2db),
+    };
+    let response = db_rpc.create_user(request).await.map_err(|err| {
+        error!("create user error: {:?}", err);
+        Error::InternalServer(err.message().to_string())
+    })?;
+
+    response
+        .into_inner()
+        .user
+        .ok_or(Error::InternalServer("Unknown Error".to_string()))
 }
