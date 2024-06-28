@@ -102,13 +102,13 @@ pub async fn github_callback(
     gen_token(&state, user_info.unwrap(), addr).await
 }
 
-pub async fn google_login(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn wechat_login(State(state): State<AppState>) -> impl IntoResponse {
     let authorize_url = get_auth_url(&state.oauth2_clients.google).await;
 
     Redirect::temporary(&authorize_url.to_string())
 }
 
-pub async fn google_callback(
+pub async fn wechat_callback(
     Query(auth): Query<AuthResp>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
