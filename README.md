@@ -57,6 +57,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - knock off desk from the mobile
 - delete minio file by period
 - add send box for sender
+- support matrix protocol so that we can import some robot
 
 ## Development
 
