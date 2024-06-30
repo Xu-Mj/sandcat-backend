@@ -50,6 +50,9 @@ pub struct Msg {
     /// user nickname
     #[prost(string, tag = "18")]
     pub nickname: ::prost::alloc::string::String,
+    /// related message id
+    #[prost(string, optional, tag = "19")]
+    pub related_msg_id: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

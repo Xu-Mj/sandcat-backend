@@ -109,6 +109,9 @@ message Msg {
   string avatar = 17;
   // user nickname
   string nickname = 18;
+
+  // related message id
+  optional string related_msg_id = 19;
 }
 
 message MsgRead {
@@ -377,7 +380,10 @@ message AgreeReply {
 
 message FsListRequest { string user_id = 1; }
 
-message FriendListRequest { string user_id = 1;  int64 offline_time = 2;}
+message FriendListRequest {
+  string user_id = 1;
+  int64 offline_time = 2;
+}
 
 /// only for update friend apply request
 message FsUpdate {
