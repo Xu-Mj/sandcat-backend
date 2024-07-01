@@ -181,6 +181,7 @@ impl Manager {
                     message.msg_type = MsgType::MsgRecResp as i32;
                     message.server_id.clone_from(&response.server_id);
                     message.content = response.err.into_bytes();
+                    message.send_time = response.send_time;
                 }
                 Err(err) => {
                     error!("send message error: {:?}", err);

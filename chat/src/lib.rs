@@ -135,10 +135,7 @@ impl ChatService for ChatRpcService {
         {
             msg.server_id = nanoid!();
         }
-        msg.send_time = chrono::Local::now()
-            .naive_local()
-            .and_utc()
-            .timestamp_millis();
+        msg.send_time = chrono::Utc::now().timestamp_millis();
 
         // send msg to kafka
         let payload = serde_json::to_string(&msg).unwrap();
