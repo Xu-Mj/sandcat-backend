@@ -38,6 +38,9 @@ impl TryFrom<Document> for Msg {
             platform: value.get_i32("platform").unwrap_or_default(),
             avatar: value.get_str("avatar").unwrap_or_default().to_string(),
             nickname: value.get_str("nickname").unwrap_or_default().to_string(),
+            related_msg_id: value
+                .get_str("related_msg_id")
+                .map_or(None, |v| Some(v.to_string())),
         })
     }
 }

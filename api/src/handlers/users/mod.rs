@@ -49,7 +49,7 @@ impl LoginRequest {
         if self.account.is_empty() || self.password.is_empty() {
             return Err(Error::BadRequest("parameter is none".to_string()));
         }
-        let pwd = BASE64_STANDARD
+        let pwd = BASE64_STANDARD_NO_PAD
             .decode(&self.password)
             .map_err(|e| Error::InternalServer(e.to_string()))?;
         self.password = String::from_utf8(pwd).map_err(|e| Error::InternalServer(e.to_string()))?;

@@ -135,10 +135,11 @@ oss:
   region: us-east-1
 
 mail:
-  # server: smtp.qq.com
-  server: 127.0.0.1
-  account: sandcat@sandcat.com
-  # password: rxkhmcpjgigsbegi
-  password: sandcat.email.password!~
+  server: smtp.qq.com
+  # server: 127.0.0.1
+  # account: sandcat@sandcat.com
+  account: 653609824@qq.com
+  password: rxkhmcpjgigsbegi
+  # password: sandcat.email.password!~
   temp_path: ./api/fixtures/templates/*
   temp_file: email_temp.html

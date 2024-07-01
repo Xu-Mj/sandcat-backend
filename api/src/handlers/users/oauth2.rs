@@ -142,7 +142,7 @@ async fn download_avatar(url: &str, state: &AppState) -> Result<String, Error> {
     // get image type
     let mut filename = nanoid!();
     if let Ok(tp) = image::guess_format(&content) {
-        filename = format!("{}{}", filename, tp.extensions_str().first().unwrap());
+        filename = format!("{}.{}", filename, tp.extensions_str().first().unwrap());
     }
 
     let oss = state.oss.clone();

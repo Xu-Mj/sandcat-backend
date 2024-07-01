@@ -256,6 +256,7 @@ mod tests {
             group_id: "".to_string(),
             avatar: "".to_string(),
             nickname: "".to_string(),
+            related_msg_id: None,
         }
     }
     #[tokio::test]
