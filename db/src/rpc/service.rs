@@ -37,7 +37,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         let message = inner
             .message
-            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+            .ok_or(Status::invalid_argument("message is empty"))?;
         let need_to_history = inner.need_to_history;
         debug!("save message: {:?}", message);
         self.handle_message(message, need_to_history).await?;
@@ -51,7 +51,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         let message = inner
             .message
-            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+            .ok_or(Status::invalid_argument("message is empty"))?;
         let need_to_history = inner.need_to_history;
         let members_id = inner.members_id;
         debug!("save group message: {:?}", message);
@@ -127,7 +127,7 @@ impl DbService for DbRpcService {
         let group = request
             .into_inner()
             .group
-            .ok_or_else(|| Status::invalid_argument("group is empty"))?;
+            .ok_or(Status::invalid_argument("group is empty"))?;
 
         let group_id = group.id.clone();
         // insert group information and members information to db
@@ -162,7 +162,7 @@ impl DbService for DbRpcService {
         let invitation = request
             .into_inner()
             .group_invite
-            .ok_or_else(|| Status::invalid_argument("group_invite is empty"))?;
+            .ok_or(Status::invalid_argument("group_invite is empty"))?;
 
         let members = self.db.group.invite_new_members(&invitation).await?;
 
@@ -182,7 +182,7 @@ impl DbService for DbRpcService {
         let group = request
             .into_inner()
             .group
-            .ok_or_else(|| Status::invalid_argument("group information is empty"))?;
+            .ok_or(Status::invalid_argument("group information is empty"))?;
 
         // update db
         let group = self.db.group.update_group(&group).await?;
@@ -258,7 +258,7 @@ impl DbService for DbRpcService {
         let mut user = request
             .into_inner()
             .user
-            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
+            .ok_or(Status::invalid_argument("user is empty"))?;
         user.id = nanoid!();
 
         let user = self.db.user.create_user(user).await?;
@@ -296,7 +296,7 @@ impl DbService for DbRpcService {
         let user = request
             .into_inner()
             .user
-            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
+            .ok_or(Status::invalid_argument("user is empty"))?;
 
         let user = self.db.user.update_user(user).await?;
         Ok(Response::new(UpdateUserResponse { user: Some(user) }))
@@ -348,7 +348,7 @@ impl DbService for DbRpcService {
         let fs = request
             .into_inner()
             .fs_create
-            .ok_or_else(|| Status::invalid_argument("fs_create is empty"))?;
+            .ok_or(Status::invalid_argument("fs_create is empty"))?;
         let (fs_req, fs_send) = self.db.friend.create_fs(fs).await?;
         Ok(Response::new(FsCreateResponse {
             fs_req: Some(fs_req),
@@ -363,7 +363,7 @@ impl DbService for DbRpcService {
         let fs = request
             .into_inner()
             .fs_reply
-            .ok_or_else(|| Status::invalid_argument("fs_reply is empty"))?;
+            .ok_or(Status::invalid_argument("fs_reply is empty"))?;
         let (req, send) = self.db.friend.agree_friend_apply_request(fs).await?;
         Ok(Response::new(FsAgreeResponse {
             req: Some(req),

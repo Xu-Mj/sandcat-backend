@@ -58,11 +58,11 @@ pub async fn create_friendship(
     let inner = response.into_inner();
     let fs_req = inner
         .fs_req
-        .ok_or_else(|| Error::InternalServer("create fs error".to_string()))?;
+        .ok_or(Error::InternalServer("create fs error".to_string()))?;
 
     let fs_send = inner
         .fs_send
-        .ok_or_else(|| Error::InternalServer("send fs error".to_string()))?;
+        .ok_or(Error::InternalServer("send fs error".to_string()))?;
 
     // decode fs
     let fs = bincode::serialize(&fs_send).map_err(|e| Error::InternalServer(e.to_string()))?;
@@ -94,10 +94,10 @@ pub async fn agree(
     let inner = response.into_inner();
     let req = inner
         .req
-        .ok_or_else(|| Error::InternalServer("agree fs error".to_string()))?;
+        .ok_or(Error::InternalServer("agree fs error".to_string()))?;
     let send = inner
         .send
-        .ok_or_else(|| Error::InternalServer("send fs error".to_string()))?;
+        .ok_or(Error::InternalServer("send fs error".to_string()))?;
     // decode friend
     let friend = bincode::serialize(&send).map_err(|e| Error::InternalServer(e.to_string()))?;
     // send message
