@@ -1,1 +1,1 @@
-DELETE TABLE sequence IF EXISTS;
+DROP TABLE sequence;

@@ -1,4 +1,5 @@
 CREATE TABLE sequence (
     user_id VARCHAR PRIMARY KEY,
-    max_seq BIGINT  NOT NULL DEFAULT 0
+    send_max_seq BIGINT  NOT NULL DEFAULT 0,
+    rec_max_seq BIGINT  NOT NULL DEFAULT 0
 );
