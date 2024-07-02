@@ -28,6 +28,7 @@ pub struct ConsumerService {
     db_rpc: DbServiceClient<LbWithServiceDiscovery>,
     pusher: PushServiceClient<LbWithServiceDiscovery>,
     cache: Arc<dyn Cache>,
+    seq_step: i32,
 }
 
 impl ConsumerService {
@@ -68,6 +69,8 @@ impl ConsumerService {
             .await
             .unwrap();
 
+        let seq_step = config.redis.seq_step;
+
         let cache = cache::cache(config);
 
         Self {
@@ -75,6 +78,7 @@ impl ConsumerService {
             db_rpc,
             pusher,
             cache,
+            seq_step,
         }
     }
 
@@ -153,34 +157,42 @@ impl ConsumerService {
         }
     }
 
-    /// todo we need to handle the errors, like: should we use something like transaction?
-    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
-        debug!("Received message: {:#?}", payload);
-
-        // send to db rpc server
+    async fn handle_send_seq(&self, user_id: &str) -> Result<(), Error> {
         let mut db_rpc = self.db_rpc.clone();
+        let send_seq = self.cache.get_send_seq(user_id).await?;
 
-        let mut msg: Msg = serde_json::from_str(payload)?;
-
-        let mt =
-            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
-        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
-        if need_increase_seq {
-            let (cur_seq, _, updated) = self.cache.increase_seq(&msg.receiver_id).await?;
-            msg.seq = cur_seq;
-            if updated {
-                db_rpc
-                    .save_max_seq(SaveMaxSeqRequest {
-                        user_id: msg.receiver_id.clone(),
-                    })
-                    .await
-                    .map_err(|e| Error::InternalServer(e.to_string()))?;
-            }
+        if send_seq.0 == send_seq.1 - self.seq_step as i64 {
+            db_rpc
+                .save_send_max_seq(SaveMaxSeqRequest {
+                    user_id: user_id.to_string(),
+                })
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
         }
+        Ok(())
+    }
 
-        // query members id from cache if the message type is group
+    async fn increase_message_seq(&self, user_id: &str) -> Result<i64, Error> {
+        let mut db_rpc = self.db_rpc.clone();
+        let (cur_seq, _, updated) = self.cache.increase_seq(user_id).await?;
+        if updated {
+            db_rpc
+                .save_max_seq(SaveMaxSeqRequest {
+                    user_id: user_id.to_string(),
+                })
+                .await
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
+        }
+        Ok(cur_seq)
+    }
+
+    async fn handle_group_seq(
+        &self,
+        msg_type: &MsgType2,
+        msg: &mut Msg,
+    ) -> Result<Vec<String>, Error> {
         let mut members = vec![];
-        if msg_type == MsgType2::Group {
+        if *msg_type == MsgType2::Group {
             // query group members id from the cache
             members = self.get_members_id(&msg.receiver_id).await?;
 
@@ -202,12 +214,15 @@ impl ConsumerService {
                     }
                 })
                 .collect::<Vec<String>>();
-            db_rpc
-                .save_max_seq_batch(SaveMaxSeqBatchRequest {
-                    user_ids: need_update,
-                })
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+            if !need_update.is_empty() {
+                let mut db_rpc = self.db_rpc.clone();
+                db_rpc
+                    .save_max_seq_batch(SaveMaxSeqBatchRequest {
+                        user_ids: need_update,
+                    })
+                    .await
+                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+            }
 
             // judge the message type;
             // we should delete the cache data if the type is group dismiss
@@ -220,6 +235,32 @@ impl ConsumerService {
                     .await?;
             }
         }
+        Ok(members)
+    }
+
+    /// todo we need to handle the errors, like: should we use something like transaction?
+    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
+        debug!("Received message: {:#?}", payload);
+
+        // send to db rpc server
+        let mut db_rpc = self.db_rpc.clone();
+
+        let mut msg: Msg = serde_json::from_str(payload)?;
+
+        let mt =
+            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
+
+        // check send seq if need to increase max_seq
+        self.handle_send_seq(&msg.send_id).await?;
+
+        if need_increase_seq {
+            let cur_seq = self.increase_message_seq(&msg.receiver_id).await?;
+            msg.seq = cur_seq;
+        }
+
+        // query members id from cache if the message type is group
+        let members = self.handle_group_seq(&msg_type, &mut msg).await?;
 
         // send to db
         let cloned_msg = msg.clone();
