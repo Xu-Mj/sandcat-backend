@@ -24,6 +24,7 @@ pub struct Msg {
     pub create_time: i64,
     #[prost(int64, tag = "6")]
     pub send_time: i64,
+    /// receiver sequence
     #[prost(int64, tag = "7")]
     pub seq: i64,
     /// is there necessary to cary the user's avatar and nickname?
@@ -53,6 +54,9 @@ pub struct Msg {
     /// related message id
     #[prost(string, optional, tag = "19")]
     pub related_msg_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// / send sequence
+    #[prost(int64, tag = "20")]
+    pub send_seq: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

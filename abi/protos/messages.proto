@@ -89,6 +89,8 @@ message Msg {
   // timestamp
   int64 create_time = 5;
   int64 send_time = 6;
+
+  // receiver sequence
   int64 seq = 7;
   // is there necessary to cary the user's avatar and nickname?
   MsgType msg_type = 8;
@@ -112,6 +114,9 @@ message Msg {
 
   // related message id
   optional string related_msg_id = 19;
+
+  /// send sequence
+  int64 send_seq = 20;
 }
 
 message MsgRead {

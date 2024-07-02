@@ -32,6 +32,7 @@ impl TryFrom<Document> for Msg {
             send_id: value.get_str("send_id").unwrap_or_default().to_string(),
             receiver_id: value.get_str("receiver_id").unwrap_or_default().to_string(),
             seq: value.get_i64("seq").unwrap_or_default(),
+            send_seq: value.get_i64("send_seq").unwrap_or_default(),
             msg_type: value.get_i32("msg_type").unwrap_or_default(),
             is_read: value.get_bool("is_read").unwrap_or_default(),
             group_id: value.get_str("group_id").unwrap_or_default().to_string(),

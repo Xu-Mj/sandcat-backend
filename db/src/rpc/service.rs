@@ -74,6 +74,7 @@ impl DbService for DbRpcService {
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
 
+    #[allow(deprecated)]
     async fn get_messages(
         &self,
         request: Request<GetDbMsgRequest>,

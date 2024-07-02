@@ -168,6 +168,68 @@ impl MsgRecBoxRepo for MsgBox {
         }
         Ok(messages)
     }
+
+    async fn get_msgs(
+        &self,
+        user_id: &str,
+        send_start: i64,
+        send_end: i64,
+        rec_start: i64,
+        rec_end: i64,
+    ) -> Result<Vec<Msg>, Error> {
+        let pipeline = vec![
+            doc! {
+                "$match": {
+                    "$or": [
+                        {
+                            "receiver_id": user_id,
+                            "seq": { "$gt": rec_start, "$lte": rec_end }
+                        },
+                        {
+                            "send_id": user_id,
+                            "send_seq": { "$gt": send_start, "$lte": send_end }
+                        }
+                    ]
+                }
+            },
+            doc! {
+                "$addFields": {
+                    "sort_field": {
+                        "$cond": {
+                            "if": { "$eq": ["$send_id", user_id] },
+                            "then": "$send_seq",
+                            "else": "$seq"
+                        }
+                    }
+                }
+            },
+            doc! {
+                "$sort": {
+                    "send_time": 1,
+                    "sort_field": 1
+                }
+            },
+        ];
+
+        let len = send_end - send_start + rec_end - rec_start;
+        // query
+        let mut cursor = self.mb.aggregate(pipeline, None).await?;
+
+        let mut messages = Vec::with_capacity((len) as usize);
+        while let Some(result) = cursor.next().await {
+            match result {
+                Ok(doc) => {
+                    let msg = Msg::try_from(doc)?;
+                    messages.push(msg)
+                }
+                Err(e) => {
+                    error!("{:?}", e);
+                    return Err(Error::MongoDbOperateError(e));
+                }
+            }
+        }
+        Ok(messages)
+    }
 }
 
 #[cfg(test)]
@@ -247,6 +309,7 @@ mod tests {
             send_id: "123".to_string(),
             receiver_id: "111".to_string(),
             seq: 0,
+            send_seq: 0,
             msg_type: MsgType::SingleMsg as i32,
             is_read: false,
             platform: PlatformType::Mobile as i32,
