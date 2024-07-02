@@ -57,13 +57,15 @@ impl SeqRepo for PostgresSeq {
         Ok(())
     }
 
-    async fn get_max_seq(&self) -> Result<Receiver<(String, i64)>, Error> {
-        let mut result = sqlx::query("SELECT user_id, max_seq FROM sequence").fetch(&self.pool);
+    async fn get_max_seq(&self) -> Result<Receiver<(String, i64, i64)>, Error> {
+        let mut result = sqlx::query("SELECT user_id, send_max_seq, rec_max_seq FROM sequence")
+            .fetch(&self.pool);
         let (tx, rx) = mpsc::channel(1024);
         while let Some(item) = result.try_next().await? {
             let user_id: String = item.try_get(0)?;
-            let max_seq: i64 = item.try_get(1)?;
-            if let Err(e) = tx.send((user_id, max_seq)).await {
+            let send_max_seq: i64 = item.try_get(1)?;
+            let rec_max_seq: i64 = item.try_get(2)?;
+            if let Err(e) = tx.send((user_id, send_max_seq, rec_max_seq)).await {
                 error!("send error: {}", e);
             };
         }

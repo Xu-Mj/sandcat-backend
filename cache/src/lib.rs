@@ -17,7 +17,8 @@ pub trait Cache: Sync + Send + Debug {
     async fn set_seq_loaded(&self) -> Result<(), Error>;
 
     /// set the receive sequence
-    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+    /// contains: user_id, send_max_seq, recv_max_seq
+    async fn set_seq(&self, max_seq: &[(String, i64, i64)]) -> Result<(), Error>;
 
     /// set the send sequence
     async fn set_send_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
