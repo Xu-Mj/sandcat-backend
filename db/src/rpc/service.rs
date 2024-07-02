@@ -98,6 +98,17 @@ impl DbService for DbRpcService {
         Ok(Response::new(DelMsgResp {}))
     }
 
+    async fn save_send_max_seq(
+        &self,
+        request: Request<SaveMaxSeqRequest>,
+    ) -> Result<Response<SaveMaxSeqResponse>, Status> {
+        let req = request.into_inner();
+        if let Err(e) = self.db.seq.save_max_seq(&req.user_id).await {
+            return Err(Status::internal(e.to_string()));
+        };
+        Ok(Response::new(SaveMaxSeqResponse {}))
+    }
+
     async fn save_max_seq(
         &self,
         request: Request<SaveMaxSeqRequest>,

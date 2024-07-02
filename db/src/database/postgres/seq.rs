@@ -20,9 +20,21 @@ impl PostgresSeq {
 
 #[async_trait]
 impl SeqRepo for PostgresSeq {
+    async fn save_send_max_seq(&self, user_id: &str) -> Result<i64, Error> {
+        let max_seq = sqlx::query(
+            "UPDATE sequence SET send_max_seq = send_max_seq + $1 WHERE user_id = $2 RETURNING send_max_seq",
+        )
+        .bind(self.seq_step)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?
+        .try_get(0)?;
+        Ok(max_seq)
+    }
+
     async fn save_max_seq(&self, user_id: &str) -> Result<i64, Error> {
         let max_seq = sqlx::query(
-            "UPDATE sequence SET max_seq = max_seq + $1 WHERE user_id = $2 RETURNING max_seq",
+            "UPDATE sequence SET rec_max_seq = rec_max_seq + $1 WHERE user_id = $2 RETURNING rec_max_seq",
         )
         .bind(self.seq_step)
         .bind(user_id)
@@ -37,13 +49,14 @@ impl SeqRepo for PostgresSeq {
         if user_ids.is_empty() {
             return Ok(());
         }
-        sqlx::query("UPDATE sequence SET max_seq = max_seq + $1 WHERE user_id = ANY($2)")
+        sqlx::query("UPDATE sequence SET rec_max_seq = rec_max_seq + $1 WHERE user_id = ANY($2)")
             .bind(self.seq_step)
             .bind(user_ids as &[_])
             .execute(&self.pool)
             .await?;
         Ok(())
     }
+
     async fn get_max_seq(&self) -> Result<Receiver<(String, i64)>, Error> {
         let mut result = sqlx::query("SELECT user_id, max_seq FROM sequence").fetch(&self.pool);
         let (tx, rx) = mpsc::channel(1024);

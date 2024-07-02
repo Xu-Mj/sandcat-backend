@@ -548,9 +548,11 @@ service DbService {
   rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
   rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
   rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
-  /// save message max sequence
+  /// save message send max sequence
+  rpc SaveSendMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
+  /// save message receive max sequence
   rpc SaveMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
-  /// save message max sequence batch
+  /// save message receive max sequence batch
   rpc SaveMaxSeqBatch(SaveMaxSeqBatchRequest) returns (SaveMaxSeqResponse);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
