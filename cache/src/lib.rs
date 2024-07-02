@@ -26,8 +26,9 @@ pub trait Cache: Sync + Send + Debug {
     /// query receive sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
 
-    /// query send sequence by user id
-    async fn get_send_seq(&self, user_id: &str) -> Result<i64, Error>;
+    /// query send sequence by user id,
+    /// it returns the current send sequence and the max send sequence
+    async fn get_send_seq(&self, user_id: &str) -> Result<(i64, i64), Error>;
 
     /// increase receive sequence by user id
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;

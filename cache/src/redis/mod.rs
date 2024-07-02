@@ -181,13 +181,28 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn get_send_seq(&self, user_id: &str) -> Result<i64, Error> {
+    async fn get_send_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
         // generate key
         let key = format!("send_seq:{}", user_id);
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
-        Ok(seq)
+        // let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
+        // Ok(seq)
+        let (cur_seq, max_seq): (Option<i64>, Option<i64>) = redis::pipe()
+            .cmd("HGET")
+            .arg(&key)
+            .arg("cur_seq")
+            .cmd("HGET")
+            .arg(&key)
+            .arg("max_seq")
+            .query_async(&mut conn)
+            .await?;
+
+        // 处理默认值
+        let cur_seq = cur_seq.unwrap_or_default();
+        let max_seq = max_seq.unwrap_or_default();
+
+        Ok((cur_seq, max_seq))
     }
 
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
