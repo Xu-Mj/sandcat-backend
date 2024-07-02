@@ -10,14 +10,29 @@ mod redis;
 
 #[async_trait]
 pub trait Cache: Sync + Send + Debug {
+    /// check if the sequence is loaded
     async fn check_seq_loaded(&self) -> Result<bool, Error>;
+
+    /// set the sequence is loaded
     async fn set_seq_loaded(&self) -> Result<(), Error>;
 
+    /// set the receive sequence
     async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
 
-    /// query sequence by user id
+    /// set the send sequence
+    async fn set_send_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+
+    /// query receive sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
+
+    /// query send sequence by user id
+    async fn get_send_seq(&self, user_id: &str) -> Result<i64, Error>;
+
+    /// increase receive sequence by user id
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
+
+    /// increase send sequence by user id
+    async fn incr_send_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
 
     /// INCREASE GROUP MEMBERS SEQUENCE
     async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error>;

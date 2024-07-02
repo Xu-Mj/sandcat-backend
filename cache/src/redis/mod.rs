@@ -157,6 +157,18 @@ impl Cache for RedisCache {
         Ok(())
     }
 
+    async fn set_send_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let mut pipe = redis::pipe();
+        for (user_id, max_seq) in max_seq {
+            let key = format!("send_seq:{}", user_id);
+            pipe.hset(&key, CUR_SEQ_KEY, max_seq);
+            pipe.hset(&key, MAX_SEQ_KEY, max_seq);
+        }
+        pipe.query_async(&mut conn).await?;
+        Ok(())
+    }
+
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error> {
         // generate key
         let key = format!("seq:{}", user_id);
@@ -166,9 +178,34 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
+    async fn get_send_seq(&self, user_id: &str) -> Result<i64, Error> {
+        // generate key
+        let key = format!("send_seq:{}", user_id);
+
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
+        Ok(seq)
+    }
+
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
         // generate key
         let key = format!("seq:{}", user_id);
+
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // increase seq
+        let seq = redis::cmd(EVALSHA)
+            .arg(&self.single_seq_exe_sha)
+            .arg(1)
+            .arg(&key)
+            .arg(self.seq_step)
+            .query_async(&mut conn)
+            .await?;
+        Ok(seq)
+    }
+
+    async fn incr_send_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
+        // generate key
+        let key = format!("send_seq:{}", user_id);
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // increase seq
