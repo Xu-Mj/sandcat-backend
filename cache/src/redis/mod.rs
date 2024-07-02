@@ -53,7 +53,7 @@ impl RedisCache {
         // Program should panic if unable to connect to Redis, as it's critical for operation.
         let client = redis::Client::open(config.redis.url()).unwrap();
         // init redis
-        let seq_exe_sha = Self::single_script_load(&client);
+        let single_seq_exe_sha = Self::single_script_load(&client);
         let group_seq_exe_sha = Self::group_script_load(&client);
         let mut seq_step = DEFAULT_SEQ_STEP;
         if config.redis.seq_step != 0 {
@@ -62,7 +62,7 @@ impl RedisCache {
         Self {
             client,
             seq_step,
-            single_seq_exe_sha: seq_exe_sha,
+            single_seq_exe_sha,
             group_seq_exe_sha,
         }
     }
