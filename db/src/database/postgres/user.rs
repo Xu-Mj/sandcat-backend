@@ -22,7 +22,7 @@ impl PostgresUser {
 #[async_trait]
 impl UserRepo for PostgresUser {
     async fn create_user(&self, user: User) -> Result<User, Error> {
-        let now = chrono::Local::now().timestamp_millis();
+        let now = chrono::Utc::now().timestamp_millis();
         let mut tx = self.pool.begin().await?;
         let result = sqlx::query_as(
             "INSERT INTO users
@@ -123,7 +123,7 @@ impl UserRepo for PostgresUser {
         .bind(&user.region)
         .bind(user.birthday)
         .bind(&user.signature)
-        .bind(chrono::Local::now().timestamp_millis())
+        .bind(chrono::Utc::now().timestamp_millis())
         .fetch_one(&self.pool)
         .await?;
         Ok(user)
