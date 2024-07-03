@@ -66,8 +66,12 @@ pub async fn create_friendship(
 
     // decode fs
     let fs = bincode::serialize(&fs_send).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    // increase send sequence
+    let (cur_seq, _, _) = app_state.cache.incr_send_seq(&fs_send.user_id).await?;
+
     // send create fs message for online user
-    let msg = SendMsgRequest::new_with_friend_ship_req(fs_send.user_id, receiver_id, fs);
+    let msg = SendMsgRequest::new_with_friend_ship_req(fs_send.user_id, receiver_id, fs, cur_seq);
     let mut chat_rpc = app_state.chat_rpc.clone();
     // need to send message to mq, because need to store
     chat_rpc
@@ -98,14 +102,21 @@ pub async fn agree(
     let send = inner
         .send
         .ok_or(Error::InternalServer("send fs error".to_string()))?;
+
+    let send_id = send.friend_id.clone();
     // decode friend
     let friend = bincode::serialize(&send).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    // increase send sequence
+    let (cur_seq, _, _) = app_state.cache.incr_send_seq(&send_id).await?;
+
     // send message
     let mut chat_rpc = app_state.chat_rpc.clone();
     chat_rpc
         .send_msg(SendMsgRequest::new_with_friend_ship_resp(
             req.friend_id.clone(),
             friend,
+            cur_seq,
         ))
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;

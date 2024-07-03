@@ -112,7 +112,10 @@ impl ConsumerService {
             | MsgType::SingleCallInviteCancel
             | MsgType::Hangup
             | MsgType::ConnectSingleCall
-            | MsgType::RejectSingleCall => {
+            | MsgType::RejectSingleCall
+            | MsgType::FriendApplyReq
+            | MsgType::FriendApplyResp
+            | MsgType::FriendDelete => {
                 // single message and need to increase seq
                 msg_type = MsgType2::Single;
                 need_increase_seq = true;

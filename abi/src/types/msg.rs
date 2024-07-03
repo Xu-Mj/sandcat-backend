@@ -62,9 +62,15 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_req(send_id: String, receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_req(
+        send_id: String,
+        receiver_id: String,
+        fs: Vec<u8>,
+        send_seq: i64,
+    ) -> Self {
         Self {
             message: Some(Msg {
+                send_seq,
                 send_id,
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
@@ -75,9 +81,10 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Vec<u8>, send_seq: i64) -> Self {
         Self {
             message: Some(Msg {
+                send_seq,
                 receiver_id,
                 content: fs,
                 msg_type: MsgType::FriendApplyResp as i32,
