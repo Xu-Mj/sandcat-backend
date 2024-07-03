@@ -501,6 +501,14 @@ message GetDbMsgRequest {
   int64 end = 3;
 }
 
+message GetDbMessagesRequest {
+  string user_id = 1;
+  int64 send_start = 2;
+  int64 send_end = 3;
+  int64 start = 4;
+  int64 end = 5;
+}
+
 message GetMsgResp { repeated Msg messages = 1; }
 
 message DelMsgRequest {
@@ -547,6 +555,8 @@ service DbService {
   /// query message from mongodb by start seq to end seq
   rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
   rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
+  /// get messages with send seq and rec seq
+  rpc GetMsgs(GetDbMessagesRequest) returns (GetMsgResp);
   rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
   /// save message send max sequence
   rpc SaveSendMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);

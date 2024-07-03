@@ -211,7 +211,7 @@ impl MsgRecBoxRepo for MsgBox {
             },
         ];
 
-        let len = send_end - send_start + rec_end - rec_start;
+        let len = send_end - send_start + (rec_end - rec_start);
         // query
         let mut cursor = self.mb.aggregate(pipeline, None).await?;
 

@@ -13,15 +13,15 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
-    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
-    GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
-    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, QueryFriendInfoRequest,
-    QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest,
-    SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse,
-    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
-    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    GetDbMessagesRequest, GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest,
+    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
+    GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
+    GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
+    QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse,
+    SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest,
+    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRegionRequest,
+    UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
+    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -83,6 +83,24 @@ impl DbService for DbRpcService {
         let result = self
             .msg_rec_box
             .get_messages(&req.user_id, req.start, req.end)
+            .await?;
+        Ok(Response::new(GetMsgResp { messages: result }))
+    }
+
+    async fn get_msgs(
+        &self,
+        request: Request<GetDbMessagesRequest>,
+    ) -> Result<Response<GetMsgResp>, Status> {
+        let req = request.into_inner();
+        let result = self
+            .msg_rec_box
+            .get_msgs(
+                &req.user_id,
+                req.send_start,
+                req.send_end,
+                req.start,
+                req.end,
+            )
             .await?;
         Ok(Response::new(GetMsgResp { messages: result }))
     }

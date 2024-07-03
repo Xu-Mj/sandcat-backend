@@ -2,7 +2,10 @@ use mongodb::bson::Document;
 use tonic::Status;
 
 use crate::errors::Error;
-use crate::message::{GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest, UserAndGroupId};
+use crate::message::{
+    GetDbMessagesRequest, GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest,
+    UserAndGroupId,
+};
 
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
@@ -161,6 +164,24 @@ impl UserAndGroupId {
 }
 
 impl GetDbMsgRequest {
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.user_id.is_empty() {
+            return Err(Error::BadRequest("user_id is empty".to_string()));
+        }
+        if self.start < 0 {
+            return Err(Error::BadRequest("start is invalid".to_string()));
+        }
+        if self.end < 0 {
+            return Err(Error::BadRequest("end is invalid".to_string()));
+        }
+        if self.end < self.start {
+            return Err(Error::BadRequest("start is greater than end".to_string()));
+        }
+        Ok(())
+    }
+}
+
+impl GetDbMessagesRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
             return Err(Error::BadRequest("user_id is empty".to_string()));
