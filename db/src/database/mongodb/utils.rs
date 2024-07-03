@@ -13,6 +13,7 @@ pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
         "send_id": &msg.send_id,
         "receiver_id": &msg.receiver_id,
         "seq": msg.seq,
+        "send_seq": msg.send_seq,
         "msg_type": msg.msg_type,
         "is_read": msg.is_read,
         "group_id": &msg.group_id,
