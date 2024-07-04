@@ -53,7 +53,7 @@ impl RedisCache {
         // Program should panic if unable to connect to Redis, as it's critical for operation.
         let client = redis::Client::open(config.redis.url()).unwrap();
         // init redis
-        let seq_exe_sha = Self::single_script_load(&client);
+        let single_seq_exe_sha = Self::single_script_load(&client);
         let group_seq_exe_sha = Self::group_script_load(&client);
         let mut seq_step = DEFAULT_SEQ_STEP;
         if config.redis.seq_step != 0 {
@@ -62,7 +62,7 @@ impl RedisCache {
         Self {
             client,
             seq_step,
-            single_seq_exe_sha: seq_exe_sha,
+            single_seq_exe_sha,
             group_seq_exe_sha,
         }
     }
@@ -145,11 +145,26 @@ impl Cache for RedisCache {
         Ok(())
     }
 
-    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error> {
+    async fn set_seq(&self, max_seq: &[(String, i64, i64)]) -> Result<(), Error> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let mut pipe = redis::pipe();
+        for (user_id, send_max_seq, rec_max_seq) in max_seq {
+            let key = format!("send_seq:{}", user_id);
+            pipe.hset(&key, CUR_SEQ_KEY, send_max_seq);
+            pipe.hset(&key, MAX_SEQ_KEY, send_max_seq);
+            let key = format!("seq:{}", user_id);
+            pipe.hset(&key, CUR_SEQ_KEY, rec_max_seq);
+            pipe.hset(&key, MAX_SEQ_KEY, rec_max_seq);
+        }
+        pipe.query_async(&mut conn).await?;
+        Ok(())
+    }
+
+    async fn set_send_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         let mut pipe = redis::pipe();
         for (user_id, max_seq) in max_seq {
-            let key = format!("seq:{}", user_id);
+            let key = format!("send_seq:{}", user_id);
             pipe.hset(&key, CUR_SEQ_KEY, max_seq);
             pipe.hset(&key, MAX_SEQ_KEY, max_seq);
         }
@@ -166,9 +181,69 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
+    async fn get_cur_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
+        // generate key
+        let key1 = format!("seq:{}", user_id);
+        let key2 = format!("send_seq:{}", user_id);
+
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
+        let (seq1, seq2): (i64, i64) = redis::pipe()
+            .cmd("HGET")
+            .arg(&key1)
+            .arg(CUR_SEQ_KEY)
+            .cmd("HGET")
+            .arg(&key2)
+            .arg(CUR_SEQ_KEY)
+            .query_async(&mut conn)
+            .await?;
+
+        Ok((seq1, seq2))
+    }
+
+    async fn get_send_seq(&self, user_id: &str) -> Result<(i64, i64), Error> {
+        // generate key
+        let key = format!("send_seq:{}", user_id);
+
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // let seq: i64 = conn.hget(&key, CUR_SEQ_KEY).await.unwrap_or_default();
+        // Ok(seq)
+        let (cur_seq, max_seq): (Option<i64>, Option<i64>) = redis::pipe()
+            .cmd("HGET")
+            .arg(&key)
+            .arg("cur_seq")
+            .cmd("HGET")
+            .arg(&key)
+            .arg("max_seq")
+            .query_async(&mut conn)
+            .await?;
+
+        // 处理默认值
+        let cur_seq = cur_seq.unwrap_or_default();
+        let max_seq = max_seq.unwrap_or_default();
+
+        Ok((cur_seq, max_seq))
+    }
+
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
         // generate key
         let key = format!("seq:{}", user_id);
+
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        // increase seq
+        let seq = redis::cmd(EVALSHA)
+            .arg(&self.single_seq_exe_sha)
+            .arg(1)
+            .arg(&key)
+            .arg(self.seq_step)
+            .query_async(&mut conn)
+            .await?;
+        Ok(seq)
+    }
+
+    async fn incr_send_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error> {
+        // generate key
+        let key = format!("send_seq:{}", user_id);
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // increase seq

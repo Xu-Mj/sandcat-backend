@@ -59,6 +59,7 @@ fn main() {
             "MsgToDb",
             "Msg.data",
             "GetDbMsgRequest",
+            "GetDbMessagesRequest",
             "DelMsgRequest",
             "UserAndGroupID",
             "User",

@@ -13,15 +13,15 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
-    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
-    GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
-    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, QueryFriendInfoRequest,
-    QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest,
-    SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse,
-    SearchUserRequest, SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse,
-    UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse,
-    UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    GetDbMessagesRequest, GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest,
+    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
+    GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
+    GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
+    QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse,
+    SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest,
+    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRegionRequest,
+    UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
+    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -37,7 +37,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         let message = inner
             .message
-            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+            .ok_or(Status::invalid_argument("message is empty"))?;
         let need_to_history = inner.need_to_history;
         debug!("save message: {:?}", message);
         self.handle_message(message, need_to_history).await?;
@@ -51,7 +51,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         let message = inner
             .message
-            .ok_or_else(|| Status::invalid_argument("message is empty"))?;
+            .ok_or(Status::invalid_argument("message is empty"))?;
         let need_to_history = inner.need_to_history;
         let members_id = inner.members_id;
         debug!("save group message: {:?}", message);
@@ -74,6 +74,7 @@ impl DbService for DbRpcService {
         Ok(Response::new(Box::pin(TonicReceiverStream::new(result))))
     }
 
+    #[allow(deprecated)]
     async fn get_messages(
         &self,
         request: Request<GetDbMsgRequest>,
@@ -82,6 +83,24 @@ impl DbService for DbRpcService {
         let result = self
             .msg_rec_box
             .get_messages(&req.user_id, req.start, req.end)
+            .await?;
+        Ok(Response::new(GetMsgResp { messages: result }))
+    }
+
+    async fn get_msgs(
+        &self,
+        request: Request<GetDbMessagesRequest>,
+    ) -> Result<Response<GetMsgResp>, Status> {
+        let req = request.into_inner();
+        let result = self
+            .msg_rec_box
+            .get_msgs(
+                &req.user_id,
+                req.send_start,
+                req.send_end,
+                req.start,
+                req.end,
+            )
             .await?;
         Ok(Response::new(GetMsgResp { messages: result }))
     }
@@ -95,6 +114,17 @@ impl DbService for DbRpcService {
             .delete_messages(&req.user_id, req.msg_id)
             .await?;
         Ok(Response::new(DelMsgResp {}))
+    }
+
+    async fn save_send_max_seq(
+        &self,
+        request: Request<SaveMaxSeqRequest>,
+    ) -> Result<Response<SaveMaxSeqResponse>, Status> {
+        let req = request.into_inner();
+        if let Err(e) = self.db.seq.save_max_seq(&req.user_id).await {
+            return Err(Status::internal(e.to_string()));
+        };
+        Ok(Response::new(SaveMaxSeqResponse {}))
     }
 
     async fn save_max_seq(
@@ -126,7 +156,7 @@ impl DbService for DbRpcService {
         let group = request
             .into_inner()
             .group
-            .ok_or_else(|| Status::invalid_argument("group is empty"))?;
+            .ok_or(Status::invalid_argument("group is empty"))?;
 
         let group_id = group.id.clone();
         // insert group information and members information to db
@@ -161,7 +191,7 @@ impl DbService for DbRpcService {
         let invitation = request
             .into_inner()
             .group_invite
-            .ok_or_else(|| Status::invalid_argument("group_invite is empty"))?;
+            .ok_or(Status::invalid_argument("group_invite is empty"))?;
 
         let members = self.db.group.invite_new_members(&invitation).await?;
 
@@ -181,7 +211,7 @@ impl DbService for DbRpcService {
         let group = request
             .into_inner()
             .group
-            .ok_or_else(|| Status::invalid_argument("group information is empty"))?;
+            .ok_or(Status::invalid_argument("group information is empty"))?;
 
         // update db
         let group = self.db.group.update_group(&group).await?;
@@ -257,7 +287,7 @@ impl DbService for DbRpcService {
         let mut user = request
             .into_inner()
             .user
-            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
+            .ok_or(Status::invalid_argument("user is empty"))?;
         user.id = nanoid!();
 
         let user = self.db.user.create_user(user).await?;
@@ -295,7 +325,7 @@ impl DbService for DbRpcService {
         let user = request
             .into_inner()
             .user
-            .ok_or_else(|| Status::invalid_argument("user is empty"))?;
+            .ok_or(Status::invalid_argument("user is empty"))?;
 
         let user = self.db.user.update_user(user).await?;
         Ok(Response::new(UpdateUserResponse { user: Some(user) }))
@@ -347,7 +377,7 @@ impl DbService for DbRpcService {
         let fs = request
             .into_inner()
             .fs_create
-            .ok_or_else(|| Status::invalid_argument("fs_create is empty"))?;
+            .ok_or(Status::invalid_argument("fs_create is empty"))?;
         let (fs_req, fs_send) = self.db.friend.create_fs(fs).await?;
         Ok(Response::new(FsCreateResponse {
             fs_req: Some(fs_req),
@@ -362,7 +392,7 @@ impl DbService for DbRpcService {
         let fs = request
             .into_inner()
             .fs_reply
-            .ok_or_else(|| Status::invalid_argument("fs_reply is empty"))?;
+            .ok_or(Status::invalid_argument("fs_reply is empty"))?;
         let (req, send) = self.db.friend.agree_friend_apply_request(fs).await?;
         Ok(Response::new(FsAgreeResponse {
             req: Some(req),

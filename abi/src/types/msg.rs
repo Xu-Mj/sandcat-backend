@@ -2,7 +2,10 @@ use mongodb::bson::Document;
 use tonic::Status;
 
 use crate::errors::Error;
-use crate::message::{GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest, UserAndGroupId};
+use crate::message::{
+    GetDbMessagesRequest, GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest,
+    UserAndGroupId,
+};
 
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
@@ -32,6 +35,7 @@ impl TryFrom<Document> for Msg {
             send_id: value.get_str("send_id").unwrap_or_default().to_string(),
             receiver_id: value.get_str("receiver_id").unwrap_or_default().to_string(),
             seq: value.get_i64("seq").unwrap_or_default(),
+            send_seq: value.get_i64("send_seq").unwrap_or_default(),
             msg_type: value.get_i32("msg_type").unwrap_or_default(),
             is_read: value.get_bool("is_read").unwrap_or_default(),
             group_id: value.get_str("group_id").unwrap_or_default().to_string(),
@@ -58,9 +62,15 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_req(send_id: String, receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_req(
+        send_id: String,
+        receiver_id: String,
+        fs: Vec<u8>,
+        send_seq: i64,
+    ) -> Self {
         Self {
             message: Some(Msg {
+                send_seq,
                 send_id,
                 receiver_id,
                 send_time: chrono::Local::now().timestamp_millis(),
@@ -71,9 +81,10 @@ impl SendMsgRequest {
         }
     }
 
-    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Vec<u8>) -> Self {
+    pub fn new_with_friend_ship_resp(receiver_id: String, fs: Vec<u8>, send_seq: i64) -> Self {
         Self {
             message: Some(Msg {
+                send_seq,
                 receiver_id,
                 content: fs,
                 msg_type: MsgType::FriendApplyResp as i32,
@@ -160,6 +171,24 @@ impl UserAndGroupId {
 }
 
 impl GetDbMsgRequest {
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.user_id.is_empty() {
+            return Err(Error::BadRequest("user_id is empty".to_string()));
+        }
+        if self.start < 0 {
+            return Err(Error::BadRequest("start is invalid".to_string()));
+        }
+        if self.end < 0 {
+            return Err(Error::BadRequest("end is invalid".to_string()));
+        }
+        if self.end < self.start {
+            return Err(Error::BadRequest("start is greater than end".to_string()));
+        }
+        Ok(())
+    }
+}
+
+impl GetDbMessagesRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
             return Err(Error::BadRequest("user_id is empty".to_string()));

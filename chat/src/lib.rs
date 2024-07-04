@@ -126,7 +126,7 @@ impl ChatService for ChatRpcService {
         let mut msg = request
             .into_inner()
             .message
-            .ok_or_else(|| tonic::Status::invalid_argument("message is empty"))?;
+            .ok_or(tonic::Status::invalid_argument("message is empty"))?;
 
         // generate msg id
         if !(msg.msg_type == MsgType::GroupDismissOrExitReceived as i32

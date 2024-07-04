@@ -10,14 +10,33 @@ mod redis;
 
 #[async_trait]
 pub trait Cache: Sync + Send + Debug {
+    /// check if the sequence is loaded
     async fn check_seq_loaded(&self) -> Result<bool, Error>;
+
+    /// set the sequence is loaded
     async fn set_seq_loaded(&self) -> Result<(), Error>;
 
-    async fn set_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+    /// set the receive sequence
+    /// contains: user_id, send_max_seq, recv_max_seq
+    async fn set_seq(&self, max_seq: &[(String, i64, i64)]) -> Result<(), Error>;
 
-    /// query sequence by user id
+    /// set the send sequence
+    async fn set_send_seq(&self, max_seq: &[(String, i64)]) -> Result<(), Error>;
+
+    /// query receive sequence by user id
     async fn get_seq(&self, user_id: &str) -> Result<i64, Error>;
+    /// query current send sequence and receive sequence by user id
+    async fn get_cur_seq(&self, user_id: &str) -> Result<(i64, i64), Error>;
+
+    /// query send sequence by user id,
+    /// it returns the current send sequence and the max send sequence
+    async fn get_send_seq(&self, user_id: &str) -> Result<(i64, i64), Error>;
+
+    /// increase receive sequence by user id
     async fn increase_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
+
+    /// increase send sequence by user id
+    async fn incr_send_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
 
     /// INCREASE GROUP MEMBERS SEQUENCE
     async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error>;

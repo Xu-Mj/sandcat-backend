@@ -67,7 +67,7 @@ pub async fn create_user(
         .get_register_code(&new_user.email)
         .await?
         .filter(|code| *code == new_user.code)
-        .ok_or_else(|| Error::InvalidRegisterCode)?;
+        .ok_or(Error::InvalidRegisterCode)?;
 
     // encode the password
     let salt = utils::generate_salt();
@@ -122,7 +122,7 @@ pub async fn update_user(
     let user = response
         .into_inner()
         .user
-        .ok_or_else(|| Error::InternalServer("Unknown Error".to_string()))?;
+        .ok_or(Error::InternalServer("Unknown Error".to_string()))?;
 
     Ok(Json(user))
 }
@@ -139,7 +139,7 @@ pub async fn get_user_by_id(
         .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
         .user
-        .ok_or_else(|| Error::NotFound)?;
+        .ok_or(Error::NotFound)?;
     Ok(Json(user))
 }
 
@@ -184,7 +184,7 @@ pub async fn login(
         .map_err(|err| Error::InternalServer(err.message().to_string()))?
         .into_inner()
         .user
-        .ok_or_else(|| Error::AccountOrPassword)?;
+        .ok_or(Error::AccountOrPassword)?;
 
     gen_token(&app_state, user, addr).await
 }

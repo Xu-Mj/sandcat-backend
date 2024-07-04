@@ -39,5 +39,15 @@ pub trait MsgRecBoxRepo: Sync + Send {
         end: i64,
     ) -> Result<mpsc::Receiver<Result<Msg, Error>>, Error>;
 
+    #[deprecated]
     async fn get_messages(&self, user_id: &str, start: i64, end: i64) -> Result<Vec<Msg>, Error>;
+
+    async fn get_msgs(
+        &self,
+        user_id: &str,
+        send_start: i64,
+        send_end: i64,
+        rec_start: i64,
+        rec_end: i64,
+    ) -> Result<Vec<Msg>, Error>;
 }

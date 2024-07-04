@@ -40,7 +40,7 @@ pub async fn create_group_handler(
     let invitation = response
         .into_inner()
         .invitation
-        .ok_or_else(|| Error::InternalServer("group create failed".to_string()))?;
+        .ok_or(Error::InternalServer("group create failed".to_string()))?;
 
     let mut chat_rpc = app_state.chat_rpc.clone();
     let msg = bincode::serialize(&invitation).map_err(|e| Error::InternalServer(e.to_string()))?;
@@ -120,9 +120,9 @@ pub async fn update_group_handler(
         ))
     })?;
 
-    let inner = response.into_inner().group.ok_or_else(|| {
-        Error::InternalServer("group update failed, rpc response is none".to_string())
-    })?;
+    let inner = response.into_inner().group.ok_or(Error::InternalServer(
+        "group update failed, rpc response is none".to_string(),
+    ))?;
 
     //todo notify the group members, except updater
     // let mut members = app_state.cache.query_group_members_id(&inner.id).await?;
