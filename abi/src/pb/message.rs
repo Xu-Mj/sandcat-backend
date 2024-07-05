@@ -62,12 +62,12 @@ pub struct Msg {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRead {
-    #[prost(string, tag = "1")]
-    pub msg_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "1")]
+    pub msg_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
+    pub send_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub seq: ::prost::alloc::string::String,
+    pub friend_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

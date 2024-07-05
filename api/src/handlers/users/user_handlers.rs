@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use axum::extract::{ConnectInfo, State};
 use axum::Json;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -8,7 +10,6 @@ use lettre::{Message, SmtpTransport, Transport};
 use nanoid::nanoid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
 use tera::{Context, Tera};
 use tracing::{debug, error};
 

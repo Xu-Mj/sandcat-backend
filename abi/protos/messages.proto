@@ -120,9 +120,9 @@ message Msg {
 }
 
 message MsgRead {
-  string msg_id = 1;
-  string user_id = 2;
-  string seq = 3;
+  repeated string msg_ids = 1;
+  string send_id = 2;
+  string friend_id = 3;
 }
 
 message Candidate {
