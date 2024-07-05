@@ -230,6 +230,16 @@ impl MsgRecBoxRepo for MsgBox {
         }
         Ok(messages)
     }
+
+    async fn msg_read(&self, user_id: &str, msg_seq: &[i64]) -> Result<(), Error> {
+        if msg_seq.is_empty() {
+            return Ok(());
+        }
+        let query = doc! {"receiver_id":{"$eq":user_id},"seq":{"$in":msg_seq}};
+        let update = doc! {"$set":{"is_read":true}};
+        self.mb.update_many(query, update, None).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

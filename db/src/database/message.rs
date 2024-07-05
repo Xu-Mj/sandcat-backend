@@ -50,4 +50,7 @@ pub trait MsgRecBoxRepo: Sync + Send {
         rec_start: i64,
         rec_end: i64,
     ) -> Result<Vec<Msg>, Error>;
+
+    /// update message read status by user id and message sequence
+    async fn msg_read(&self, user_id: &str, msg_seq: &[i64]) -> Result<(), Error>;
 }

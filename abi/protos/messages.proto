@@ -120,10 +120,13 @@ message Msg {
 }
 
 message MsgRead {
-  repeated string msg_ids = 1;
-  string send_id = 2;
-  string friend_id = 3;
+  repeated int64 msg_seq = 1;
+  string user_id = 2;
 }
+
+message MsgReadReq { MsgRead msg_read = 1; }
+
+message MsgReadResp {}
 
 message Candidate {
   string candidate = 1;
@@ -557,6 +560,8 @@ service DbService {
   rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
   /// get messages with send seq and rec seq
   rpc GetMsgs(GetDbMessagesRequest) returns (GetMsgResp);
+  /// update message read status
+  rpc ReadMsg(MsgReadReq) returns (MsgReadResp);
   rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
   /// save message send max sequence
   rpc SaveSendMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);

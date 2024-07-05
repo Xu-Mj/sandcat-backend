@@ -17,11 +17,11 @@ use abi::message::{
     GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
     GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
     GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
-    QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse,
-    SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest,
-    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRegionRequest,
-    UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
-    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    MsgReadReq, MsgReadResp, QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest,
+    SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse,
+    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
+    UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse,
+    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -103,6 +103,22 @@ impl DbService for DbRpcService {
             )
             .await?;
         Ok(Response::new(GetMsgResp { messages: result }))
+    }
+
+    async fn read_msg(
+        &self,
+        request: Request<MsgReadReq>,
+    ) -> Result<Response<MsgReadResp>, Status> {
+        let req = request
+            .into_inner()
+            .msg_read
+            .ok_or(Status::invalid_argument("message is empty"))?;
+
+        // update database
+        self.msg_rec_box
+            .msg_read(&req.user_id, &req.msg_seq)
+            .await?;
+        Ok(Response::new(MsgReadResp {}))
     }
 
     async fn del_messages(
