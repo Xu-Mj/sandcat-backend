@@ -9,7 +9,7 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqBatchRequest,
+    GroupMembersIdRequest, Msg, MsgReadReq, MsgType, SaveGroupMsgRequest, SaveMaxSeqBatchRequest,
     SaveMaxSeqRequest, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
@@ -189,6 +189,19 @@ impl ConsumerService {
         Ok(cur_seq)
     }
 
+    async fn handle_msg_read(&self, msg: Msg) -> Result<(), Error> {
+        let data =
+            bincode::deserialize(&msg.content).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let mut db_rpc = self.db_rpc.clone();
+
+        db_rpc
+            .read_msg(MsgReadReq {
+                msg_read: Some(data),
+            })
+            .await
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        Ok(())
+    }
     async fn handle_group_seq(
         &self,
         msg_type: &MsgType2,
@@ -252,6 +265,12 @@ impl ConsumerService {
 
         let mt =
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        // handle message read type
+        if mt == MsgType::Read {
+            return self.handle_msg_read(msg).await;
+        }
+
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
 
         // check send seq if need to increase max_seq
