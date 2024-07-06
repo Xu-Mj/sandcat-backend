@@ -1,6 +1,7 @@
 use crate::Cache;
 use abi::config::Config;
 use abi::errors::Error;
+use abi::message::GroupMemSeq;
 use async_trait::async_trait;
 use redis::AsyncCommands;
 
@@ -102,7 +103,7 @@ impl RedisCache {
             local key = "seq:" .. ARGV[i]
             local cur_seq = redis.call('HINCRBY', key, 'cur_seq', 1)
             local max_seq = redis.call('HGET', key, 'max_seq')
-            local updated = false
+            local updated = 0
             if max_seq == false then
                 max_seq = seq_step
                 redis.call('HSET', key, 'max_seq', max_seq)
@@ -112,7 +113,7 @@ impl RedisCache {
             if cur_seq > max_seq then
                 max_seq = max_seq + seq_step
                 redis.call('HSET', key, 'max_seq', max_seq)
-                updated = true
+                updated = 1
             end
             table.insert(result, {cur_seq, max_seq, updated})
         end
@@ -257,7 +258,7 @@ impl Cache for RedisCache {
         Ok(seq)
     }
 
-    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error> {
+    async fn incr_group_seq(&self, mut members: Vec<String>) -> Result<Vec<GroupMemSeq>, Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         let mut cmd = redis::cmd("EVALSHA");
@@ -269,8 +270,9 @@ impl Cache for RedisCache {
 
         let response: Vec<redis::Value> = cmd.query_async(&mut conn).await?;
 
+        println!("group seq response: {:?}", response);
         let mut seq = Vec::with_capacity(members.len());
-        for item in response {
+        for (index, item) in response.iter().enumerate() {
             if let redis::Value::Bulk(bulk_item) = item {
                 if bulk_item.len() == 3 {
                     if let (
@@ -279,7 +281,13 @@ impl Cache for RedisCache {
                         redis::Value::Int(updated),
                     ) = (&bulk_item[0], &bulk_item[1], &bulk_item[2])
                     {
-                        seq.push((*cur_seq, *max_seq, *updated != 0));
+                        seq.push(GroupMemSeq::new(
+                            members.remove(index),
+                            *cur_seq,
+                            *max_seq,
+                            *updated != 0,
+                        ));
+                        // seq.push((*cur_seq, *max_seq, *updated != 0));
                     }
                 }
             }

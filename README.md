@@ -50,13 +50,11 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
 - **Partition Table for Messages (Mongodb) Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
-- **Group Message Sequencing**: The sequence for group messages is incremented at the consumer module, and we need to obtain the sequence in the WebSocket/mongoDB module. Is there a more effective way to do this?
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
 - **Friendship Read Status**: we should delete the Friendship related message after user read it.
-- need to handle friendship/group operations while user desktop and mobile are both online
+- **need to handle friendship/group operations while user desktop and mobile are both online**
 - knock off desk from the mobile
 - delete minio file by period
-- add send box for sender
 - support matrix protocol so that we can import some robot
 - maybe we should combine the query send_seq and incr recv_seq into one operation with lua
 

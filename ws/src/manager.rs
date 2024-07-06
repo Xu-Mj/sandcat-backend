@@ -8,7 +8,9 @@ use tracing::{debug, error, info, warn};
 use crate::client::Client;
 use abi::errors::Error;
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::{ContentType, Msg, MsgResponse, MsgType, PlatformType, SendMsgRequest};
+use abi::message::{
+    ContentType, GroupMemSeq, Msg, MsgResponse, MsgType, PlatformType, SendMsgRequest,
+};
 use cache::Cache;
 use utils::service_discovery::LbWithServiceDiscovery;
 
@@ -40,21 +42,16 @@ impl Manager {
         }
     }
 
-    pub async fn send_group(&self, obj_ids: &Vec<String>, mut msg: Msg) {
+    pub async fn send_group(&self, obj_ids: Vec<GroupMemSeq>, mut msg: Msg) {
         self.send_to_self(&msg.send_id, &msg).await;
 
-        for id in obj_ids {
-            if let Some(clients) = self.hub.get(id) {
-                let seq = match self.cache.get_seq(id).await {
-                    Ok(seq) => seq,
-                    Err(e) => {
-                        error!("get seq error: {:?}", e);
-                        continue;
-                    }
-                };
+        // set send sequence to 0
+        msg.send_seq = 0;
 
+        for mem in obj_ids {
+            if let Some(clients) = self.hub.get(&mem.mem_id) {
                 // Modify only the seq in the message and serialize it.
-                msg.seq = seq;
+                msg.seq = mem.cur_seq;
 
                 // Send message to all clients
                 self.send_msg_to_clients(&clients, &msg).await;
@@ -133,7 +130,7 @@ impl Manager {
         }
     }
 
-    // 注册客户端
+    // register client
     pub async fn register(&mut self, id: String, client: Client) {
         self.hub
             .entry(id)
@@ -159,12 +156,11 @@ impl Manager {
     pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {
         info!("manager start");
 
-        // 循环读取消息
+        // read the message from the channel
         while let Some(mut message) = receiver.recv().await {
-            // 处理消息并生成响应
             self.process_message(&mut message).await;
 
-            // 回复结果给消息发送方
+            // reply send result
             debug!("reply message:{:?}", message);
             self.send_single_msg(&message.send_id, &message).await;
         }
@@ -219,58 +215,6 @@ impl Manager {
         message.msg_type = MsgType::MsgRecResp as i32;
         message.content = error.to_string().into_bytes();
     }
-    // pub async fn run(&mut self, mut receiver: mpsc::Receiver<Msg>) {
-    //     info!("manager start");
-    //     // 循环读取消息
-    //     while let Some(mut message) = receiver.recv().await {
-    //         // request the message rpc to get server_msg_id
-    //         // increment the send sequence in cache
-    //         match self.cache.incr_send_seq(&message.send_id).await {
-    //             Ok((seq, _, _)) => {
-    //                 // we do not operate the database here about saving send sequence
-    //                 // we do that in the consumer module
-    //                 message.send_seq = seq;
-    //                 debug!("receive message: {:?}", message);
-    //                 match self
-    //                     .chat_rpc
-    //                     .send_msg(SendMsgRequest {
-    //                         message: Some(message.clone()),
-    //                     })
-    //                     .await
-    //                 {
-    //                     Ok(res) => {
-    //                         // reply send success
-    //                         let response = res.into_inner();
-    //                         if response.err.is_empty() {
-    //                             debug!("send message success");
-    //                         } else {
-    //                             error!("send message error: {:?}", response.err);
-    //                             message.content_type = ContentType::Error as i32;
-    //                         }
-    //                         message.msg_type = MsgType::MsgRecResp as i32;
-    //                         message.server_id.clone_from(&response.server_id);
-    //                         message.content = response.err.into_bytes();
-    //                         message.send_time = response.send_time;
-    //                     }
-    //                     Err(err) => {
-    //                         error!("send message error: {:?}", err);
-    //                         let response = MsgResponse::from(err);
-    //                         message.content = response.err.into_bytes();
-    //                     }
-    //                 }
-    //             }
-    //             Err(e) => {
-    //                 message.content_type = ContentType::Error as i32;
-    //                 message.msg_type = MsgType::MsgRecResp as i32;
-    //                 message.content = e.to_string().into_bytes();
-    //             }
-    //         };
-
-    //         // reply result to sender
-    //         debug!("reply message:{:?}", message);
-    //         self.send_single_msg(&message.send_id, &message).await;
-    //     }
-    // }
 
     pub async fn broadcast(&self, msg: Msg) -> Result<(), Error> {
         self.tx.send(msg).await.map_err(|_| Error::BroadCastError)

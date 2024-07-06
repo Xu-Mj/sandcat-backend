@@ -89,8 +89,8 @@ impl MsgService for MsgRpcService {
         let msg = req
             .message
             .ok_or(Status::invalid_argument("message is empty"))?;
-        let members_id = req.members_id;
-        self.manager.send_group(&members_id, msg).await;
+        let members = req.members;
+        self.manager.send_group(members, msg).await;
         let response = Response::new(SendMsgResponse {});
         Ok(response)
     }

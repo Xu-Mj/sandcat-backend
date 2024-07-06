@@ -1,8 +1,9 @@
 use async_trait::async_trait;
-use bson::{doc, Document};
 use mongodb::options::{FindOptions, IndexOptions};
-use mongodb::{Client, Collection, Database, IndexModel};
-use std::sync::Arc;
+use mongodb::{
+    bson::{doc, Document},
+    Client, Collection, Database, IndexModel,
+};
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
 use tracing::error;
@@ -10,8 +11,7 @@ use tracing::log::debug;
 
 use abi::config::Config;
 use abi::errors::Error;
-use abi::message::Msg;
-use cache::Cache;
+use abi::message::{GroupMemSeq, Msg};
 
 use crate::database::message::MsgRecBoxRepo;
 use crate::database::mongodb::utils::to_doc;
@@ -23,7 +23,6 @@ use crate::database::mongodb::utils::to_doc;
 pub struct MsgBox {
     /// for message box
     mb: Collection<Document>,
-    cache: Arc<dyn Cache>,
 }
 
 /// for all users single message receive box
@@ -31,11 +30,11 @@ const COLL_SINGLE_BOX: &str = "single_msg_box";
 
 #[allow(dead_code)]
 impl MsgBox {
-    pub async fn new(db: Database, cache: Arc<dyn Cache>) -> Self {
+    pub async fn new(db: Database) -> Self {
         let mb = db.collection(COLL_SINGLE_BOX);
-        Self { mb, cache }
+        Self { mb }
     }
-    pub async fn from_config(config: &Config, cache: Arc<dyn Cache>) -> Self {
+    pub async fn from_config(config: &Config) -> Self {
         let db = Client::with_uri_str(config.db.mongodb.url())
             .await
             .unwrap()
@@ -50,7 +49,7 @@ impl MsgBox {
         mb.create_index(index_model, None).await.unwrap();
         debug!("create index for message box");
 
-        Self { mb, cache }
+        Self { mb }
     }
 }
 
@@ -62,15 +61,18 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn save_group_msg(&self, mut message: Msg, members: Vec<String>) -> Result<(), Error> {
+    async fn save_group_msg(
+        &self,
+        mut message: Msg,
+        members: Vec<GroupMemSeq>,
+    ) -> Result<(), Error> {
         let mut messages = Vec::with_capacity(members.len());
         // modify message receiver id
-        for id in members {
+        for seq in members {
             // increase members sequence
-            let seq = self.cache.get_seq(&id).await?;
-            message.seq = seq;
+            message.seq = seq.cur_seq;
 
-            message.receiver_id = id;
+            message.receiver_id = seq.mem_id;
 
             messages.push(to_doc(&message)?);
         }
@@ -219,7 +221,11 @@ impl MsgRecBoxRepo for MsgBox {
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(doc) => {
-                    let msg = Msg::try_from(doc)?;
+                    let mut msg = Msg::try_from(doc)?;
+                    // set seq to 0 if the message is sent by the user
+                    if user_id == msg.send_id {
+                        msg.seq = 0;
+                    }
                     messages.push(msg)
                 }
                 Err(e) => {
@@ -229,6 +235,16 @@ impl MsgRecBoxRepo for MsgBox {
             }
         }
         Ok(messages)
+    }
+
+    async fn msg_read(&self, user_id: &str, msg_seq: &[i64]) -> Result<(), Error> {
+        if msg_seq.is_empty() {
+            return Ok(());
+        }
+        let query = doc! {"receiver_id":{"$eq":user_id},"seq":{"$in":msg_seq}};
+        let update = doc! {"$set":{"is_read":true}};
+        self.mb.update_many(query, update, None).await?;
+        Ok(())
     }
 }
 
@@ -263,7 +279,7 @@ mod tests {
                 &config.db.mongodb.password,
             )
             .await;
-            let msg_box = MsgBox::new(tdb.database().await, cache::cache(&config)).await;
+            let msg_box = MsgBox::new(tdb.database().await).await;
             Self {
                 box_: msg_box,
                 _tdb: tdb,

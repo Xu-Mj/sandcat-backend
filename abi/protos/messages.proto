@@ -120,10 +120,13 @@ message Msg {
 }
 
 message MsgRead {
-  string msg_id = 1;
+  repeated int64 msg_seq = 1;
   string user_id = 2;
-  string seq = 3;
 }
+
+message MsgReadReq { MsgRead msg_read = 1; }
+
+message MsgReadResp {}
 
 message Candidate {
   string candidate = 1;
@@ -468,7 +471,7 @@ message SendMsgRequest { Msg message = 1; }
 
 message SendGroupMsgRequest {
   Msg message = 1;
-  repeated string members_id = 2;
+  repeated GroupMemSeq members = 2;
 }
 
 message SendMsgResponse {}
@@ -490,7 +493,14 @@ message SaveMessageResponse {}
 message SaveGroupMsgRequest {
   Msg message = 1;
   bool need_to_history = 2;
-  repeated string members_id = 3;
+  repeated GroupMemSeq members = 3;
+}
+
+message GroupMemSeq {
+  string mem_id = 1;
+  int64 cur_seq = 2;
+  int64 max_seq = 3;
+  bool need_update = 4;
 }
 
 message SaveGroupMsgResponse {}
@@ -557,6 +567,8 @@ service DbService {
   rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
   /// get messages with send seq and rec seq
   rpc GetMsgs(GetDbMessagesRequest) returns (GetMsgResp);
+  /// update message read status
+  rpc ReadMsg(MsgReadReq) returns (MsgReadResp);
   rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
   /// save message send max sequence
   rpc SaveSendMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);

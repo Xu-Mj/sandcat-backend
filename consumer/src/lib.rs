@@ -9,7 +9,7 @@ use abi::errors::Error;
 use abi::message::db_service_client::DbServiceClient;
 use abi::message::push_service_client::PushServiceClient;
 use abi::message::{
-    GroupMembersIdRequest, Msg, MsgType, SaveGroupMsgRequest, SaveMaxSeqBatchRequest,
+    GroupMemSeq, GroupMembersIdRequest, Msg, MsgReadReq, MsgType, SaveGroupMsgRequest,
     SaveMaxSeqRequest, SaveMessageRequest, SendGroupMsgRequest, SendMsgRequest,
 };
 use cache::Cache;
@@ -189,56 +189,50 @@ impl ConsumerService {
         Ok(cur_seq)
     }
 
+    async fn handle_msg_read(&self, msg: Msg) -> Result<(), Error> {
+        let data =
+            bincode::deserialize(&msg.content).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let mut db_rpc = self.db_rpc.clone();
+
+        db_rpc
+            .read_msg(MsgReadReq {
+                msg_read: Some(data),
+            })
+            .await
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        Ok(())
+    }
     async fn handle_group_seq(
         &self,
         msg_type: &MsgType2,
         msg: &mut Msg,
-    ) -> Result<Vec<String>, Error> {
-        let mut members = vec![];
-        if *msg_type == MsgType2::Group {
-            // query group members id from the cache
-            members = self.get_members_id(&msg.receiver_id).await?;
-
-            // retain the members id
-            members.retain(|id| id != &msg.send_id);
-
-            // increase the members seq
-            let seq = self.cache.incr_group_seq(&members).await?;
-
-            // handle group members max_seq
-            let need_update = seq
-                .into_iter()
-                .enumerate()
-                .filter_map(|(index, item)| {
-                    if item.2 {
-                        members.get(index).cloned()
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<String>>();
-            if !need_update.is_empty() {
-                let mut db_rpc = self.db_rpc.clone();
-                db_rpc
-                    .save_max_seq_batch(SaveMaxSeqBatchRequest {
-                        user_ids: need_update,
-                    })
-                    .await
-                    .map_err(|e| Error::InternalServer(e.to_string()))?;
-            }
-
-            // judge the message type;
-            // we should delete the cache data if the type is group dismiss
-            // update the cache if the type is group member exit
-            if msg.msg_type == MsgType::GroupDismiss as i32 {
-                self.cache.del_group_members(&msg.receiver_id).await?;
-            } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
-                self.cache
-                    .remove_group_member_id(&msg.receiver_id, &msg.send_id)
-                    .await?;
-            }
+    ) -> Result<Vec<GroupMemSeq>, Error> {
+        if *msg_type != MsgType2::Group {
+            return Ok(vec![]);
         }
-        Ok(members)
+        // query group members id from the cache
+        let mut members = self.get_members_id(&msg.receiver_id).await?;
+
+        // retain the members id
+        members.retain(|id| id != &msg.send_id);
+
+        // increase the members seq
+        let seq = self.cache.incr_group_seq(members).await?;
+
+        // we should send the whole list to db module and db module will handle the data
+
+        // judge the message type;
+        // we should delete the cache data if the type is group dismiss
+        // update the cache if the type is group member exit
+        if msg.msg_type == MsgType::GroupDismiss as i32 {
+            self.cache.del_group_members(&msg.receiver_id).await?;
+        } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
+            self.cache
+                .remove_group_member_id(&msg.receiver_id, &msg.send_id)
+                .await?;
+        }
+
+        Ok(seq)
     }
 
     /// todo we need to handle the errors, like: should we use something like transaction?
@@ -252,11 +246,18 @@ impl ConsumerService {
 
         let mt =
             MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        // handle message read type
+        if mt == MsgType::Read {
+            return self.handle_msg_read(msg).await;
+        }
+
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
 
         // check send seq if need to increase max_seq
         self.handle_send_seq(&msg.send_id).await?;
 
+        // handle receiver seq
         if need_increase_seq {
             let cur_seq = self.increase_message_seq(&msg.receiver_id).await?;
             msg.seq = cur_seq;
@@ -265,6 +266,7 @@ impl ConsumerService {
         // query members id from cache if the message type is group
         let members = self.handle_group_seq(&msg_type, &mut msg).await?;
 
+        error!("members group seq: {:?}", members);
         // send to db
         let cloned_msg = msg.clone();
         let cloned_type = msg_type.clone();
@@ -313,7 +315,7 @@ impl ConsumerService {
         msg: Msg,
         msg_type: MsgType2,
         need_to_history: bool,
-        members: Vec<String>,
+        members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
         // don't send it if data type is call xxx
         let mut send_flag = true;
@@ -352,7 +354,7 @@ impl ConsumerService {
                 let request = SaveGroupMsgRequest {
                     message: Some(msg),
                     need_to_history,
-                    members_id: members,
+                    members,
                 };
                 db_rpc
                     .save_group_message(request)
@@ -378,12 +380,12 @@ impl ConsumerService {
     async fn send_group_to_pusher(
         pusher: &mut PushServiceClient<LbWithServiceDiscovery>,
         msg: Msg,
-        members_id: Vec<String>,
+        members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
         pusher
             .push_group_msg(SendGroupMsgRequest {
                 message: Some(msg),
-                members_id,
+                members,
             })
             .await
             .map_err(|e| Error::InternalServer(e.to_string()))?;

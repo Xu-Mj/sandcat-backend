@@ -9,7 +9,6 @@ mod user;
 use std::sync::Arc;
 
 use abi::config::Config;
-use cache::Cache;
 use sqlx::PgPool;
 
 use crate::database::friend::FriendRepo;
@@ -49,6 +48,6 @@ impl DbRepo {
     }
 }
 
-pub async fn msg_rec_box_repo(config: &Config, cache: Arc<dyn Cache>) -> Arc<dyn MsgRecBoxRepo> {
-    Arc::new(mongodb::MsgBox::from_config(config, cache).await)
+pub async fn msg_rec_box_repo(config: &Config) -> Arc<dyn MsgRecBoxRepo> {
+    Arc::new(mongodb::MsgBox::from_config(config).await)
 }

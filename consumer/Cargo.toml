@@ -11,6 +11,7 @@ abi = { version = "0.1.0", path = "../abi" }
 cache = { version = "0.1.0", path = "../cache" }
 utils = { version = "0.1.0", path = "../utils" }
 
+bincode = "1"
 rdkafka = { version = "0.36.2" }
 serde = "1"
 serde_json = "1"

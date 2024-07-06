@@ -2,7 +2,7 @@ use sqlx::postgres::PgRow;
 use sqlx::{Error, FromRow, Row};
 
 use crate::message::{
-    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupMember,
+    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember,
     GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
 };
 
@@ -62,5 +62,16 @@ impl FromRow<'_, PgRow> for GroupInfo {
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,
         })
+    }
+}
+
+impl GroupMemSeq {
+    pub fn new(mem_id: String, cur_seq: i64, max_seq: i64, need_update: bool) -> Self {
+        Self {
+            mem_id,
+            cur_seq,
+            max_seq,
+            need_update,
+        }
     }
 }

@@ -62,13 +62,20 @@ pub struct Msg {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRead {
-    #[prost(string, tag = "1")]
-    pub msg_id: ::prost::alloc::string::String,
+    #[prost(int64, repeated, tag = "1")]
+    pub msg_seq: ::prost::alloc::vec::Vec<i64>,
     #[prost(string, tag = "2")]
     pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub seq: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgReadReq {
+    #[prost(message, optional, tag = "1")]
+    pub msg_read: ::core::option::Option<MsgRead>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgReadResp {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -751,8 +758,8 @@ pub struct SendMsgRequest {
 pub struct SendGroupMsgRequest {
     #[prost(message, optional, tag = "1")]
     pub message: ::core::option::Option<Msg>,
-    #[prost(string, repeated, tag = "2")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -788,8 +795,20 @@ pub struct SaveGroupMsgRequest {
     pub message: ::core::option::Option<Msg>,
     #[prost(bool, tag = "2")]
     pub need_to_history: bool,
-    #[prost(string, repeated, tag = "3")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "3")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMemSeq {
+    #[prost(string, tag = "1")]
+    pub mem_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub cur_seq: i64,
+    #[prost(int64, tag = "3")]
+    pub max_seq: i64,
+    #[prost(bool, tag = "4")]
+    pub need_update: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1563,6 +1582,24 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "GetMsgs"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / update message read status
+        pub async fn read_msg(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MsgReadReq>,
+        ) -> std::result::Result<tonic::Response<super::MsgReadResp>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/ReadMsg");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "ReadMsg"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn del_messages(
@@ -2616,6 +2653,11 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::GetDbMessagesRequest>,
         ) -> std::result::Result<tonic::Response<super::GetMsgResp>, tonic::Status>;
+        /// / update message read status
+        async fn read_msg(
+            &self,
+            request: tonic::Request<super::MsgReadReq>,
+        ) -> std::result::Result<tonic::Response<super::MsgReadResp>, tonic::Status>;
         async fn del_messages(
             &self,
             request: tonic::Request<super::DelMsgRequest>,
@@ -3002,6 +3044,45 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetMsgsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/ReadMsg" => {
+                    #[allow(non_camel_case_types)]
+                    struct ReadMsgSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::MsgReadReq> for ReadMsgSvc<T> {
+                        type Response = super::MsgReadResp;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgReadReq>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut =
+                                async move { <T as DbService>::read_msg(&inner, request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = ReadMsgSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
