@@ -1,8 +1,11 @@
-use async_trait::async_trait;
-use bson::{doc, Document};
-use mongodb::options::{FindOptions, IndexOptions};
-use mongodb::{Client, Collection, Database, IndexModel};
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use mongodb::options::{FindOptions, IndexOptions};
+use mongodb::{
+    bson::{doc, Document},
+    Client, Collection, Database, IndexModel,
+};
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
 use tracing::error;
@@ -219,7 +222,11 @@ impl MsgRecBoxRepo for MsgBox {
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(doc) => {
-                    let msg = Msg::try_from(doc)?;
+                    let mut msg = Msg::try_from(doc)?;
+                    // set seq to 0 if the message is sent by the user
+                    if user_id == msg.send_id {
+                        msg.seq = 0;
+                    }
                     messages.push(msg)
                 }
                 Err(e) => {
