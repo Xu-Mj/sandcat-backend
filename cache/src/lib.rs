@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::sync::Arc;
 
+use abi::message::GroupMemSeq;
 use async_trait::async_trait;
 
 use abi::config::Config;
@@ -39,7 +40,7 @@ pub trait Cache: Sync + Send + Debug {
     async fn incr_send_seq(&self, user_id: &str) -> Result<(i64, i64, bool), Error>;
 
     /// INCREASE GROUP MEMBERS SEQUENCE
-    async fn incr_group_seq(&self, members: &[String]) -> Result<Vec<(i64, i64, bool)>, Error>;
+    async fn incr_group_seq(&self, mut members: Vec<String>) -> Result<Vec<GroupMemSeq>, Error>;
 
     /// query group members id
     async fn query_group_members_id(&self, group_id: &str) -> Result<Vec<String>, Error>;

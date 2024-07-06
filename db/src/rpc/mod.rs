@@ -8,7 +8,7 @@ use tracing::info;
 use abi::config::{Component, Config};
 use abi::errors::Error;
 use abi::message::db_service_server::DbServiceServer;
-use abi::message::{Msg, MsgType};
+use abi::message::{GroupMemSeq, Msg, MsgType};
 use cache::Cache;
 
 use crate::database;
@@ -29,7 +29,7 @@ impl DbRpcService {
         let cache = cache::cache(config);
         Self {
             db: Arc::new(DbRepo::new(config).await),
-            msg_rec_box: database::msg_rec_box_repo(config, cache.clone()).await,
+            msg_rec_box: database::msg_rec_box_repo(config).await,
             cache,
         }
     }
@@ -103,12 +103,32 @@ impl DbRpcService {
         &self,
         message: Msg,
         need_to_history: bool,
-        members_id: Vec<String>,
+        members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
         let cloned_msg = message.clone();
+        // update the user's seq in postgres
+        let need_update = members
+            .iter()
+            .enumerate()
+            .filter_map(|(index, item)| {
+                if item.need_update {
+                    members.get(index).map(|v| v.mem_id.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<String>>();
+
         let db_task = tokio::spawn(async move {
+            if !need_update.is_empty() {
+                if let Err(err) = db.seq.save_max_seq_batch(&need_update).await {
+                    tracing::error!("save max seq batch failed: {}", err);
+                    return;
+                };
+            }
+
             if !need_to_history {
                 return;
             }
@@ -120,7 +140,7 @@ impl DbRpcService {
         // task 2 save message to mongodb
         let msg_rec_box = self.msg_rec_box.clone();
         let msg_rec_box_task = tokio::spawn(async move {
-            if let Err(e) = msg_rec_box.save_group_msg(message, members_id).await {
+            if let Err(e) = msg_rec_box.save_group_msg(message, members).await {
                 tracing::error!("save message to mongodb failed: {}", e);
             }
         });

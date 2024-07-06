@@ -471,7 +471,7 @@ message SendMsgRequest { Msg message = 1; }
 
 message SendGroupMsgRequest {
   Msg message = 1;
-  repeated string members_id = 2;
+  repeated GroupMemSeq members = 2;
 }
 
 message SendMsgResponse {}
@@ -493,7 +493,14 @@ message SaveMessageResponse {}
 message SaveGroupMsgRequest {
   Msg message = 1;
   bool need_to_history = 2;
-  repeated string members_id = 3;
+  repeated GroupMemSeq members = 3;
+}
+
+message GroupMemSeq {
+  string mem_id = 1;
+  int64 cur_seq = 2;
+  int64 max_seq = 3;
+  bool need_update = 4;
 }
 
 message SaveGroupMsgResponse {}

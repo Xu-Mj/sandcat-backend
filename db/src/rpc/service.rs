@@ -53,7 +53,7 @@ impl DbService for DbRpcService {
             .message
             .ok_or(Status::invalid_argument("message is empty"))?;
         let need_to_history = inner.need_to_history;
-        let members_id = inner.members_id;
+        let members_id = inner.members;
         debug!("save group message: {:?}", message);
         self.handle_group_message(message, need_to_history, members_id)
             .await?;

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use tokio::sync::mpsc;
 
 use abi::errors::Error;
-use abi::message::Msg;
+use abi::message::{GroupMemSeq, Msg};
 
 /// face to postgres db
 #[async_trait]
@@ -21,7 +21,7 @@ pub trait MsgRecBoxRepo: Sync + Send {
 
     /// save message to message receive box
     /// need the group members id
-    async fn save_group_msg(&self, message: Msg, members: Vec<String>) -> Result<(), Error>;
+    async fn save_group_msg(&self, message: Msg, members: Vec<GroupMemSeq>) -> Result<(), Error>;
 
     async fn delete_message(&self, message_id: &str) -> Result<(), Error>;
 

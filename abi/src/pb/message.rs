@@ -758,8 +758,8 @@ pub struct SendMsgRequest {
 pub struct SendGroupMsgRequest {
     #[prost(message, optional, tag = "1")]
     pub message: ::core::option::Option<Msg>,
-    #[prost(string, repeated, tag = "2")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -795,8 +795,20 @@ pub struct SaveGroupMsgRequest {
     pub message: ::core::option::Option<Msg>,
     #[prost(bool, tag = "2")]
     pub need_to_history: bool,
-    #[prost(string, repeated, tag = "3")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "3")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMemSeq {
+    #[prost(string, tag = "1")]
+    pub mem_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub cur_seq: i64,
+    #[prost(int64, tag = "3")]
+    pub max_seq: i64,
+    #[prost(bool, tag = "4")]
+    pub need_update: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
