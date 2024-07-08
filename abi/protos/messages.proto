@@ -310,6 +310,17 @@ message FriendshipWithUser {
   optional string email = 14;
 }
 
+message FriendDb{
+  int64 id = 1;
+  string user_id = 2;
+  string friend_id = 3;
+  FriendshipStatus status = 4;
+  optional string req_remark = 5;
+  string source = 6;
+  int64 create_time = 7;
+  int64 accept_time = 8;
+}
+
 message Friend {
   string fs_id = 1;
   string name = 2;
