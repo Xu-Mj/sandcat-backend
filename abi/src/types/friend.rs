@@ -10,8 +10,6 @@ impl Display for FriendshipStatus {
             FriendshipStatus::Accepted => write!(f, "Accepted"),
             FriendshipStatus::Rejected => write!(f, "Rejected"),
             FriendshipStatus::Blacked => write!(f, "Blacked"),
-            FriendshipStatus::Default => write!(f, "Default"),
-            FriendshipStatus::Canceled => write!(f, "Canceled"),
             FriendshipStatus::Deleted => write!(f, "Deleted"),
         }
     }
@@ -25,7 +23,6 @@ pub enum FsStatus {
     Rejected,
     /// / blacklist
     Blacked,
-    Canceled,
     Deleted,
 }
 
@@ -36,7 +33,6 @@ impl From<FsStatus> for FriendshipStatus {
             FsStatus::Accepted => Self::Accepted,
             FsStatus::Rejected => Self::Rejected,
             FsStatus::Blacked => Self::Blacked,
-            FsStatus::Canceled => Self::Canceled,
             FsStatus::Deleted => Self::Deleted,
         }
     }

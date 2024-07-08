@@ -23,15 +23,12 @@ enum ContentType {
 
 /// friendship status
 enum FriendshipStatus {
-  /// default status
-  FriendshipStatusDefault = 0;
-  Pending = 1;
-  Accepted = 2;
-  Rejected = 3;
+  Pending = 0;
+  Accepted = 1;
+  Rejected = 2;
   /// blacklist
-  Blacked = 4;
-  Canceled = 5;
-  Deleted = 6;
+  Blacked = 3;
+  Deleted = 4;
 }
 
 enum MsgType {
@@ -70,7 +67,8 @@ enum MsgType {
   MsgTypeFriendshipReceived = 24;
 
   /// friend delete
-  MsgTypeFriendDelete = 25;
+  MsgTypeFriendBlack = 25;
+  MsgTypeFriendDelete = 26;
 }
 
 /// decode message content by content type

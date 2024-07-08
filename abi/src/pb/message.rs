@@ -992,15 +992,12 @@ impl ContentType {
 )]
 #[repr(i32)]
 pub enum FriendshipStatus {
-    /// / default status
-    Default = 0,
-    Pending = 1,
-    Accepted = 2,
-    Rejected = 3,
+    Pending = 0,
+    Accepted = 1,
+    Rejected = 2,
     /// / blacklist
-    Blacked = 4,
-    Canceled = 5,
-    Deleted = 6,
+    Blacked = 3,
+    Deleted = 4,
 }
 impl FriendshipStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1009,24 +1006,20 @@ impl FriendshipStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            FriendshipStatus::Default => "FriendshipStatusDefault",
             FriendshipStatus::Pending => "Pending",
             FriendshipStatus::Accepted => "Accepted",
             FriendshipStatus::Rejected => "Rejected",
             FriendshipStatus::Blacked => "Blacked",
-            FriendshipStatus::Canceled => "Canceled",
             FriendshipStatus::Deleted => "Deleted",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "FriendshipStatusDefault" => Some(Self::Default),
             "Pending" => Some(Self::Pending),
             "Accepted" => Some(Self::Accepted),
             "Rejected" => Some(Self::Rejected),
             "Blacked" => Some(Self::Blacked),
-            "Canceled" => Some(Self::Canceled),
             "Deleted" => Some(Self::Deleted),
             _ => None,
         }
@@ -1064,7 +1057,8 @@ pub enum MsgType {
     Service = 23,
     FriendshipReceived = 24,
     /// / friend delete
-    FriendDelete = 25,
+    FriendBlack = 25,
+    FriendDelete = 26,
 }
 impl MsgType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1098,6 +1092,7 @@ impl MsgType {
             MsgType::Notification => "MsgTypeNotification",
             MsgType::Service => "MsgTypeService",
             MsgType::FriendshipReceived => "MsgTypeFriendshipReceived",
+            MsgType::FriendBlack => "MsgTypeFriendBlack",
             MsgType::FriendDelete => "MsgTypeFriendDelete",
         }
     }
@@ -1129,6 +1124,7 @@ impl MsgType {
             "MsgTypeNotification" => Some(Self::Notification),
             "MsgTypeService" => Some(Self::Service),
             "MsgTypeFriendshipReceived" => Some(Self::FriendshipReceived),
+            "MsgTypeFriendBlack" => Some(Self::FriendBlack),
             "MsgTypeFriendDelete" => Some(Self::FriendDelete),
             _ => None,
         }
