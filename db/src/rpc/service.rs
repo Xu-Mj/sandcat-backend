@@ -5,7 +5,7 @@ use futures::Stream;
 use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
 use tonic::{async_trait, Request, Response, Status};
-use tracing::{debug, info};
+use tracing::debug;
 
 use abi::errors::Error;
 use abi::message::db_service_server::DbService;
@@ -476,7 +476,7 @@ impl DbService for DbRpcService {
         request: Request<QueryFriendInfoRequest>,
     ) -> Result<Response<QueryFriendInfoResponse>, Status> {
         let inner = request.into_inner();
-        info!("query friend info: {:?}", inner);
+        debug!("query friend info: {:?}", inner);
         let user = self
             .db
             .user

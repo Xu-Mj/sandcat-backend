@@ -5,7 +5,8 @@ use tracing::debug;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, Friend, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate, FsUpdate, User,
+    AgreeReply, Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate,
+    FsUpdate, User,
 };
 
 use crate::database::friend::FriendRepo;
@@ -158,7 +159,7 @@ impl FriendRepo for PostgresFriend {
         user_id: &str,
         friend_id: &str,
         remark: &str,
-    ) -> Result<Friendship, Error> {
+    ) -> Result<FriendDb, Error> {
         let fs = sqlx::query_as(
             "UPDATE friends
             SET remark = $1 ,

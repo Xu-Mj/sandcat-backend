@@ -1,4 +1,4 @@
-use crate::message::{Friend, Friendship, FriendshipStatus, FriendshipWithUser, User};
+use crate::message::{Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, User};
 use sqlx::postgres::PgRow;
 use sqlx::{Error, FromRow, Row};
 use std::fmt::{Display, Formatter};
@@ -37,6 +37,7 @@ impl From<FsStatus> for FriendshipStatus {
         }
     }
 }
+
 impl FromRow<'_, PgRow> for Friendship {
     fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
         let status: FsStatus = row.try_get("status")?;
@@ -50,6 +51,23 @@ impl FromRow<'_, PgRow> for Friendship {
             req_remark: row.try_get("req_remark")?,
             resp_msg: row.try_get("resp_msg")?,
             resp_remark: row.try_get("resp_remark")?,
+            source: row.try_get("source")?,
+            create_time: row.try_get("create_time")?,
+            update_time: row.try_get("update_time")?,
+        })
+    }
+}
+
+impl FromRow<'_, PgRow> for FriendDb {
+    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+        let status: FsStatus = row.try_get("status")?;
+        let status = FriendshipStatus::from(status);
+        Ok(Self {
+            id: row.try_get("id")?,
+            user_id: row.try_get("user_id")?,
+            friend_id: row.try_get("friend_id")?,
+            status: status as i32,
+            remark: row.try_get("resp_remark")?,
             source: row.try_get("source")?,
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,

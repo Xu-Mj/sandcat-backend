@@ -2,7 +2,8 @@ use async_trait::async_trait;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, Friend, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate, FsUpdate,
+    AgreeReply, Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate,
+    FsUpdate,
 };
 
 #[async_trait]
@@ -29,7 +30,7 @@ pub trait FriendRepo: Send + Sync {
         user_id: &str,
         friend_id: &str,
         remark: &str,
-    ) -> Result<Friendship, Error>;
+    ) -> Result<FriendDb, Error>;
 
     /// update friend status; the status should be accepted or blocked.
     /// this is not that to agree friend-apply-request

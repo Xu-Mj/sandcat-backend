@@ -435,13 +435,13 @@ pub struct FriendDb {
     #[prost(enumeration = "FriendshipStatus", tag = "4")]
     pub status: i32,
     #[prost(string, optional, tag = "5")]
-    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "6")]
     pub source: ::prost::alloc::string::String,
     #[prost(int64, tag = "7")]
     pub create_time: i64,
     #[prost(int64, tag = "8")]
-    pub accept_time: i64,
+    pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
