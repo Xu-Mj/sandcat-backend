@@ -1,6 +1,6 @@
 CREATE TABLE friends (
     id BIGINT primary key,
-    -- friendship_id VARCHAR NOT NULL,
+    friendship_id VARCHAR NOT NULL,
     user_id VARCHAR NOT NULL,
     friend_id VARCHAR NOT NULL,
     status friend_request_status NOT NULL DEFAULT 'Accepted',

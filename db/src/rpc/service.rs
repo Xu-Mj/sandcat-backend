@@ -466,7 +466,7 @@ impl DbService for DbRpcService {
         let inner = request.into_inner();
         self.db
             .friend
-            .delete_friend(&inner.user_id, &inner.friend_id)
+            .delete_friend(&inner.user_id, inner.id)
             .await?;
         Ok(Response::new(DeleteFriendResponse {}))
     }

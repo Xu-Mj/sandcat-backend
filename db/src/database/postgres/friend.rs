@@ -332,31 +332,25 @@ impl FriendRepo for PostgresFriend {
         Ok((req, send))
     }
 
-    async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error> {
-        sqlx::query(
-            "WITH updated AS (
-            UPDATE friendships
-            SET status = 'Deleted'
-            WHERE
-                ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
-                AND status != 'Deleted'
-            RETURNING user_id, friend_id
-            )
-            DELETE FROM friendships
-            WHERE
-                ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
-                AND NOT EXISTS (
-                    SELECT 1 FROM updated
-                    WHERE
-                        updated.user_id = friendships.user_id
-                        AND
-                        updated.friend_id = friendships.friend_id
-                )",
-        )
-        .bind(user_id)
-        .bind(friend_id)
-        .execute(&self.pool)
-        .await?;
+    async fn delete_friend(&self, fs_id: &str, friend_id: i64) -> Result<(), Error> {
+        // update two tables friendships and friends
+        // so need to use transaction
+        let update_time = chrono::Utc::now().timestamp_millis();
+        let mut transaction = self.pool.begin().await?;
+
+        sqlx::query("UPDATE friends SET status = 'Deleted', update_time = $2 WHERE id = $1")
+            .bind(friend_id)
+            .bind(update_time)
+            .execute(&mut *transaction)
+            .await?;
+
+        sqlx::query("UPDATE friendships SET status = 'Deleted', update_time = $2 WHERE id = $1")
+            .bind(fs_id)
+            .bind(update_time)
+            .execute(&mut *transaction)
+            .await?;
+
+        transaction.commit().await?;
         Ok(())
     }
 }

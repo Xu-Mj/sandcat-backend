@@ -42,14 +42,11 @@ pub trait FriendRepo: Send + Sync {
         status: FriendshipStatus,
     ) -> Result<Friendship, Error>;
 
-    /// get friend list;
-    /// we need to determine user_id is the friend or not
-    /// use 'OR'
     async fn get_friend_list(&self, user_id: &str, offline_time: i64)
         -> Result<Vec<Friend>, Error>;
     // ) -> Result<mpsc::Receiver<Result<Friend, Error>>, Error>;
 
     /// agree friend-apply-request
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error>;
-    async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error>;
+    async fn delete_friend(&self, fs_id: &str, friend_id: i64) -> Result<(), Error>;
 }
