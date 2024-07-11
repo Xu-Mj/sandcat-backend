@@ -202,37 +202,46 @@ impl FriendRepo for PostgresFriend {
     ) -> Result<Vec<Friend>, Error> {
         let list = sqlx::query_as(
             "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
-                        f.id as fs_id, f.status, f.source, f.create_time, f.accept_time,
-              CASE
-                WHEN f.user_id = $1 THEN f.resp_msg
-                ELSE f.apply_msg
-              END AS hello,
-              CASE
-                WHEN f.user_id = $1 THEN f.resp_remark
-                ELSE f.req_remark
-              END AS remark
-            FROM friendships AS f
+                        f.fs_id as fs_id, f.status, f.source, f.create_time, f.update_time, f.remark
+            FROM friends AS f
             JOIN users AS u
-            ON u.id = CASE
-                        WHEN f.user_id = $1 THEN f.friend_id
-                        ELSE f.user_id
-                      END
+            ON u.id =  f.friend_id
             WHERE (f.user_id = $1 OR f.friend_id = $1)
-              AND f.status = 'Accepted'
-              AND f.accept_time > $2
-              AND u.is_delete = FALSE",
-        )
-        .bind(user_id)
-        .bind(offline_time)
-        .fetch_all(&self.pool)
-        .await?;
+            AND f.update_time > $2
+            AND u.is_delete = FALSE",)
+              .bind(user_id)
+              .bind(offline_time)
+              .fetch_all(&self.pool)
+              .await?;
+        Ok(list)
+        // )        let list = sqlx::query_as(
+        //     "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
+        //                 f.id as fs_id, f.status, f.source, f.create_time, f.accept_time,
+        //       CASE
+        //         WHEN f.user_id = $1 THEN f.resp_msg
+        //         ELSE f.apply_msg
+        //       END AS hello,
+        //       CASE
+        //         WHEN f.user_id = $1 THEN f.resp_remark
+        //         ELSE f.req_remark
+        //       END AS remark
+        //     FROM friendships AS f
+        //     JOIN users AS u
+        //     ON u.id = CASE
+        //                 WHEN f.user_id = $1 THEN f.friend_id
+        //                 ELSE f.user_id
+        //               END
+        //     WHERE (f.user_id = $1 OR f.friend_id = $1)
+        //       AND f.status = 'Accepted'
+        //       AND f.accept_time > $2
+        //       AND u.is_delete = FALSE",
+        // )
         // let (tx, rx) = mpsc::channel(100);
         // while let Some(result) = list.try_next().await? {
         //     if tx.send(Ok(result)).await.is_err() {
         //         break;
         //     };
         // }
-        Ok(list)
     }
 
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error> {
@@ -302,10 +311,9 @@ impl FriendRepo for PostgresFriend {
             age: user.age,
             region: user.region,
             status: friendship.status,
-            hello: friendship.apply_msg,
             remark: friendship.resp_remark,
             source: friendship.source.clone(),
-            accept_time: now,
+            update_time: now,
             account: user.account,
             signature: user.signature,
             create_time: friendship.update_time,
@@ -320,10 +328,9 @@ impl FriendRepo for PostgresFriend {
             age: friend.age,
             region: friend.region,
             status: friendship.status,
-            hello: friendship.resp_msg,
             remark: friendship.req_remark,
             source: friendship.source,
-            accept_time: now,
+            update_time: now,
             account: friend.account,
             signature: friend.signature,
             create_time: friendship.update_time,

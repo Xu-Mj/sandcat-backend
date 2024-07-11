@@ -429,18 +429,20 @@ pub struct FriendDb {
     #[prost(int64, tag = "1")]
     pub id: i64,
     #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
+    pub fs_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
     pub friend_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "4")]
+    #[prost(enumeration = "FriendshipStatus", tag = "5")]
     pub status: i32,
-    #[prost(string, optional, tag = "5")]
+    #[prost(string, optional, tag = "6")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "6")]
+    #[prost(string, tag = "7")]
     pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "7")]
-    pub create_time: i64,
     #[prost(int64, tag = "8")]
+    pub create_time: i64,
+    #[prost(int64, tag = "9")]
     pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -450,35 +452,33 @@ pub struct Friend {
     #[prost(string, tag = "1")]
     pub fs_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "5")]
-    pub age: i32,
-    #[prost(string, optional, tag = "6")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(enumeration = "FriendshipStatus", tag = "7")]
-    pub status: i32,
-    #[prost(string, optional, tag = "8")]
-    pub hello: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "10")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "11")]
-    pub accept_time: i64,
-    #[prost(string, tag = "12")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "13")]
     pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "14")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(int64, tag = "15")]
-    pub create_time: i64,
-    #[prost(string, optional, tag = "16")]
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration = "FriendshipStatus", tag = "9")]
+    pub status: i32,
+    #[prost(string, optional, tag = "10")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "12")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(string, tag = "13")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(int64, tag = "14")]
+    pub create_time: i64,
+    #[prost(int64, tag = "15")]
+    pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
