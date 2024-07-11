@@ -160,20 +160,14 @@ impl FriendRepo for PostgresFriend {
         remark: &str,
     ) -> Result<Friendship, Error> {
         let fs = sqlx::query_as(
-            "UPDATE friendships
-            SET req_remark = CASE
-                    WHEN user_id = $2 THEN $1
-                    ELSE req_remark
-                END,
-                resp_remark = CASE
-                    WHEN friend_id = $2 THEN $1
-                    ELSE resp_remark
-                END
-            WHERE (user_id = $2 AND friend_id = $3)
-            OR (user_id = $3 AND friend_id = $2)
+            "UPDATE friends
+            SET remark = $1 ,
+            update_time = $2
+            WHERE (user_id = $3 AND friend_id = $4)
             RETURNING *",
         )
         .bind(remark)
+        .bind(chrono::Utc::now().timestamp_millis())
         .bind(user_id)
         .bind(friend_id)
         .fetch_one(&self.pool)
