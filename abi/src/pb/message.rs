@@ -388,7 +388,7 @@ pub struct Friendship {
     #[prost(int64, tag = "10")]
     pub create_time: i64,
     #[prost(int64, tag = "11")]
-    pub accept_time: i64,
+    pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

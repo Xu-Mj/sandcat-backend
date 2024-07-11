@@ -52,7 +52,7 @@ impl FromRow<'_, PgRow> for Friendship {
             resp_remark: row.try_get("resp_remark")?,
             source: row.try_get("source")?,
             create_time: row.try_get("create_time")?,
-            accept_time: row.try_get("accept_time")?,
+            update_time: row.try_get("update_time")?,
         })
     }
 }

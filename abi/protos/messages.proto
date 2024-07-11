@@ -290,7 +290,7 @@ message Friendship {
   optional string resp_remark = 8;
   string source = 9;
   int64 create_time = 10;
-  int64 accept_time = 11;
+  int64 update_time = 11;
 }
 
 message FriendshipWithUser {

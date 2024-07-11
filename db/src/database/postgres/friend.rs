@@ -244,13 +244,37 @@ impl FriendRepo for PostgresFriend {
                 accept_time = $1,
                 resp_msg = $2,
                 resp_remark = $3
-            WHERE id = $4 RETURNING *",
+            WHERE id = $4
+            RETURNING *",
         )
         .bind(now)
         .bind(&fs.resp_msg)
         .bind(&fs.resp_remark)
         .bind(fs.fs_id)
         .fetch_one(&mut *transaction)
+        .await?;
+
+        // insert into friends about two friends information
+        // EXCLUDED is a special keyword in postgresql stands for the value of the column that is being conflicting
+        // DO UPDATE only operate the conflicting row,
+        // so we can use EXCLUDED to get the value of the column that is being conflicting
+        sqlx::query(
+            "INSERT INTO friends (user_id, friend_id, remark, source)
+        VALUES
+        ($1, $2, $3, $5),
+         ($2, $1, $4, $5)
+         ON CONFLICT (user_id, friend_id)
+         DO UPDATE SET
+            remark =  EXCLUDED.remark,
+            status = 'Accepted',
+            source = EXCLUDED.source",
+        )
+        .bind(&friendship.user_id)
+        .bind(&friendship.friend_id)
+        .bind(&friendship.req_remark)
+        .bind(&friendship.resp_remark)
+        .bind(&friendship.source)
+        .execute(&mut *transaction)
         .await?;
 
         // select user information
@@ -283,8 +307,8 @@ impl FriendRepo for PostgresFriend {
             accept_time: now,
             account: user.account,
             signature: user.signature,
-            create_time: friendship.accept_time,
-            email: None,
+            create_time: friendship.update_time,
+            email: user.email,
         };
         let send = Friend {
             fs_id: friendship.id,
@@ -301,8 +325,8 @@ impl FriendRepo for PostgresFriend {
             accept_time: now,
             account: friend.account,
             signature: friend.signature,
-            create_time: friendship.accept_time,
-            email: None,
+            create_time: friendship.update_time,
+            email: friend.email,
         };
         Ok((req, send))
     }
