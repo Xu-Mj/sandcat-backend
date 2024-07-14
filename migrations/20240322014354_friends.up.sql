@@ -7,7 +7,7 @@ CREATE TABLE friends (
     status friend_request_status NOT NULL DEFAULT 'Accepted',
     remark VARCHAR,
     source VARCHAR,
-    create_time timestamp NOT NULL DEFAULT now(),
-    update_time timestamp NOT NULL DEFAULT now(),
+    create_time BIGINT NOT NULL,
+    update_time BIGINT NOT NULL ,
     CONSTRAINT unique_user_friend UNIQUE (user_id, friend_id)
 )
