@@ -48,11 +48,13 @@ impl UserRepo for PostgresUser {
             .await?;
 
         // insert into sequence
-        sqlx::query("INSERT INTO sequence (user_id, max_seq) VALUES ($1, $2)")
-            .bind(&user.id)
-            .bind(self.init_max_seq)
-            .execute(&mut *tx)
-            .await?;
+        sqlx::query(
+            "INSERT INTO sequence (user_id, send_max_seq, rec_max_seq) VALUES ($1, $2, $2)",
+        )
+        .bind(&user.id)
+        .bind(self.init_max_seq)
+        .execute(&mut *tx)
+        .await?;
 
         tx.commit().await?;
         Ok(result)

@@ -28,14 +28,14 @@ impl FriendRepo for PostgresFriend {
         fs: FsCreate,
     ) -> Result<(FriendshipWithUser, FriendshipWithUser), Error> {
         let user_id = fs.user_id.clone();
-        let now = chrono::Local::now().timestamp_millis();
+        let now = chrono::Utc::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
         debug!("create_fs: {:?}", &fs);
         let fs_id: (String,) = sqlx::query_as(
             "INSERT INTO friendships
-                (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time)
+                (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time, update_time)
              VALUES
-                ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8)
+                ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8, $8)
              ON CONFLICT (user_id, friend_id)
              DO UPDATE
                 SET apply_msg = EXCLUDED.apply_msg, req_remark = EXCLUDED.req_remark,
@@ -147,7 +147,7 @@ impl FriendRepo for PostgresFriend {
         .bind(FriendshipStatus::Pending.as_str_name())
         .bind(&fs.apply_msg)
         .bind(&fs.req_remark)
-        .bind(chrono::Local::now().timestamp_millis())
+        .bind(chrono::Utc::now().timestamp_millis())
         .bind(&fs.id)
         .fetch_one(&self.pool)
         .await?;
@@ -245,13 +245,13 @@ impl FriendRepo for PostgresFriend {
     }
 
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error> {
-        let now = chrono::Local::now().timestamp_millis();
+        let now = chrono::Utc::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
         let friendship: Friendship = sqlx::query_as(
             "UPDATE friendships
             SET
                 status = 'Accepted',
-                accept_time = $1,
+                update_time = $1,
                 resp_msg = $2,
                 resp_remark = $3
             WHERE id = $4
@@ -269,21 +269,23 @@ impl FriendRepo for PostgresFriend {
         // DO UPDATE only operate the conflicting row,
         // so we can use EXCLUDED to get the value of the column that is being conflicting
         sqlx::query(
-            "INSERT INTO friends (user_id, friend_id, remark, source)
+            "INSERT INTO friends (fs_id, user_id, friend_id, remark, source, create_time, update_time)
         VALUES
-        ($1, $2, $3, $5),
-         ($2, $1, $4, $5)
-         ON CONFLICT (user_id, friend_id)
-         DO UPDATE SET
+        ($1, $2, $3, $4, $6, $7, $7),
+        ($1, $3, $2, $5, $6, $7, $7)
+        ON CONFLICT (user_id, friend_id)
+        DO UPDATE SET
             remark =  EXCLUDED.remark,
             status = 'Accepted',
             source = EXCLUDED.source",
         )
+        .bind(&friendship.id)
         .bind(&friendship.user_id)
         .bind(&friendship.friend_id)
         .bind(&friendship.req_remark)
         .bind(&friendship.resp_remark)
         .bind(&friendship.source)
+        .bind(now)
         .execute(&mut *transaction)
         .await?;
 
