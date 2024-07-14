@@ -1,6 +1,6 @@
 CREATE TYPE friend_request_status AS ENUM ('Pending', 'Accepted', 'Rejected', 'Blacked', 'Deleted');
 CREATE TABLE friends (
-    id BIGINT primary key,
+    id SERIAL primary key,
     fs_id VARCHAR NOT NULL,
     user_id VARCHAR NOT NULL,
     friend_id VARCHAR NOT NULL,
