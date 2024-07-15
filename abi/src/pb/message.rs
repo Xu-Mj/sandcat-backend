@@ -875,8 +875,8 @@ pub struct GetMsgResp {
 pub struct DelMsgRequest {
     #[prost(string, tag = "1")]
     pub user_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "2")]
-    pub msg_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "2")]
+    pub msg_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

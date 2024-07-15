@@ -534,7 +534,7 @@ message GetMsgResp { repeated Msg messages = 1; }
 
 message DelMsgRequest {
   string user_id = 1;
-  repeated string msg_id = 2;
+  repeated int64 msg_id = 2;
 }
 
 message DelMsgResp {}

@@ -206,7 +206,7 @@ impl FriendRepo for PostgresFriend {
             FROM friends AS f
             JOIN users AS u
             ON u.id =  f.friend_id
-            WHERE (f.user_id = $1 OR f.friend_id = $1)
+            WHERE f.user_id = $1
             AND f.update_time > $2
             AND u.is_delete = FALSE",)
               .bind(user_id)
