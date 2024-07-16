@@ -18,7 +18,11 @@ pub trait FriendRepo: Send + Sync {
     // async fn get_fs(&self, user_id: &str, friend_id: &str) -> Result<FriendshipWithUser, Error>;
 
     /// get friend apply request list
-    async fn get_fs_list(&self, user_id: &str) -> Result<Vec<FriendshipWithUser>, Error>;
+    async fn get_fs_list(
+        &self,
+        user_id: &str,
+        offline_time: i64,
+    ) -> Result<Vec<FriendshipWithUser>, Error>;
 
     /// update friend apply request
     #[allow(dead_code)]

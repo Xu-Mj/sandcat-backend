@@ -588,13 +588,6 @@ pub struct AgreeReply {
     #[prost(string, optional, tag = "3")]
     pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
 }
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsListRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FriendListRequest {
@@ -1979,7 +1972,7 @@ pub mod db_service_client {
         /// / get friendship list
         pub async fn get_friendship_list(
             &mut self,
-            request: impl tonic::IntoRequest<super::FsListRequest>,
+            request: impl tonic::IntoRequest<super::FriendListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
@@ -2775,7 +2768,7 @@ pub mod db_service_server {
         /// / get friendship list
         async fn get_friendship_list(
             &self,
-            request: tonic::Request<super::FsListRequest>,
+            request: tonic::Request<super::FriendListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status>;
         /// / get friend list by user id
         async fn get_friend_list(
@@ -3887,12 +3880,14 @@ pub mod db_service_server {
                 "/message.DbService/GetFriendshipList" => {
                     #[allow(non_camel_case_types)]
                     struct GetFriendshipListSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::UnaryService<super::FsListRequest> for GetFriendshipListSvc<T> {
+                    impl<T: DbService> tonic::server::UnaryService<super::FriendListRequest>
+                        for GetFriendshipListSvc<T>
+                    {
                         type Response = super::FsListResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::FsListRequest>,
+                            request: tonic::Request<super::FriendListRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

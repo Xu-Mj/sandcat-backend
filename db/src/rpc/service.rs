@@ -12,16 +12,16 @@ use abi::message::db_service_server::DbService;
 use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
-    FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListRequest, FsListResponse,
-    GetDbMessagesRequest, GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest,
-    GetUserResponse, GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest,
-    GroupDeleteResponse, GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse,
-    GroupMembersIdRequest, GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg,
-    MsgReadReq, MsgReadResp, QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest,
-    SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse,
-    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
-    UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse,
-    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListResponse, GetDbMessagesRequest,
+    GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
+    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
+    GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
+    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, MsgReadReq, MsgReadResp,
+    QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse,
+    SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest,
+    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRegionRequest,
+    UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
+    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -418,13 +418,17 @@ impl DbService for DbRpcService {
 
     async fn get_friendship_list(
         &self,
-        request: Request<FsListRequest>,
+        request: Request<FriendListRequest>,
     ) -> Result<Response<FsListResponse>, Status> {
-        let user_id = request.into_inner().user_id;
-        if user_id.is_empty() {
+        let inner = request.into_inner();
+        if inner.user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
         }
-        let list = self.db.friend.get_fs_list(&user_id).await?;
+        let list = self
+            .db
+            .friend
+            .get_fs_list(&inner.user_id, inner.offline_time)
+            .await?;
         Ok(Response::new(FsListResponse { friendships: list }))
     }
 

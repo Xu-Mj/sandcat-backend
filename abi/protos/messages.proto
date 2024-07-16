@@ -397,7 +397,7 @@ message AgreeReply {
   optional string resp_remark = 3;
 }
 
-message FsListRequest { string user_id = 1; }
+// message FsListRequest { string user_id = 1; }
 
 message FriendListRequest {
   string user_id = 1;
@@ -618,7 +618,7 @@ service DbService {
   /// reply friendship: agree, reject
   rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
   /// get friendship list
-  rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
+  rpc GetFriendshipList(FriendListRequest) returns (FsListResponse);
   /// get friend list by user id
   rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
   /// update friend remark by user id and friend id
