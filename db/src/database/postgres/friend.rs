@@ -126,10 +126,10 @@ impl FriendRepo for PostgresFriend {
         // Ok(rx)
         let fs = sqlx::query_as(
             "SELECT f.id, f.user_id, f.apply_msg, f.source, f.create_time,
-             u.name, u.avatar, u.gender, u.age, u.region,
-             FROM friendships f
-             JOIN users u ON f.user_id = u.id
-             WHERE f.friend_id = $1 and update_time > $2",
+             u.name, u.avatar, u.gender, u.age, u.region
+             FROM friendships AS f
+             JOIN users AS u ON f.user_id = u.id
+             WHERE f.friend_id = $1 and f.update_time > $2",
         )
         .bind(user_id)
         .bind(offline_time)
