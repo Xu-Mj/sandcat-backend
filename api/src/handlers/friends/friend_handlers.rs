@@ -1,40 +1,58 @@
 use axum::extract::State;
 use axum::Json;
+use serde::Serialize;
 
 use abi::errors::Error;
 use abi::message::{
     AgreeReply, DeleteFriendRequest, Friend, FriendInfo, FriendListRequest, FriendshipWithUser,
-    FsAgreeRequest, FsCreate, FsCreateRequest, FsListRequest, QueryFriendInfoRequest,
-    SendMsgRequest, UpdateRemarkRequest,
+    FsAgreeRequest, FsCreate, FsCreateRequest, QueryFriendInfoRequest, SendMsgRequest,
+    UpdateRemarkRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
 
+#[derive(Serialize)]
+pub struct FriendShipList {
+    pub friends: Vec<Friend>,
+    pub fs: Vec<FriendshipWithUser>,
+}
+
 pub async fn get_friends_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, offline_time)): PathWithAuthExtractor<(String, i64)>,
-) -> Result<Json<Vec<Friend>>, Error> {
+) -> Result<Json<FriendShipList>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = FriendListRequest {
         user_id,
         offline_time,
     };
-    let response = db_rpc
-        .get_friend_list(request)
+    let friends = db_rpc
+        .get_friend_list(request.clone())
         .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
-    Ok(Json(response.into_inner().friends))
+        .map_err(|e| Error::InternalServer(e.to_string()))?
+        .into_inner()
+        .friends;
+    let fs = db_rpc
+        .get_friendship_list(request)
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?
+        .into_inner()
+        .friendships;
+    Ok(Json(FriendShipList { friends, fs }))
 }
 
 // 获取好友申请列表
 pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor((user_id, offline_time)): PathWithAuthExtractor<(String, i64)>,
 ) -> Result<Json<Vec<FriendshipWithUser>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let response = db_rpc
-        .get_friendship_list(FsListRequest { user_id })
+        .get_friendship_list(FriendListRequest {
+            user_id,
+            offline_time,
+        })
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
     let list = response.into_inner().friendships;

@@ -86,8 +86,8 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn delete_messages(&self, user_id: &str, message_ids: Vec<String>) -> Result<(), Error> {
-        let query = doc! {"receiver_id": user_id, "server_id": {"$in": message_ids}};
+    async fn delete_messages(&self, user_id: &str, msg_seq: Vec<i64>) -> Result<(), Error> {
+        let query = doc! {"receiver_id": user_id, "seq": {"$in": msg_seq}};
         self.mb.delete_many(query, None).await?;
 
         Ok(())
@@ -343,18 +343,22 @@ mod tests {
         let msg_box = TestConfig::new().await;
         let msg_id = vec!["123".to_string(), "124".to_string(), "125".to_string()];
         let mut msg = get_test_msg(msg_id[0].clone());
+
+        let msg_seq = vec![12, 123, 1234];
         // save it into mongodb
         msg_box.save_message(&msg).await.unwrap();
 
         msg.server_id.clone_from(&msg_id[1]);
+        msg.seq = msg_seq[1];
         msg_box.save_message(&msg).await.unwrap();
 
+        msg.seq = msg_seq[2];
         msg.server_id.clone_from(&msg_id[2]);
         msg_box.save_message(&msg).await.unwrap();
 
         // delete it
         msg_box
-            .delete_messages("111", msg_id.clone())
+            .delete_messages("111", msg_seq.clone())
             .await
             .unwrap();
 

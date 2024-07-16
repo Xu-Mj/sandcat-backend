@@ -14,7 +14,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 ## Architecture Components
 
-​![architecture](rfcs/images/framework-english.png)
+![architecture](rfcs/images/framework-english.png)
 
 1. **Service Layer**
 
@@ -47,7 +47,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 ## Unresolved questions
 
 - **Integrating Member ID Retrieval from Cache into DB Service**: Whether the method for retrieving member IDs from the cache should be integrated into the DB service is under consideration.
-- **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign.
+- **Friendship Redesign**: The current design for representing friendships is inadequate and requires a thorough redesign. --rebuilding
 - **Conversation Feature**: There is currently no implementation of conversations on the server-side, as it exists only client-side.
 - **Partition Table for Messages (Mongodb) Not Implemented**: The strategy for implementing partitioned tables for messages has not been realized yet.
 - **User Table Should Add Login Device Field**: There should be consideration to add a field for the login device to the user table, which is used to check if clients need to sync the friend list.
@@ -60,14 +60,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 ## Development
 
-1. clone the project
-
-   ```shell
-   git clone https://github.com/Xu-Mj/sandcat-backend.git
-   cd sandcat-backend
-   ```
-
-2. install `librdkafka`
+1. install `librdkafka`
 
    **Ubuntu：**
 
@@ -87,7 +80,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
    .\vcpkg integrate install
    ```
 
-3. run docker compose
+2. run docker compose
 
    ```shell
    docker-compose up -d
@@ -95,11 +88,18 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
    **important:** make sure all the third service are running in docker.
 
-4. install sqlx-cli and init the database
+3. install sqlx-cli and init the database
 
    ```shell
    cargo install sqlx-cli
    sqlx migrate run
+   ```
+
+4. clone the project
+
+   ```shell
+   git clone https://github.com/Xu-Mj/sandcat-backend.git
+   cd sandcat-backend
    ```
 
 5. build

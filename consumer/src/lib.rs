@@ -266,7 +266,6 @@ impl ConsumerService {
         // query members id from cache if the message type is group
         let members = self.handle_group_seq(&msg_type, &mut msg).await?;
 
-        error!("members group seq: {:?}", members);
         // send to db
         let cloned_msg = msg.clone();
         let cloned_type = msg_type.clone();

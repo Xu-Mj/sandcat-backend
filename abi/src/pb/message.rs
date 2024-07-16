@@ -388,7 +388,7 @@ pub struct Friendship {
     #[prost(int64, tag = "10")]
     pub create_time: i64,
     #[prost(int64, tag = "11")]
-    pub accept_time: i64,
+    pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -423,6 +423,28 @@ pub struct FriendshipWithUser {
     #[prost(string, optional, tag = "14")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendDb {
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    #[prost(string, tag = "2")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "5")]
+    pub status: i32,
+    #[prost(string, optional, tag = "6")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "7")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "8")]
+    pub create_time: i64,
+    #[prost(int64, tag = "9")]
+    pub update_time: i64,
+}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -430,35 +452,33 @@ pub struct Friend {
     #[prost(string, tag = "1")]
     pub fs_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "5")]
-    pub age: i32,
-    #[prost(string, optional, tag = "6")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(enumeration = "FriendshipStatus", tag = "7")]
-    pub status: i32,
-    #[prost(string, optional, tag = "8")]
-    pub hello: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "10")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "11")]
-    pub accept_time: i64,
-    #[prost(string, tag = "12")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "13")]
     pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "14")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(int64, tag = "15")]
-    pub create_time: i64,
-    #[prost(string, optional, tag = "16")]
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration = "FriendshipStatus", tag = "9")]
+    pub status: i32,
+    #[prost(string, optional, tag = "10")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
     pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "12")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(string, tag = "13")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(int64, tag = "14")]
+    pub create_time: i64,
+    #[prost(int64, tag = "15")]
+    pub update_time: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -549,6 +569,10 @@ pub struct DeleteFriendRequest {
     pub user_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "4")]
+    pub id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -563,13 +587,6 @@ pub struct AgreeReply {
     pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "3")]
     pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsListRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -851,8 +868,8 @@ pub struct GetMsgResp {
 pub struct DelMsgRequest {
     #[prost(string, tag = "1")]
     pub user_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "2")]
-    pub msg_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, repeated, tag = "2")]
+    pub msg_id: ::prost::alloc::vec::Vec<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -992,15 +1009,12 @@ impl ContentType {
 )]
 #[repr(i32)]
 pub enum FriendshipStatus {
-    /// / default status
-    Default = 0,
-    Pending = 1,
-    Accepted = 2,
-    Rejected = 3,
+    Pending = 0,
+    Accepted = 1,
+    Rejected = 2,
     /// / blacklist
-    Blacked = 4,
-    Canceled = 5,
-    Deleted = 6,
+    Blacked = 3,
+    Deleted = 4,
 }
 impl FriendshipStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1009,24 +1023,20 @@ impl FriendshipStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            FriendshipStatus::Default => "FriendshipStatusDefault",
             FriendshipStatus::Pending => "Pending",
             FriendshipStatus::Accepted => "Accepted",
             FriendshipStatus::Rejected => "Rejected",
             FriendshipStatus::Blacked => "Blacked",
-            FriendshipStatus::Canceled => "Canceled",
             FriendshipStatus::Deleted => "Deleted",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "FriendshipStatusDefault" => Some(Self::Default),
             "Pending" => Some(Self::Pending),
             "Accepted" => Some(Self::Accepted),
             "Rejected" => Some(Self::Rejected),
             "Blacked" => Some(Self::Blacked),
-            "Canceled" => Some(Self::Canceled),
             "Deleted" => Some(Self::Deleted),
             _ => None,
         }
@@ -1064,7 +1074,8 @@ pub enum MsgType {
     Service = 23,
     FriendshipReceived = 24,
     /// / friend delete
-    FriendDelete = 25,
+    FriendBlack = 25,
+    FriendDelete = 26,
 }
 impl MsgType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1098,6 +1109,7 @@ impl MsgType {
             MsgType::Notification => "MsgTypeNotification",
             MsgType::Service => "MsgTypeService",
             MsgType::FriendshipReceived => "MsgTypeFriendshipReceived",
+            MsgType::FriendBlack => "MsgTypeFriendBlack",
             MsgType::FriendDelete => "MsgTypeFriendDelete",
         }
     }
@@ -1129,6 +1141,7 @@ impl MsgType {
             "MsgTypeNotification" => Some(Self::Notification),
             "MsgTypeService" => Some(Self::Service),
             "MsgTypeFriendshipReceived" => Some(Self::FriendshipReceived),
+            "MsgTypeFriendBlack" => Some(Self::FriendBlack),
             "MsgTypeFriendDelete" => Some(Self::FriendDelete),
             _ => None,
         }
@@ -1959,7 +1972,7 @@ pub mod db_service_client {
         /// / get friendship list
         pub async fn get_friendship_list(
             &mut self,
-            request: impl tonic::IntoRequest<super::FsListRequest>,
+            request: impl tonic::IntoRequest<super::FriendListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
@@ -2755,7 +2768,7 @@ pub mod db_service_server {
         /// / get friendship list
         async fn get_friendship_list(
             &self,
-            request: tonic::Request<super::FsListRequest>,
+            request: tonic::Request<super::FriendListRequest>,
         ) -> std::result::Result<tonic::Response<super::FsListResponse>, tonic::Status>;
         /// / get friend list by user id
         async fn get_friend_list(
@@ -3867,12 +3880,14 @@ pub mod db_service_server {
                 "/message.DbService/GetFriendshipList" => {
                     #[allow(non_camel_case_types)]
                     struct GetFriendshipListSvc<T: DbService>(pub Arc<T>);
-                    impl<T: DbService> tonic::server::UnaryService<super::FsListRequest> for GetFriendshipListSvc<T> {
+                    impl<T: DbService> tonic::server::UnaryService<super::FriendListRequest>
+                        for GetFriendshipListSvc<T>
+                    {
                         type Response = super::FsListResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::FsListRequest>,
+                            request: tonic::Request<super::FriendListRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

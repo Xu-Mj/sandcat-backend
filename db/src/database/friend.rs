@@ -2,7 +2,8 @@ use async_trait::async_trait;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, Friend, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate, FsUpdate,
+    AgreeReply, Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, FsCreate,
+    FsUpdate,
 };
 
 #[async_trait]
@@ -17,7 +18,11 @@ pub trait FriendRepo: Send + Sync {
     // async fn get_fs(&self, user_id: &str, friend_id: &str) -> Result<FriendshipWithUser, Error>;
 
     /// get friend apply request list
-    async fn get_fs_list(&self, user_id: &str) -> Result<Vec<FriendshipWithUser>, Error>;
+    async fn get_fs_list(
+        &self,
+        user_id: &str,
+        offline_time: i64,
+    ) -> Result<Vec<FriendshipWithUser>, Error>;
 
     /// update friend apply request
     #[allow(dead_code)]
@@ -29,7 +34,7 @@ pub trait FriendRepo: Send + Sync {
         user_id: &str,
         friend_id: &str,
         remark: &str,
-    ) -> Result<Friendship, Error>;
+    ) -> Result<FriendDb, Error>;
 
     /// update friend status; the status should be accepted or blocked.
     /// this is not that to agree friend-apply-request
@@ -41,14 +46,11 @@ pub trait FriendRepo: Send + Sync {
         status: FriendshipStatus,
     ) -> Result<Friendship, Error>;
 
-    /// get friend list;
-    /// we need to determine user_id is the friend or not
-    /// use 'OR'
     async fn get_friend_list(&self, user_id: &str, offline_time: i64)
         -> Result<Vec<Friend>, Error>;
     // ) -> Result<mpsc::Receiver<Result<Friend, Error>>, Error>;
 
     /// agree friend-apply-request
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error>;
-    async fn delete_friend(&self, user_id: &str, friend_id: &str) -> Result<(), Error>;
+    async fn delete_friend(&self, fs_id: &str, friend_id: i64) -> Result<(), Error>;
 }

@@ -23,15 +23,12 @@ enum ContentType {
 
 /// friendship status
 enum FriendshipStatus {
-  /// default status
-  FriendshipStatusDefault = 0;
-  Pending = 1;
-  Accepted = 2;
-  Rejected = 3;
+  Pending = 0;
+  Accepted = 1;
+  Rejected = 2;
   /// blacklist
-  Blacked = 4;
-  Canceled = 5;
-  Deleted = 6;
+  Blacked = 3;
+  Deleted = 4;
 }
 
 enum MsgType {
@@ -70,7 +67,8 @@ enum MsgType {
   MsgTypeFriendshipReceived = 24;
 
   /// friend delete
-  MsgTypeFriendDelete = 25;
+  MsgTypeFriendBlack = 25;
+  MsgTypeFriendDelete = 26;
 }
 
 /// decode message content by content type
@@ -292,7 +290,7 @@ message Friendship {
   optional string resp_remark = 8;
   string source = 9;
   int64 create_time = 10;
-  int64 accept_time = 11;
+  int64 update_time = 11;
 }
 
 message FriendshipWithUser {
@@ -312,23 +310,34 @@ message FriendshipWithUser {
   optional string email = 14;
 }
 
+message FriendDb{
+  int64 id = 1;
+  string fs_id = 2;
+  string user_id = 3;
+  string friend_id = 4;
+  FriendshipStatus status = 5;
+  optional string remark = 6;
+  string source = 7;
+  int64 create_time = 8;
+  int64 update_time = 9;
+}
+
 message Friend {
   string fs_id = 1;
-  string name = 2;
-  string avatar = 3;
-  string gender = 4;
-  int32 age = 5;
-  optional string region = 6;
-  FriendshipStatus status = 7;
-  optional string hello = 8;
-  optional string remark = 9;
-  string source = 10;
-  int64 accept_time = 11;
-  string account = 12;
-  string friend_id = 13;
-  string signature = 14;
-  int64 create_time = 15;
-  optional string email = 16;
+  string friend_id = 2;
+  string account = 3;
+  string name = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string region = 8;
+  FriendshipStatus status = 9;
+  optional string remark = 10;
+  optional string email = 11;
+  string source = 12;
+  string signature = 13;
+  int64 create_time = 14;
+  int64 update_time = 15;
 }
 
 message FriendInfo {
@@ -376,6 +385,8 @@ message UpdateRemarkResponse {}
 message DeleteFriendRequest {
   string user_id = 1;
   string friend_id = 2;
+  string fs_id = 3;
+  int64 id = 4;
 }
 
 message DeleteFriendResponse {}
@@ -386,7 +397,7 @@ message AgreeReply {
   optional string resp_remark = 3;
 }
 
-message FsListRequest { string user_id = 1; }
+// message FsListRequest { string user_id = 1; }
 
 message FriendListRequest {
   string user_id = 1;
@@ -523,7 +534,7 @@ message GetMsgResp { repeated Msg messages = 1; }
 
 message DelMsgRequest {
   string user_id = 1;
-  repeated string msg_id = 2;
+  repeated int64 msg_id = 2;
 }
 
 message DelMsgResp {}
@@ -607,7 +618,7 @@ service DbService {
   /// reply friendship: agree, reject
   rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
   /// get friendship list
-  rpc GetFriendshipList(FsListRequest) returns (FsListResponse);
+  rpc GetFriendshipList(FriendListRequest) returns (FsListResponse);
   /// get friend list by user id
   rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
   /// update friend remark by user id and friend id

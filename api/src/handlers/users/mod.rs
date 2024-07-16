@@ -12,7 +12,7 @@ mod oauth2;
 mod user_handlers;
 
 pub use oauth2::*;
-use tracing::{error, info};
+use tracing::error;
 pub use user_handlers::*;
 use xdb::search_by_ip;
 
@@ -90,7 +90,6 @@ pub async fn gen_token(
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
-    info!("login success token: {:?}", claims);
     claims.exp += REFRESH_EXPIRES;
     let refresh_token = encode(
         &Header::default(),
@@ -99,8 +98,6 @@ pub async fn gen_token(
     )
     .map_err(|err| Error::InternalServer(err.to_string()))?;
 
-    info!("login success token: {}", token);
-    info!("login success refresh: {}", refresh_token);
     app_state.cache.user_login(&user.account).await?;
 
     // get websocket service address

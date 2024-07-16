@@ -261,7 +261,7 @@ impl Cache for RedisCache {
     async fn incr_group_seq(&self, mut members: Vec<String>) -> Result<Vec<GroupMemSeq>, Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
 
-        let mut cmd = redis::cmd("EVALSHA");
+        let mut cmd = redis::cmd(EVALSHA);
         cmd.arg(&self.group_seq_exe_sha).arg(0).arg(self.seq_step);
 
         for member in members.iter() {
@@ -270,7 +270,6 @@ impl Cache for RedisCache {
 
         let response: Vec<redis::Value> = cmd.query_async(&mut conn).await?;
 
-        println!("group seq response: {:?}", response);
         let mut seq = Vec::with_capacity(members.len());
         for (index, item) in response.iter().enumerate() {
             if let redis::Value::Bulk(bulk_item) = item {
