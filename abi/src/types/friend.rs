@@ -68,7 +68,7 @@ impl FromRow<'_, PgRow> for FriendDb {
             user_id: row.try_get("user_id")?,
             friend_id: row.try_get("friend_id")?,
             status: status as i32,
-            remark: row.try_get("resp_remark")?,
+            remark: row.try_get("remark")?,
             source: row.try_get("source")?,
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,
