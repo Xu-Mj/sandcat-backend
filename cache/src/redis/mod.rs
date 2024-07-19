@@ -271,7 +271,7 @@ impl Cache for RedisCache {
         let response: Vec<redis::Value> = cmd.query_async(&mut conn).await?;
 
         let mut seq = Vec::with_capacity(members.len());
-        for (index, item) in response.iter().enumerate() {
+        for item in response.into_iter() {
             if let redis::Value::Bulk(bulk_item) = item {
                 if bulk_item.len() == 3 {
                     if let (
@@ -281,12 +281,11 @@ impl Cache for RedisCache {
                     ) = (&bulk_item[0], &bulk_item[1], &bulk_item[2])
                     {
                         seq.push(GroupMemSeq::new(
-                            members.remove(index),
+                            members.remove(0),
                             *cur_seq,
                             *max_seq,
                             *updated != 0,
                         ));
-                        // seq.push((*cur_seq, *max_seq, *updated != 0));
                     }
                 }
             }
