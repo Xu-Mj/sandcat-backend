@@ -202,6 +202,7 @@ impl ConsumerService {
             .map_err(|e| Error::InternalServer(e.to_string()))?;
         Ok(())
     }
+
     async fn handle_group_seq(
         &self,
         msg_type: &MsgType2,
@@ -235,7 +236,6 @@ impl ConsumerService {
         Ok(seq)
     }
 
-    /// todo we need to handle the errors, like: should we use something like transaction?
     async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
         debug!("Received message: {:#?}", payload);
 

@@ -66,16 +66,18 @@ impl DbRpcService {
 
     pub async fn handle_message(&self, message: Msg, need_to_history: bool) -> Result<(), Error> {
         // task 1 save message to postgres
-        let db = self.db.clone();
-        let cloned_msg = message.clone();
-        let db_task = tokio::spawn(async move {
-            if !need_to_history {
-                return;
-            }
-            if let Err(e) = db.msg.save_message(cloned_msg).await {
-                tracing::error!("save message to db failed: {}", e);
-            }
-        });
+
+        let mut tasks = Vec::with_capacity(2);
+        if !need_to_history {
+            let db = self.db.clone();
+            let cloned_msg = message.clone();
+            let db_task = tokio::spawn(async move {
+                if let Err(e) = db.msg.save_message(cloned_msg).await {
+                    tracing::error!("save message to db failed: {}", e);
+                }
+            });
+            tasks.push(db_task);
+        }
 
         // task 2 save message to mongodb
         let msg_rec_box = self.msg_rec_box.clone();
@@ -94,7 +96,11 @@ impl DbRpcService {
                 tracing::error!("save message to mongodb failed: {}", e);
             }
         });
-        tokio::try_join!(db_task, msg_rec_box_task)
+        tasks.push(msg_rec_box_task);
+
+        // wait all tasks
+        futures::future::try_join_all(tasks)
+            .await
             .map_err(|e| Error::InternalServer(e.to_string()))?;
         Ok(())
     }
@@ -107,7 +113,6 @@ impl DbRpcService {
     ) -> Result<(), Error> {
         // task 1 save message to postgres
         let db = self.db.clone();
-        let cloned_msg = message.clone();
         // update the user's seq in postgres
         let need_update = members
             .iter()
@@ -121,20 +126,27 @@ impl DbRpcService {
             })
             .collect::<Vec<String>>();
 
+        let cloned_msg = if need_to_history {
+            Some(message.clone())
+        } else {
+            None
+        };
+
         let db_task = tokio::spawn(async move {
             if !need_update.is_empty() {
                 if let Err(err) = db.seq.save_max_seq_batch(&need_update).await {
                     tracing::error!("save max seq batch failed: {}", err);
-                    return;
+                    return Err(err);
                 };
             }
 
-            if !need_to_history {
-                return;
+            if let Some(cloned_msg) = cloned_msg {
+                if let Err(e) = db.msg.save_message(cloned_msg).await {
+                    tracing::error!("save message to db failed: {}", e);
+                    return Err(e);
+                }
             }
-            if let Err(e) = db.msg.save_message(cloned_msg).await {
-                tracing::error!("save message to db failed: {}", e);
-            }
+            Ok(())
         });
 
         // task 2 save message to mongodb
@@ -142,10 +154,18 @@ impl DbRpcService {
         let msg_rec_box_task = tokio::spawn(async move {
             if let Err(e) = msg_rec_box.save_group_msg(message, members).await {
                 tracing::error!("save message to mongodb failed: {}", e);
+                return Err(e);
             }
+            Ok(())
         });
-        tokio::try_join!(db_task, msg_rec_box_task)
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        // wait all tasks complete
+        let (db_result, msg_rec_box_result) = tokio::try_join!(db_task, msg_rec_box_task)
+            .map_err(|err| Error::InternalServer(err.to_string()))?;
+
+        db_result?;
+        msg_rec_box_result?;
+
         Ok(())
     }
 }
