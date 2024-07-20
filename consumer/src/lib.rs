@@ -266,24 +266,28 @@ impl ConsumerService {
         // query members id from cache if the message type is group
         let members = self.handle_group_seq(&msg_type, &mut msg).await?;
 
+        let mut tasks = Vec::with_capacity(2);
         // send to db
-        let cloned_msg = msg.clone();
-        let cloned_type = msg_type.clone();
-        let cloned_members = members.clone();
-        let to_db = tokio::spawn(async move {
-            if let Err(e) = Self::send_to_db(
-                &mut db_rpc,
-                cloned_msg,
-                cloned_type,
-                need_history,
-                cloned_members,
-            )
-            .await
-            {
-                error!("failed to send message to db, error: {:?}", e);
-            }
-        });
+        if Self::get_send_to_db_flag(&mt) {
+            let cloned_msg = msg.clone();
+            let cloned_type = msg_type.clone();
+            let cloned_members = members.clone();
+            let to_db = tokio::spawn(async move {
+                if let Err(e) = Self::send_to_db(
+                    &mut db_rpc,
+                    cloned_msg,
+                    cloned_type,
+                    need_history,
+                    cloned_members,
+                )
+                .await
+                {
+                    error!("failed to send message to db, error: {:?}", e);
+                }
+            });
 
+            tasks.push(to_db);
+        }
         // send to pusher
         let mut pusher = self.pusher.clone();
         let to_pusher = tokio::spawn(async move {
@@ -300,13 +304,27 @@ impl ConsumerService {
                 }
             }
         });
+        tasks.push(to_pusher);
 
-        // todo try_join! or join!; we should think about it
-        if let Err(err) = tokio::try_join!(to_db, to_pusher) {
-            error!("failed to consume message, error: {:?}", err);
-            return Err(Error::InternalServer(err.to_string()));
-        }
+        futures::future::try_join_all(tasks)
+            .await
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+
         Ok(())
+    }
+
+    /// there is no need to send to db
+    /// if the message type is related to call protocol
+    #[inline]
+    fn get_send_to_db_flag(msg_type: &MsgType) -> bool {
+        matches!(
+            *msg_type,
+            MsgType::ConnectSingleCall
+                | MsgType::AgreeSingleCall
+                | MsgType::Candidate
+                | MsgType::SingleCallOffer
+                | MsgType::SingleCallInvite
+        )
     }
 
     async fn send_to_db(
@@ -316,45 +334,17 @@ impl ConsumerService {
         need_to_history: bool,
         members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
-        // don't send it if data type is call xxx
-        let mut send_flag = true;
-        let msg_type2 =
-            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
-        // only skip the single call protocol data for db
-        match msg_type2 {
-            MsgType::ConnectSingleCall
-            | MsgType::AgreeSingleCall
-            | MsgType::Candidate
-            | MsgType::SingleCallOffer
-            | MsgType::SingleCallInvite => {
-                send_flag = false;
-            }
-            _ => {}
-        }
-
-        if !send_flag {
-            return Ok(());
-        }
-
         // match the message type to procedure the different method
-
         match msg_type {
             MsgType2::Single => {
-                let request = SaveMessageRequest {
-                    message: Some(msg),
-                    need_to_history,
-                };
+                let request = SaveMessageRequest::new(msg, need_to_history);
                 db_rpc
                     .save_message(request)
                     .await
                     .map_err(|e| Error::InternalServer(e.to_string()))?;
             }
             MsgType2::Group => {
-                let request = SaveGroupMsgRequest {
-                    message: Some(msg),
-                    need_to_history,
-                    members,
-                };
+                let request = SaveGroupMsgRequest::new(msg, need_to_history, members);
                 db_rpc
                     .save_group_message(request)
                     .await

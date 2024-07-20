@@ -3,8 +3,8 @@ use tonic::Status;
 
 use crate::errors::Error;
 use crate::message::{
-    GetDbMessagesRequest, GetDbMsgRequest, Msg, MsgResponse, MsgType, SendMsgRequest,
-    UserAndGroupId,
+    GetDbMessagesRequest, GetDbMsgRequest, GroupMemSeq, Msg, MsgResponse, MsgType,
+    SaveGroupMsgRequest, SaveMessageRequest, SendMsgRequest, UserAndGroupId,
 };
 
 impl From<Status> for MsgResponse {
@@ -203,5 +203,24 @@ impl GetDbMessagesRequest {
             return Err(Error::BadRequest("start is greater than end".to_string()));
         }
         Ok(())
+    }
+}
+
+impl SaveMessageRequest {
+    pub fn new(msg: Msg, need_to_history: bool) -> Self {
+        Self {
+            message: Some(msg),
+            need_to_history,
+        }
+    }
+}
+
+impl SaveGroupMsgRequest {
+    pub fn new(msg: Msg, need_to_history: bool, members: Vec<GroupMemSeq>) -> Self {
+        Self {
+            message: Some(msg),
+            need_to_history,
+            members,
+        }
     }
 }
