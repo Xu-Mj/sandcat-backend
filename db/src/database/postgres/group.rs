@@ -114,7 +114,7 @@ impl GroupStoreRepo for PostgresGroup {
                 SELECT 1 FROM group_members
                 WHERE group_id = $1
                 AND user_id = $3
-                AND (role = 'admin' OR role = 'owner'))",
+                AND (role = 'Admin' OR role = 'Owner'))",
         )
         .bind(mem_id)
         .bind(group_id)
