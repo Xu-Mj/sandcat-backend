@@ -17,11 +17,12 @@ use abi::message::{
     GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
     GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
     GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, MsgReadReq, MsgReadResp,
-    QueryFriendInfoRequest, QueryFriendInfoResponse, SaveGroupMsgRequest, SaveGroupMsgResponse,
-    SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse, SaveMessageRequest,
-    SaveMessageResponse, SearchUserRequest, SearchUserResponse, UpdateRegionRequest,
-    UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse, UpdateUserRequest,
-    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    QueryFriendInfoRequest, QueryFriendInfoResponse, RemoveMemberRequest, RemoveMemberResp,
+    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
+    SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
+    SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
+    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
+    VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -218,6 +219,13 @@ impl DbService for DbRpcService {
 
         let response = GroupInviteNewResp { members };
         Ok(Response::new(response))
+    }
+
+    async fn remove_member(
+        &self,
+        _request: Request<RemoveMemberRequest>,
+    ) -> Result<Response<RemoveMemberResp>, Status> {
+        Ok(Response::new(RemoveMemberResp {}))
     }
 
     async fn group_update(
