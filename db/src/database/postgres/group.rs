@@ -100,6 +100,30 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(members)
     }
 
+    async fn remove_member(
+        &self,
+        group_id: &str,
+        user_id: &str,
+        mem_id: &str,
+    ) -> Result<(), Error> {
+        sqlx::query(
+            "DELETE FROM group_members
+            WHERE user_id = $1
+            AND group_id = $2
+            AND EXISTS (
+                SELECT 1 FROM group_members
+                WHERE group_id = $1
+                AND user_id = $3
+                AND (role = 'admin' OR role = 'owner'))",
+        )
+        .bind(mem_id)
+        .bind(group_id)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error> {
         let info = sqlx::query_as("SELECT * FROM groups WHERE id = $1")
             .bind(group_id)
