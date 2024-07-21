@@ -310,7 +310,7 @@ message FriendshipWithUser {
   optional string email = 14;
 }
 
-message FriendDb{
+message FriendDb {
   int64 id = 1;
   string fs_id = 2;
   string user_id = 3;
@@ -418,6 +418,14 @@ message FsListResponse { repeated FriendshipWithUser friendships = 1; }
 message FriendListResponse { repeated Friend friends = 1; }
 
 message GroupInviteNewRequest { GroupInviteNew group_invite = 1; }
+
+message RemoveMemberRequest {
+  string user_id = 1;
+  string group_id = 2;
+  string mem_id = 3;
+}
+
+message RemoveMemberResp {}
 
 message GroupInviteNewResp { repeated GroupMember members = 1; }
 
@@ -591,6 +599,8 @@ service DbService {
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member
   rpc GroupInviteNew(GroupInviteNewRequest) returns (GroupInviteNewResp);
+  /// administrator remove member
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResp);
   /// update group
   rpc GroupUpdate(GroupUpdateRequest) returns (GroupUpdateResponse);
   /// delete group
