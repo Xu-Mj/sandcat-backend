@@ -69,15 +69,16 @@ impl MsgRecBoxRepo for MsgBox {
         let mut messages = Vec::with_capacity(members.len() + 1);
         // save message for sender
         messages.push(to_doc(&message)?);
+
+        // reset message send_seq
+        message.send_seq = 0;
+
         // modify message receiver id
         for seq in members {
             // increase members sequence
             message.seq = seq.cur_seq;
 
             message.receiver_id = seq.mem_id;
-
-            // reset message send_seq
-            message.send_seq = 0;
 
             messages.push(to_doc(&message)?);
         }
