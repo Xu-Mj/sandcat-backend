@@ -7,7 +7,7 @@ use abi::errors::Error;
 use abi::message::{
     GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation,
     GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate, GroupUpdateRequest, MsgType,
-    SendMsgRequest, UserAndGroupId,
+    RemoveMemberRequest, SendMsgRequest, UserAndGroupId,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -137,6 +137,18 @@ pub async fn update_group_handler(
         ))
     })?;
     Ok(Json(inner))
+}
+
+pub async fn remove_member(
+    State(app_state): State<AppState>,
+    JsonWithAuthExtractor(req): JsonWithAuthExtractor<RemoveMemberRequest>,
+) -> Result<(), Error> {
+    let mut db_rpc = app_state.db_rpc.clone();
+    db_rpc
+        .remove_member(req)
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
