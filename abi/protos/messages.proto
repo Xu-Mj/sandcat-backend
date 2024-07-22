@@ -192,6 +192,11 @@ message GroupInfo {
   int64 update_time = 8;
 }
 
+enum GroupMemberRole {
+  GroupMemberRoleOwner = 0;
+  GroupMemberRoleAdmin = 1;
+  GroupMemberRoleMember = 2;
+}
 // fixme add account field
 /// group member information also related to database table group_members
 message GroupMember {
@@ -206,6 +211,7 @@ message GroupMember {
   bool is_friend = 9;
   optional string remark = 10;
   string signature = 11;
+  GroupMemberRole role = 12;
 }
 
 /// create group object

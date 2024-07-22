@@ -45,6 +45,7 @@ impl FromRow<'_, PgRow> for GroupMember {
             joined_at: row.try_get("joined_at")?,
             remark: None,
             signature: row.try_get("signature")?,
+            role: row.try_get("role")?,
         })
     }
 }

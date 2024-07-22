@@ -87,6 +87,7 @@ fn main() {
             "GroupInviteNew",
             "RemoveMemberRequest",
             "GroupMember",
+            "GroupMemberRole",
             "GroupCreate",
             "GroupUpdate",
             "GroupInvitation",
