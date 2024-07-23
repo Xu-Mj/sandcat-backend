@@ -5,9 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{
-    GetGroupAndMembersResp, GetGroupRequest, GroupCreate, GroupCreateRequest, GroupDeleteRequest,
-    GroupInfo, GroupInvitation, GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate,
-    GroupUpdateRequest, MsgType, RemoveMemberRequest, SendMsgRequest, UserAndGroupId,
+    GetGroupAndMembersResp, GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest,
+    GroupDeleteRequest, GroupInfo, GroupInvitation, GroupInviteNew, GroupInviteNewRequest,
+    GroupMember, GroupUpdate, GroupUpdateRequest, MsgType, RemoveMemberRequest, SendMsgRequest,
+    UserAndGroupId,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -46,6 +47,20 @@ pub async fn get_group_and_members(
         .map_err(|e| Error::InternalServer(e.to_string()))?;
 
     Ok(Json(resp.into_inner()))
+}
+
+pub async fn get_group_members(
+    State(app_state): State<AppState>,
+    JsonWithAuthExtractor(req): JsonWithAuthExtractor<GetMemberReq>,
+) -> Result<Json<Vec<GroupMember>>, Error> {
+    let mut db_rpc = app_state.db_rpc.clone();
+
+    let resp = db_rpc
+        .get_group_members(req)
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    Ok(Json(resp.into_inner().members))
 }
 
 ///  use the send_message, need to store the notification message
