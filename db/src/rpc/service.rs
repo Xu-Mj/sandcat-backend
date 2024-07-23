@@ -14,16 +14,17 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListResponse, GetDbMessagesRequest,
-    GetDbMsgRequest, GetGroupAndMembersResp, GetGroupRequest, GetGroupResponse, GetMsgResp,
-    GetUserByEmailRequest, GetUserRequest, GetUserResponse, GroupCreateRequest,
-    GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse, GroupInviteNewRequest,
-    GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest, GroupMembersIdResponse,
-    GroupUpdateRequest, GroupUpdateResponse, Msg, MsgReadReq, MsgReadResp, QueryFriendInfoRequest,
-    QueryFriendInfoResponse, RemoveMemberRequest, RemoveMemberResp, SaveGroupMsgRequest,
-    SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest, SaveMaxSeqResponse,
-    SaveMessageRequest, SaveMessageResponse, SearchUserRequest, SearchUserResponse,
-    UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest, UpdateRemarkResponse,
-    UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
+    GetDbMsgRequest, GetGroupAndMembersResp, GetGroupRequest, GetGroupResponse, GetMemberReq,
+    GetMemberResp, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
+    GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
+    GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
+    GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, MsgReadReq, MsgReadResp,
+    QueryFriendInfoRequest, QueryFriendInfoResponse, RemoveMemberRequest, RemoveMemberResp,
+    SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
+    SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
+    SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
+    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
+    VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -234,6 +235,23 @@ impl DbService for DbRpcService {
             .await?;
 
         Ok(Response::new(group_and_members))
+    }
+
+    async fn get_group_members(
+        &self,
+        request: Request<GetMemberReq>,
+    ) -> Result<Response<GetMemberResp>, Status> {
+        let inner = request.into_inner();
+        inner.validate()?;
+
+        let members = self
+            .db
+            .group
+            .get_members(&inner.group_id, &inner.user_id, inner.mem_ids)
+            .await?;
+
+        let resp = GetMemberResp { members };
+        Ok(Response::new(resp))
     }
 
     async fn group_invite_new(

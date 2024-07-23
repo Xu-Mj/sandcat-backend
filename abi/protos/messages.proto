@@ -552,6 +552,14 @@ message DelMsgRequest {
 
 message DelMsgResp {}
 
+message GetMemberReq {
+  string user_id = 1;
+  string group_id = 2;
+  repeated string mem_ids = 3;
+}
+
+message GetMemberResp { repeated GroupMember members = 1; }
+
 message GetGroupRequest {
   string user_id = 1;
   string group_id = 2;
@@ -616,6 +624,7 @@ service DbService {
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse);
   /// query group information and members
   rpc GetGroupAndMembers(GetGroupRequest) returns (GetGroupAndMembersResp);
+  rpc GetGroupMembers(GetMemberReq) returns (GetMemberResp);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member

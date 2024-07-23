@@ -3,9 +3,9 @@ use sqlx::{Error, FromRow, Row};
 use tonic::Status;
 
 use crate::message::{
-    GetGroupAndMembersResp, GetGroupRequest, GroupCreate, GroupCreateRequest, GroupDeleteRequest,
-    GroupInfo, GroupMemSeq, GroupMember, GroupMemberRole, GroupMembersIdRequest, GroupUpdate,
-    GroupUpdateRequest,
+    GetGroupAndMembersResp, GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest,
+    GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember, GroupMemberRole,
+    GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
 };
 
 use super::Validator;
@@ -47,6 +47,21 @@ impl Validator for GetGroupRequest {
         }
         if self.user_id.is_empty() {
             return Err(Status::invalid_argument("user_id is empty"));
+        }
+        Ok(())
+    }
+}
+
+impl Validator for GetMemberReq {
+    fn validate(&self) -> Result<(), Status> {
+        if self.group_id.is_empty() {
+            return Err(Status::invalid_argument("group_id is empty"));
+        }
+        if self.user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        if self.mem_ids.is_empty() {
+            return Err(Status::invalid_argument("mem_ids is empty"));
         }
         Ok(())
     }
