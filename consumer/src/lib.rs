@@ -126,6 +126,7 @@ impl ConsumerService {
                 msg_type = MsgType2::Group;
             }
             MsgType::GroupInvitation
+            | MsgType::GroupInviteNew
             | MsgType::GroupMemberExit
             | MsgType::GroupDismiss
             | MsgType::GroupUpdate => {
