@@ -100,7 +100,7 @@ fn main() {
             "AgreeSingleCall",
             "Candidate",
         ])
-        .with_sqlx_type(&["FriendshipStatus"])
+        .with_sqlx_type(&["FriendshipStatus", "GroupMemberRole"])
         .compile(&["protos/messages.proto"], &["protos"])
         .unwrap();
 

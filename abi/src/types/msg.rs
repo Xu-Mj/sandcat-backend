@@ -55,7 +55,7 @@ impl SendMsgRequest {
             message: Some(Msg {
                 send_id,
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::FriendDelete as i32,
                 ..Default::default()
             }),
@@ -73,7 +73,7 @@ impl SendMsgRequest {
                 send_seq,
                 send_id,
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 content: fs,
                 msg_type: MsgType::FriendApplyReq as i32,
                 ..Default::default()
@@ -88,7 +88,7 @@ impl SendMsgRequest {
                 receiver_id,
                 content: fs,
                 msg_type: MsgType::FriendApplyResp as i32,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 ..Default::default()
             }),
         }
@@ -106,7 +106,7 @@ impl SendMsgRequest {
                 send_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: msg_type as i32,
                 ..Default::default()
             }),
@@ -123,7 +123,7 @@ impl SendMsgRequest {
                 send_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupInvitation as i32,
                 content: invitation,
                 ..Default::default()
@@ -141,7 +141,7 @@ impl SendMsgRequest {
                 send_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupInviteNew as i32,
                 content: invitation,
                 ..Default::default()
@@ -155,7 +155,7 @@ impl SendMsgRequest {
                 send_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
-                send_time: chrono::Local::now().timestamp_millis(),
+                send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupUpdate as i32,
                 content: msg,
                 ..Default::default()

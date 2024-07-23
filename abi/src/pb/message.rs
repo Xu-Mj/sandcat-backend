@@ -219,13 +219,11 @@ pub struct GroupMember {
     pub region: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, tag = "8")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(bool, tag = "9")]
-    pub is_friend: bool,
-    #[prost(string, optional, tag = "10")]
+    #[prost(string, optional, tag = "9")]
     pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "11")]
+    #[prost(string, tag = "10")]
     pub signature: ::prost::alloc::string::String,
-    #[prost(enumeration = "GroupMemberRole", tag = "12")]
+    #[prost(enumeration = "GroupMemberRole", tag = "11")]
     pub role: i32,
 }
 /// / create group object
@@ -1192,6 +1190,7 @@ impl SingleCallInviteType {
 #[derive(
     serde::Serialize,
     serde::Deserialize,
+    sqlx::Type,
     Clone,
     Copy,
     Debug,

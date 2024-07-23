@@ -3,7 +3,7 @@ use sqlx::{Error, FromRow, Row};
 
 use crate::message::{
     GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember,
-    GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
+    GroupMemberRole, GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
 };
 
 impl GroupCreateRequest {
@@ -29,23 +29,41 @@ impl GroupMembersIdRequest {
         Self { group_id }
     }
 }
+#[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[sqlx(type_name = "group_role")]
+pub enum GroupRole {
+    Owner,
+    Admin,
+    Member,
+}
+
+impl From<GroupRole> for GroupMemberRole {
+    fn from(value: GroupRole) -> Self {
+        match value {
+            GroupRole::Owner => Self::Owner,
+            GroupRole::Admin => Self::Admin,
+            GroupRole::Member => Self::Member,
+        }
+    }
+}
 
 // implement slqx FromRow trait
 impl FromRow<'_, PgRow> for GroupMember {
     fn from_row(row: &PgRow) -> Result<Self, Error> {
+        let role: GroupRole = row.try_get("role")?;
+        let role = GroupMemberRole::from(role) as i32;
         Ok(Self {
             user_id: row.try_get("user_id")?,
             group_id: row.try_get("group_id")?,
             avatar: row.try_get("avatar")?,
             gender: row.try_get("gender")?,
-            is_friend: false,
             age: row.try_get("age")?,
             region: row.try_get("region")?,
             group_name: row.try_get("group_name")?,
             joined_at: row.try_get("joined_at")?,
             remark: None,
             signature: row.try_get("signature")?,
-            role: row.try_get("role")?,
+            role,
         })
     }
 }

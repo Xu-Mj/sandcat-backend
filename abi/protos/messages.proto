@@ -208,10 +208,9 @@ message GroupMember {
   int64 joined_at = 6;
   optional string region = 7;
   string gender = 8;
-  bool is_friend = 9;
-  optional string remark = 10;
-  string signature = 11;
-  GroupMemberRole role = 12;
+  optional string remark = 9;
+  string signature = 10;
+  GroupMemberRole role = 11;
 }
 
 /// create group object
