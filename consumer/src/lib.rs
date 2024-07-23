@@ -101,6 +101,84 @@ impl ConsumerService {
         }
     }
 
+    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
+        debug!("Received message: {:#?}", payload);
+
+        // send to db rpc server
+        let mut db_rpc = self.db_rpc.clone();
+
+        let mut msg: Msg = serde_json::from_str(payload)?;
+
+        let mt =
+            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        // handle message read type
+        if mt == MsgType::Read {
+            return self.handle_msg_read(msg).await;
+        }
+
+        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
+
+        // check send seq if need to increase max_seq
+        self.handle_send_seq(&msg.send_id).await?;
+
+        // handle receiver seq
+        if need_increase_seq {
+            let cur_seq = self.increase_message_seq(&msg.receiver_id).await?;
+            msg.seq = cur_seq;
+        }
+
+        // query members id from cache if the message type is group
+        let members = self.handle_group_seq(&msg_type, &mut msg).await?;
+
+        let mut tasks = Vec::with_capacity(2);
+        // send to db
+        if Self::get_send_to_db_flag(&mt) {
+            let cloned_msg = msg.clone();
+            let cloned_type = msg_type.clone();
+            let cloned_members = members.clone();
+            let to_db = tokio::spawn(async move {
+                if let Err(e) = Self::send_to_db(
+                    &mut db_rpc,
+                    cloned_msg,
+                    cloned_type,
+                    need_history,
+                    cloned_members,
+                )
+                .await
+                {
+                    error!("failed to send message to db, error: {:?}", e);
+                }
+            });
+
+            tasks.push(to_db);
+        }
+
+        // send to pusher
+        let mut pusher = self.pusher.clone();
+        let to_pusher = tokio::spawn(async move {
+            match msg_type {
+                MsgType2::Single => {
+                    if let Err(e) = Self::send_single_to_pusher(&mut pusher, msg).await {
+                        error!("failed to send message to pusher, error: {:?}", e);
+                    }
+                }
+                MsgType2::Group => {
+                    if let Err(e) = Self::send_group_to_pusher(&mut pusher, msg, members).await {
+                        error!("failed to send message to pusher, error: {:?}", e);
+                    }
+                }
+            }
+        });
+        tasks.push(to_pusher);
+
+        futures::future::try_join_all(tasks)
+            .await
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+        Ok(())
+    }
+
     async fn classify_msg_type(&self, mt: MsgType) -> (MsgType2, bool, bool) {
         let msg_type;
         let mut need_increase_seq = false;
@@ -235,83 +313,6 @@ impl ConsumerService {
         }
 
         Ok(seq)
-    }
-
-    async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
-        debug!("Received message: {:#?}", payload);
-
-        // send to db rpc server
-        let mut db_rpc = self.db_rpc.clone();
-
-        let mut msg: Msg = serde_json::from_str(payload)?;
-
-        let mt =
-            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
-
-        // handle message read type
-        if mt == MsgType::Read {
-            return self.handle_msg_read(msg).await;
-        }
-
-        let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
-
-        // check send seq if need to increase max_seq
-        self.handle_send_seq(&msg.send_id).await?;
-
-        // handle receiver seq
-        if need_increase_seq {
-            let cur_seq = self.increase_message_seq(&msg.receiver_id).await?;
-            msg.seq = cur_seq;
-        }
-
-        // query members id from cache if the message type is group
-        let members = self.handle_group_seq(&msg_type, &mut msg).await?;
-
-        let mut tasks = Vec::with_capacity(2);
-        // send to db
-        if Self::get_send_to_db_flag(&mt) {
-            let cloned_msg = msg.clone();
-            let cloned_type = msg_type.clone();
-            let cloned_members = members.clone();
-            let to_db = tokio::spawn(async move {
-                if let Err(e) = Self::send_to_db(
-                    &mut db_rpc,
-                    cloned_msg,
-                    cloned_type,
-                    need_history,
-                    cloned_members,
-                )
-                .await
-                {
-                    error!("failed to send message to db, error: {:?}", e);
-                }
-            });
-
-            tasks.push(to_db);
-        }
-        // send to pusher
-        let mut pusher = self.pusher.clone();
-        let to_pusher = tokio::spawn(async move {
-            match msg_type {
-                MsgType2::Single => {
-                    if let Err(e) = Self::send_single_to_pusher(&mut pusher, msg).await {
-                        error!("failed to send message to pusher, error: {:?}", e);
-                    }
-                }
-                MsgType2::Group => {
-                    if let Err(e) = Self::send_group_to_pusher(&mut pusher, msg, members).await {
-                        error!("failed to send message to pusher, error: {:?}", e);
-                    }
-                }
-            }
-        });
-        tasks.push(to_pusher);
-
-        futures::future::try_join_all(tasks)
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
-
-        Ok(())
     }
 
     /// there is no need to send to db

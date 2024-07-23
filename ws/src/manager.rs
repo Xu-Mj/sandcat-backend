@@ -170,6 +170,7 @@ impl Manager {
         // increment the send sequence in cache
         //  we do not operate the database here about saving send sequence
         // we do that in the consumer module
+        // even if the increment fails, it is not a problem
         match self.cache.incr_send_seq(&message.send_id).await {
             Ok((seq, _, _)) => message.send_seq = seq,
             Err(e) => {
@@ -178,7 +179,7 @@ impl Manager {
             }
         };
 
-        // 通过 RPC 发送消息
+        // send message through gRPC
         match self.send_rpc_message(message.clone()).await {
             Ok(response) => {
                 if response.err.is_empty() {
