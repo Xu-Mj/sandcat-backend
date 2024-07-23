@@ -276,8 +276,16 @@ impl DbService for DbRpcService {
 
     async fn remove_member(
         &self,
-        _request: Request<RemoveMemberRequest>,
+        request: Request<RemoveMemberRequest>,
     ) -> Result<Response<RemoveMemberResp>, Status> {
+        let inner = request.into_inner();
+        inner.validate()?;
+
+        self.db
+            .group
+            .remove_member(&inner.group_id, &inner.user_id, &inner.mem_id)
+            .await?;
+
         Ok(Response::new(RemoveMemberResp {}))
     }
 

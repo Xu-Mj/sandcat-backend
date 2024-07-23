@@ -5,7 +5,7 @@ use tonic::Status;
 use crate::message::{
     GetGroupAndMembersResp, GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest,
     GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember, GroupMemberRole,
-    GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
+    GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest, RemoveMemberRequest,
 };
 
 use super::Validator;
@@ -61,6 +61,21 @@ impl Validator for GetMemberReq {
             return Err(Status::invalid_argument("user_id is empty"));
         }
         if self.mem_ids.is_empty() {
+            return Err(Status::invalid_argument("mem_ids is empty"));
+        }
+        Ok(())
+    }
+}
+
+impl Validator for RemoveMemberRequest {
+    fn validate(&self) -> Result<(), Status> {
+        if self.group_id.is_empty() {
+            return Err(Status::invalid_argument("group_id is empty"));
+        }
+        if self.user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        if self.mem_id.is_empty() {
             return Err(Status::invalid_argument("mem_ids is empty"));
         }
         Ok(())
