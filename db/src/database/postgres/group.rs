@@ -24,7 +24,7 @@ impl GroupStoreRepo for PostgresGroup {
         &self,
         group: &GroupCreate,
     ) -> Result<GroupInvitation, Error> {
-        let now = chrono::Local::now().timestamp_millis();
+        let now = chrono::Utc::now().timestamp_millis();
         let mut tx = self.pool.begin().await?;
         let mut invitation = GroupInvitation::default();
         // create group
@@ -49,21 +49,24 @@ impl GroupStoreRepo for PostgresGroup {
         let members: Vec<GroupMember> =
             sqlx::query_as(
                 "WITH inserted AS (
-                    INSERT INTO group_members as t (user_id, group_id, group_name, joined_at)
-                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at
+                    INSERT INTO group_members (user_id, group_id, group_name, role, joined_at)
+                    SELECT u.id AS user_id, $1 AS group_id, u.name AS group_name,
+                        CASE WHEN u.id = $4 THEN 'Owner'::group_role ELSE 'Member'::group_role END AS role,
+                        $2 AS joined_at
                     FROM users AS u
                     WHERE u.id = ANY($3)
-                    RETURNING user_id, group_id, joined_at
+                    RETURNING user_id, group_id, role, joined_at
                 )
                 SELECT ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name,
                         usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender,
-                        usr.signature AS signature
+                        usr.signature AS signature, ins.role AS role
                 FROM inserted AS ins
                 JOIN users AS usr ON ins.user_id = usr.id;
                 ")
                 .bind(&group.id)
                 .bind(now)
                 .bind(&group.members_id)
+                .bind(&group.owner)
                 .fetch_all(&mut *tx)
                 .await?;
         invitation.members = members;
@@ -82,18 +85,19 @@ impl GroupStoreRepo for PostgresGroup {
         let members: Vec<GroupMember> =
         sqlx::query_as(
             "WITH inserted AS (
-                    INSERT INTO group_members as t (user_id, group_id, group_name, joined_at)
-                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at
+                    INSERT INTO group_members (user_id, group_id, group_name, joined_at, role)
+                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at, 'Member'::group_role AS role
                     FROM users AS u
                     WHERE u.id = ANY($3)
-                    RETURNING t.id, user_id, group_id, joined_at
+                    RETURNING user_id, group_id, joined_at, role
                 )
-                SELECT ins.id, ins.group_id, ins.joined_at, usr.id AS user_id, usr.name AS group_name, usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender
+                SELECT ins.group_id, ins.joined_at, ins.role AS role, usr.id AS user_id, usr.name AS group_name,
+                    usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender, usr.signature AS signature
                 FROM inserted AS ins
                 JOIN users AS usr ON ins.user_id = usr.id;
                 ")
             .bind(&group.group_id)
-            .bind(chrono::Local::now().timestamp_millis())
+            .bind(chrono::Utc::now().timestamp_millis())
             .bind(&group.members)
             .fetch_all(&self.pool)
             .await?;
@@ -158,7 +162,7 @@ impl GroupStoreRepo for PostgresGroup {
     }
 
     async fn update_group(&self, group: &GroupUpdate) -> Result<GroupInfo, Error> {
-        let now = chrono::Local::now().timestamp_millis();
+        let now = chrono::Utc::now().timestamp_millis();
         let group = sqlx::query_as(
             "UPDATE groups SET
              name = COALESCE(NULLIF($1, ''), name),
