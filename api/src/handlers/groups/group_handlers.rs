@@ -5,10 +5,9 @@ use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{
-    GetGroupAndMembersResp, GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest,
-    GroupDeleteRequest, GroupInfo, GroupInvitation, GroupInviteNew, GroupInviteNewRequest,
-    GroupMember, GroupUpdate, GroupUpdateRequest, MsgType, RemoveMemberRequest, SendMsgRequest,
-    UserAndGroupId,
+    GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo,
+    GroupInvitation, GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate,
+    GroupUpdateRequest, MsgType, RemoveMemberRequest, SendMsgRequest, UserAndGroupId,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -35,10 +34,16 @@ pub async fn get_group(
     Ok(Json(group))
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GroupAndMembers {
+    pub group: GroupInfo,
+    pub members: Vec<GroupMember>,
+}
+
 pub async fn get_group_and_members(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, group_id)): PathWithAuthExtractor<(String, String)>,
-) -> Result<Json<GetGroupAndMembersResp>, Error> {
+) -> Result<Json<GroupAndMembers>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
 
     let resp = db_rpc
@@ -46,7 +51,15 @@ pub async fn get_group_and_members(
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
 
-    Ok(Json(resp.into_inner()))
+    let resp = resp.into_inner();
+    let group = resp
+        .group
+        .ok_or(Error::InternalServer("group not found".to_string()))?;
+
+    Ok(Json(GroupAndMembers {
+        group,
+        members: resp.members,
+    }))
 }
 
 pub async fn get_group_members(
@@ -120,25 +133,24 @@ pub async fn invite_new_members(
 ) -> Result<(), Error> {
     let user_id = invitation.user_id.clone();
     let group_id = invitation.group_id.clone();
+    let members = invitation.members.clone();
     // update members
     let mut db_rpc = app_state.db_rpc.clone();
     let request = GroupInviteNewRequest {
         group_invite: Some(invitation),
     };
-    let response = db_rpc.group_invite_new(request).await.map_err(|e| {
+    db_rpc.group_invite_new(request).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure db rpc service error: group_invite_new {:?}",
             e
         ))
     })?;
 
-    let members = response.into_inner().members;
-    let new_invite = GroupInviteNewResponse { group_id, members };
     let mut chat_rpc = app_state.chat_rpc.clone();
 
-    let msg = bincode::serialize(&new_invite).map_err(|e| Error::InternalServer(e.to_string()))?;
+    let msg = bincode::serialize(&members).map_err(|e| Error::InternalServer(e.to_string()))?;
 
-    let request = SendMsgRequest::new_with_group_invite_new(user_id, new_invite.group_id, msg);
+    let request = SendMsgRequest::new_with_group_invite_new(user_id, group_id, msg);
     chat_rpc.send_msg(request).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",

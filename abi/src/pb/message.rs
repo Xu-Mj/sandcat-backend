@@ -649,10 +649,7 @@ pub struct RemoveMemberRequest {
 pub struct RemoveMemberResp {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInviteNewResp {
-    #[prost(message, repeated, tag = "1")]
-    pub members: ::prost::alloc::vec::Vec<GroupMember>,
-}
+pub struct GroupInviteNewResp {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupUpdateRequest {

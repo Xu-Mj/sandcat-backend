@@ -432,7 +432,7 @@ message RemoveMemberRequest {
 
 message RemoveMemberResp {}
 
-message GroupInviteNewResp { repeated GroupMember members = 1; }
+message GroupInviteNewResp {}
 
 message GroupUpdateRequest { GroupUpdate group = 1; }
 

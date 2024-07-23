@@ -25,7 +25,7 @@ impl GroupStoreRepo for PostgresGroup {
         let group = sqlx::query_as(
             "SELECT * FROM groups g
                 JOIN group_members gm ON g.id = gm.group_id
-                WHERE id = $1 AND gm.user_id = $2",
+                WHERE g.id = $1 AND gm.user_id = $2",
         )
         .bind(group_id)
         .bind(user_id)
@@ -42,14 +42,21 @@ impl GroupStoreRepo for PostgresGroup {
         let group = sqlx::query_as(
             "SELECT * FROM groups g
                 JOIN group_members gm ON g.id = gm.group_id
-                WHERE id = $1 AND gm.user_id = $2",
+                WHERE g.id = $1 AND gm.user_id = $2",
         )
         .bind(group_id)
         .bind(user_id)
         .fetch_one(&self.pool)
         .await?;
 
-        let members = sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1")
+        let members = sqlx::query_as(
+            "SELECT gm.group_id, gm.role AS role, gm.joined_at, u.id AS user_id, u.name AS group_name,
+                u.avatar AS avatar, u.age AS age, u.region AS region, u.gender AS gender,
+                u.signature AS signature
+                FROM group_members gm
+                JOIN users u
+                ON u.id = gm.user_id
+                WHERE group_id = $1")
             .bind(group_id)
             .fetch_all(&self.pool)
             .await?;
@@ -76,7 +83,15 @@ impl GroupStoreRepo for PostgresGroup {
         }
 
         let members =
-            sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1 AND user_id = ANY($2)")
+            sqlx::query_as(
+                "SELECT gm.group_id, gm.role AS role, gm.joined_at, u.id AS user_id, u.name AS group_name,
+                    u.avatar AS avatar, u.age AS age, u.region AS region, u.gender AS gender,
+                    u.signature AS signature
+                    FROM group_members gm
+                    JOIN users u
+                    ON u.id = gm.user_id
+                    WHERE group_id = $1 AND user_id = ANY($2)"
+                )
                 .bind(group_id)
                 .bind(&mem_ids)
                 .fetch_all(&self.pool)
@@ -138,34 +153,33 @@ impl GroupStoreRepo for PostgresGroup {
         Ok(invitation)
     }
 
-    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error> {
-        sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2")
-            .bind(&group.group_id)
-            .bind(&group.user_id)
-            .fetch_one(&self.pool)
-            .await?;
+    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<(), Error> {
+        let user_belongs_to_group: (bool,) = sqlx::query_as(
+            "SELECT EXISTS (SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2)",
+        )
+        .bind(&group.group_id)
+        .bind(&group.user_id)
+        .fetch_one(&self.pool)
+        .await?;
 
-        // update members
-        let members: Vec<GroupMember> =
-        sqlx::query_as(
-            "WITH inserted AS (
-                    INSERT INTO group_members (user_id, group_id, group_name, joined_at, role)
-                    SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at, 'Member'::group_role AS role
-                    FROM users AS u
-                    WHERE u.id = ANY($3)
-                    RETURNING user_id, group_id, joined_at, role
-                )
-                SELECT ins.group_id, ins.joined_at, ins.role AS role, usr.id AS user_id, usr.name AS group_name,
-                    usr.avatar AS avatar, usr.age AS age, usr.region AS region, usr.gender AS gender, usr.signature AS signature
-                FROM inserted AS ins
-                JOIN users AS usr ON ins.user_id = usr.id;
+        if !user_belongs_to_group.0 {
+            return Err(Error::NotFound);
+        }
+
+        // insert new members
+        sqlx::query(
+            "INSERT INTO group_members (user_id, group_id, group_name, joined_at, role)
+                SELECT u.id, $1 as group_id, u.name AS group_name,  $2 AS joined_at, 'Member'::group_role AS role
+                FROM users AS u
+                WHERE u.id = ANY($3)
+                RETURNING user_id, group_id, joined_at, role
                 ")
             .bind(&group.group_id)
             .bind(chrono::Utc::now().timestamp_millis())
             .bind(&group.members)
-            .fetch_all(&self.pool)
+            .execute(&self.pool)
             .await?;
-        Ok(members)
+        Ok(())
     }
 
     async fn remove_member(

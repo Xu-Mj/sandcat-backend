@@ -28,7 +28,7 @@ pub trait GroupStoreRepo: Sync + Send {
         group: &GroupCreate,
     ) -> Result<GroupInvitation, Error>;
 
-    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<Vec<GroupMember>, Error>;
+    async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<(), Error>;
 
     async fn remove_member(&self, group_id: &str, user_id: &str, mem_id: &str)
         -> Result<(), Error>;

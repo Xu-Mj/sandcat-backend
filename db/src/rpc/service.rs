@@ -214,7 +214,7 @@ impl DbService for DbRpcService {
         let group = self
             .db
             .group
-            .get_group(&inner.group_id, &inner.user_id)
+            .get_group(&inner.user_id, &inner.group_id)
             .await?;
 
         let response = GetGroupResponse { group: Some(group) };
@@ -231,7 +231,7 @@ impl DbService for DbRpcService {
         let group_and_members = self
             .db
             .group
-            .get_group_and_members(&inner.group_id, &inner.user_id)
+            .get_group_and_members(&inner.user_id, &inner.group_id)
             .await?;
 
         Ok(Response::new(group_and_members))
@@ -247,7 +247,7 @@ impl DbService for DbRpcService {
         let members = self
             .db
             .group
-            .get_members(&inner.group_id, &inner.user_id, inner.mem_ids)
+            .get_members(&inner.user_id, &inner.group_id, inner.mem_ids)
             .await?;
 
         let resp = GetMemberResp { members };
@@ -263,14 +263,14 @@ impl DbService for DbRpcService {
             .group_invite
             .ok_or(Status::invalid_argument("group_invite is empty"))?;
 
-        let members = self.db.group.invite_new_members(&invitation).await?;
+        self.db.group.invite_new_members(&invitation).await?;
 
         // update cache
         self.cache
             .save_group_members_id(&invitation.group_id, invitation.members)
             .await?;
 
-        let response = GroupInviteNewResp { members };
+        let response = GroupInviteNewResp {};
         Ok(Response::new(response))
     }
 
