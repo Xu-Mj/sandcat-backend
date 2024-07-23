@@ -16,6 +16,13 @@ pub trait GroupStoreRepo: Sync + Send {
         group_id: &str,
     ) -> Result<GetGroupAndMembersResp, Error>;
 
+    async fn get_members(
+        &self,
+        user_id: &str,
+        group_id: &str,
+        mem_ids: Vec<String>,
+    ) -> Result<Vec<GroupMember>, Error>;
+
     async fn create_group_with_members(
         &self,
         group: &GroupCreate,

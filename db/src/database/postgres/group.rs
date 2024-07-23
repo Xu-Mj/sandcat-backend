@@ -22,11 +22,15 @@ impl PostgresGroup {
 #[async_trait]
 impl GroupStoreRepo for PostgresGroup {
     async fn get_group(&self, user_id: &str, group_id: &str) -> Result<GroupInfo, Error> {
-        let group = sqlx::query_as("SELECT * FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE id = $1 AND gm.user_id = $2")
-            .bind(group_id)
-            .bind(user_id)
-            .fetch_one(&self.pool)
-            .await?;
+        let group = sqlx::query_as(
+            "SELECT * FROM groups g
+                JOIN group_members gm ON g.id = gm.group_id
+                WHERE id = $1 AND gm.user_id = $2",
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
         Ok(group)
     }
 
@@ -35,16 +39,49 @@ impl GroupStoreRepo for PostgresGroup {
         user_id: &str,
         group_id: &str,
     ) -> Result<GetGroupAndMembersResp, Error> {
-        let group = sqlx::query_as("SELECT * FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE id = $1 AND gm.user_id = $2")
-            .bind(group_id)
-            .bind(user_id)
-            .fetch_one(&self.pool)
-            .await?;
+        let group = sqlx::query_as(
+            "SELECT * FROM groups g
+                JOIN group_members gm ON g.id = gm.group_id
+                WHERE id = $1 AND gm.user_id = $2",
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
+
         let members = sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1")
             .bind(group_id)
             .fetch_all(&self.pool)
             .await?;
         Ok(GetGroupAndMembersResp::new(group, members))
+    }
+
+    async fn get_members(
+        &self,
+        user_id: &str,
+        group_id: &str,
+        mem_ids: Vec<String>,
+    ) -> Result<Vec<GroupMember>, Error> {
+        // check user belongs to the group
+        let user_belongs_to_group: (bool,) = sqlx::query_as(
+            "SELECT EXISTS (SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2)",
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        if !user_belongs_to_group.0 {
+            return Err(Error::NotFound);
+        }
+
+        let members =
+            sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1 AND user_id = ANY($2)")
+                .bind(group_id)
+                .bind(&mem_ids)
+                .fetch_all(&self.pool)
+                .await?;
+        Ok(members)
     }
 
     async fn create_group_with_members(
