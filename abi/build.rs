@@ -91,6 +91,8 @@ fn main() {
             "GroupCreate",
             "GroupUpdate",
             "GroupInvitation",
+            "GetGroupRequest",
+            "GetGroupAndMembersResp",
             "SingleCallInvite",
             "SingleCallInviteAnswer",
             "SingleCallInviteNotAnswer",

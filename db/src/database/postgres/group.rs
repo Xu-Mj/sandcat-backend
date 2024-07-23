@@ -3,7 +3,8 @@ use sqlx::PgPool;
 
 use abi::errors::Error;
 use abi::message::{
-    GroupCreate, GroupInfo, GroupInvitation, GroupInviteNew, GroupMember, GroupUpdate,
+    GetGroupAndMembersResp, GroupCreate, GroupInfo, GroupInvitation, GroupInviteNew, GroupMember,
+    GroupUpdate,
 };
 
 use crate::database::group::GroupStoreRepo;
@@ -20,6 +21,32 @@ impl PostgresGroup {
 
 #[async_trait]
 impl GroupStoreRepo for PostgresGroup {
+    async fn get_group(&self, user_id: &str, group_id: &str) -> Result<GroupInfo, Error> {
+        let group = sqlx::query_as("SELECT * FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE id = $1 AND gm.user_id = $2")
+            .bind(group_id)
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(group)
+    }
+
+    async fn get_group_and_members(
+        &self,
+        user_id: &str,
+        group_id: &str,
+    ) -> Result<GetGroupAndMembersResp, Error> {
+        let group = sqlx::query_as("SELECT * FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE id = $1 AND gm.user_id = $2")
+            .bind(group_id)
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        let members = sqlx::query_as("SELECT * FROM group_members WHERE group_id = $1")
+            .bind(group_id)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(GetGroupAndMembersResp::new(group, members))
+    }
+
     async fn create_group_with_members(
         &self,
         group: &GroupCreate,

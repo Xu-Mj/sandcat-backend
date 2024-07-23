@@ -552,6 +552,18 @@ message DelMsgRequest {
 
 message DelMsgResp {}
 
+message GetGroupRequest {
+  string user_id = 1;
+  string group_id = 2;
+}
+
+message GetGroupResponse { GroupInfo group = 1; }
+
+message GetGroupAndMembersResp {
+  GroupInfo group = 1;
+  repeated GroupMember members = 2;
+}
+
 message GroupCreateRequest { GroupCreate group = 1; }
 
 message GroupCreateResponse { GroupInvitation invitation = 1; }
@@ -600,6 +612,10 @@ service DbService {
   rpc SaveMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
   /// save message receive max sequence batch
   rpc SaveMaxSeqBatch(SaveMaxSeqBatchRequest) returns (SaveMaxSeqResponse);
+  /// query group information
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse);
+  /// query group information and members
+  rpc GetGroupAndMembers(GetGroupRequest) returns (GetGroupAndMembersResp);
   /// create group
   rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
   /// member invites new member
