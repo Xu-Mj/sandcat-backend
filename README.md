@@ -58,6 +58,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - support matrix protocol so that we can import some robot
 - maybe we should combine the query send_seq and incr recv_seq into one operation with lua
 - group invitation is missing while invited user is offline
+- add error detail, so that we can log it, but response to frontend need to be short
 
 ## Development
 

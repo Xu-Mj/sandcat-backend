@@ -60,7 +60,6 @@ pub async fn create_group_handler(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GroupInviteNewResponse {
-    pub user_id: String,
     pub group_id: String,
     pub members: Vec<GroupMember>,
 }
@@ -84,17 +83,12 @@ pub async fn invite_new_members(
     })?;
 
     let members = response.into_inner().members;
-    let new_invite = GroupInviteNewResponse {
-        user_id,
-        group_id,
-        members,
-    };
+    let new_invite = GroupInviteNewResponse { group_id, members };
     let mut chat_rpc = app_state.chat_rpc.clone();
 
     let msg = bincode::serialize(&new_invite).map_err(|e| Error::InternalServer(e.to_string()))?;
 
-    let request =
-        SendMsgRequest::new_with_group_invite_new(new_invite.user_id, new_invite.group_id, msg);
+    let request = SendMsgRequest::new_with_group_invite_new(user_id, new_invite.group_id, msg);
     chat_rpc.send_msg(request).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",
