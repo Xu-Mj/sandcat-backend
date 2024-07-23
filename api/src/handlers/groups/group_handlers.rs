@@ -5,13 +5,48 @@ use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{
-    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupInvitation,
-    GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate, GroupUpdateRequest, MsgType,
-    RemoveMemberRequest, SendMsgRequest, UserAndGroupId,
+    GetGroupAndMembersResp, GetGroupRequest, GroupCreate, GroupCreateRequest, GroupDeleteRequest,
+    GroupInfo, GroupInvitation, GroupInviteNew, GroupInviteNewRequest, GroupMember, GroupUpdate,
+    GroupUpdateRequest, MsgType, RemoveMemberRequest, SendMsgRequest, UserAndGroupId,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
+
+/// get group information
+/// need user id and group id
+/// if user is not in the group, return error
+pub async fn get_group(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor((user_id, group_id)): PathWithAuthExtractor<(String, String)>,
+) -> Result<Json<GroupInfo>, Error> {
+    let mut db_rpc = app_state.db_rpc.clone();
+    let resp = db_rpc
+        .get_group(GetGroupRequest::new(user_id, group_id))
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    let group = resp
+        .into_inner()
+        .group
+        .ok_or(Error::InternalServer("group not found".to_string()))?;
+
+    Ok(Json(group))
+}
+
+pub async fn get_group_and_members(
+    State(app_state): State<AppState>,
+    PathWithAuthExtractor((user_id, group_id)): PathWithAuthExtractor<(String, String)>,
+) -> Result<Json<GetGroupAndMembersResp>, Error> {
+    let mut db_rpc = app_state.db_rpc.clone();
+
+    let resp = db_rpc
+        .get_group_and_members(GetGroupRequest::new(user_id, group_id))
+        .await
+        .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    Ok(Json(resp.into_inner()))
+}
 
 ///  use the send_message, need to store the notification message
 /// create a new record handler

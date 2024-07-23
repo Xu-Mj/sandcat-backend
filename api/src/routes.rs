@@ -8,8 +8,8 @@ use crate::handlers::friends::friend_handlers::{
     get_friends_list_by_user_id, query_friend_info, update_friend_remark,
 };
 use crate::handlers::groups::group_handlers::{
-    create_group_handler, delete_group_handler, invite_new_members, remove_member,
-    update_group_handler,
+    create_group_handler, delete_group_handler, get_group, get_group_and_members,
+    invite_new_members, remove_member, update_group_handler,
 };
 use crate::handlers::messages::msg_handlers::{del_msg, get_seq, pull_offline_messages};
 use crate::handlers::users::{
@@ -58,6 +58,8 @@ fn user_routes(state: AppState) -> Router {
 
 fn group_routes(state: AppState) -> Router {
     Router::new()
+        .route("/:user_id/:group_id", get(get_group))
+        .route("/member/:user_id/:group_id", get(get_group_and_members))
         .route("/:user_id", post(create_group_handler))
         .route("/invite", put(invite_new_members))
         .route("/", delete(delete_group_handler))
