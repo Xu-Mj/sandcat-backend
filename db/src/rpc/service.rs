@@ -286,6 +286,11 @@ impl DbService for DbRpcService {
             .remove_member(&inner.group_id, &inner.user_id, &inner.mem_id)
             .await?;
 
+        // update cache
+        self.cache
+            .remove_group_member_id(&inner.group_id, &inner.mem_id)
+            .await?;
+
         Ok(Response::new(RemoveMemberResp {}))
     }
 
