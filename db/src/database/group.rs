@@ -30,8 +30,12 @@ pub trait GroupStoreRepo: Sync + Send {
 
     async fn invite_new_members(&self, group: &GroupInviteNew) -> Result<(), Error>;
 
-    async fn remove_member(&self, group_id: &str, user_id: &str, mem_id: &str)
-        -> Result<(), Error>;
+    async fn remove_member(
+        &self,
+        group_id: &str,
+        user_id: &str,
+        mem_ids: &[String],
+    ) -> Result<(), Error>;
 
     #[allow(dead_code)]
     async fn get_group_by_id(&self, group_id: &str) -> Result<GroupInfo, Error>;

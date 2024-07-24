@@ -186,19 +186,19 @@ impl GroupStoreRepo for PostgresGroup {
         &self,
         group_id: &str,
         user_id: &str,
-        mem_id: &str,
+        mem_ids: &[String],
     ) -> Result<(), Error> {
         sqlx::query(
             "DELETE FROM group_members
-            WHERE user_id = $1
+            WHERE user_id = ANY($1::Text[])
             AND group_id = $2
             AND EXISTS (
                 SELECT 1 FROM group_members
-                WHERE group_id = $1
+                WHERE group_id = $2
                 AND user_id = $3
                 AND (role = 'Admin' OR role = 'Owner'))",
         )
-        .bind(mem_id)
+        .bind(mem_ids)
         .bind(group_id)
         .bind(user_id)
         .execute(&self.pool)

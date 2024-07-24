@@ -287,8 +287,9 @@ impl DbService for DbRpcService {
             .await?;
 
         // update cache
+        let member_ids_ref: Vec<&str> = inner.mem_id.iter().map(AsRef::as_ref).collect();
         self.cache
-            .remove_group_member_id(&inner.group_id, &inner.mem_id)
+            .remove_group_member_batch(&inner.group_id, &member_ids_ref)
             .await?;
 
         Ok(Response::new(RemoveMemberResp {}))

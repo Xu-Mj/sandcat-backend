@@ -641,8 +641,8 @@ pub struct RemoveMemberRequest {
     pub user_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub mem_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub mem_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

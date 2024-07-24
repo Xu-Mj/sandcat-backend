@@ -427,7 +427,7 @@ message GroupInviteNewRequest { GroupInviteNew group_invite = 1; }
 message RemoveMemberRequest {
   string user_id = 1;
   string group_id = 2;
-  string mem_id = 3;
+  repeated string mem_id = 3;
 }
 
 message RemoveMemberResp {}

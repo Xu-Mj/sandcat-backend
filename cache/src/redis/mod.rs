@@ -334,6 +334,17 @@ impl Cache for RedisCache {
         Ok(())
     }
 
+    async fn remove_group_member_batch(
+        &self,
+        group_id: &str,
+        member_id: &[&str],
+    ) -> Result<(), Error> {
+        let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        conn.srem(&key, member_id).await?;
+        Ok(())
+    }
+
     async fn del_group_members(&self, group_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
