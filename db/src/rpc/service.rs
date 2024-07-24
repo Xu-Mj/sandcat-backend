@@ -266,6 +266,8 @@ impl DbService for DbRpcService {
         self.db.group.invite_new_members(&invitation).await?;
 
         // update cache
+        // WE SHOULD ADD NEW MEMBERS TO CACHE
+        // SO THAT THE CONSUMER CAN GET THE MEMBERS' ID
         self.cache
             .save_group_members_id(&invitation.group_id, invitation.members)
             .await?;
@@ -287,10 +289,10 @@ impl DbService for DbRpcService {
             .await?;
 
         // update cache
-        let member_ids_ref: Vec<&str> = inner.mem_id.iter().map(AsRef::as_ref).collect();
-        self.cache
-            .remove_group_member_batch(&inner.group_id, &member_ids_ref)
-            .await?;
+        // let member_ids_ref: Vec<&str> = inner.mem_id.iter().map(AsRef::as_ref).collect();
+        // self.cache
+        //     .remove_group_member_batch(&inner.group_id, &member_ids_ref)
+        //     .await?;
 
         Ok(Response::new(RemoveMemberResp {}))
     }
@@ -348,9 +350,9 @@ impl DbService for DbRpcService {
             .await?;
 
         // delete from cache, also get the members id
-        self.cache
-            .remove_group_member_id(&req.group_id, &req.user_id)
-            .await?;
+        // self.cache
+        //     .remove_group_member_id(&req.group_id, &req.user_id)
+        //     .await?;
         let response = GroupMemberExitResponse {};
         Ok(Response::new(response))
     }

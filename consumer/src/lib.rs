@@ -206,6 +206,7 @@ impl ConsumerService {
             MsgType::GroupInvitation
             | MsgType::GroupInviteNew
             | MsgType::GroupMemberExit
+            | MsgType::GroupRemoveMember
             | MsgType::GroupDismiss
             | MsgType::GroupUpdate => {
                 // group message and need to increase seq
@@ -309,6 +310,14 @@ impl ConsumerService {
         } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
             self.cache
                 .remove_group_member_id(&msg.receiver_id, &msg.send_id)
+                .await?;
+        } else if msg.msg_type == MsgType::GroupRemoveMember as i32 {
+            let data: Vec<String> = bincode::deserialize(&msg.content)
+                .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+            let member_ids_ref: Vec<&str> = data.iter().map(AsRef::as_ref).collect();
+            self.cache
+                .remove_group_member_batch(&msg.group_id, &member_ids_ref)
                 .await?;
         }
 
