@@ -199,11 +199,28 @@ pub async fn remove_member(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<RemoveMemberRequest>,
 ) -> Result<(), Error> {
+    let req_cloned = req.clone();
+
     let mut db_rpc = app_state.db_rpc.clone();
     db_rpc
         .remove_member(req)
         .await
         .map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    // send remove message to group members
+    let mut chat_rpc = app_state.chat_rpc.clone();
+    let msg =
+        bincode::serialize(&req_cloned.mem_id).map_err(|e| Error::InternalServer(e.to_string()))?;
+
+    let request =
+        SendMsgRequest::new_with_group_remove_mem(req_cloned.user_id, req_cloned.group_id, msg);
+    chat_rpc.send_msg(request).await.map_err(|e| {
+        Error::InternalServer(format!(
+            "procedure chat rpc service error: send_msg {:?}",
+            e
+        ))
+    })?;
+
     Ok(())
 }
 

@@ -40,35 +40,34 @@ enum MsgType {
   MsgTypeGroupInvitation = 2;
   MsgTypeGroupInviteNew = 3;
   MsgTypeGroupMemberExit = 4;
-  MsgTypeGroupDismiss = 5;
-  MsgTypeGroupDismissOrExitReceived = 6;
-  MsgTypeGroupInvitationReceived = 7;
-  MsgTypeGroupUpdate = 8;
+  MsgTypeGroupRemoveMember = 5;
+  MsgTypeGroupDismiss = 6;
+  MsgTypeGroupDismissOrExitReceived = 7;
+  MsgTypeGroupInvitationReceived = 8;
+  MsgTypeGroupUpdate = 9;
 
   /// friend operation
-  MsgTypeFriendApplyReq = 9;
-  MsgTypeFriendApplyResp = 10;
+  MsgTypeFriendApplyReq = 10;
+  MsgTypeFriendApplyResp = 11;
+  MsgTypeFriendBlack = 12;
+  MsgTypeFriendDelete = 13;
 
   /// single call operation
-  MsgTypeSingleCallInvite = 11;
-  MsgTypeRejectSingleCall = 12;
-  MsgTypeAgreeSingleCall = 13;
-  MsgTypeSingleCallInviteNotAnswer = 14;
-  MsgTypeSingleCallInviteCancel = 15;
-  MsgTypeSingleCallOffer = 16;
-  MsgTypeHangup = 17;
-  MsgTypeConnectSingleCall = 18;
-  MsgTypeCandidate = 19;
+  MsgTypeSingleCallInvite = 14;
+  MsgTypeRejectSingleCall = 15;
+  MsgTypeAgreeSingleCall = 16;
+  MsgTypeSingleCallInviteNotAnswer = 17;
+  MsgTypeSingleCallInviteCancel = 18;
+  MsgTypeSingleCallOffer = 19;
+  MsgTypeHangup = 20;
+  MsgTypeConnectSingleCall = 21;
+  MsgTypeCandidate = 22;
 
-  MsgTypeRead = 20;
-  MsgTypeMsgRecResp = 21;
-  MsgTypeNotification = 22;
-  MsgTypeService = 23;
-  MsgTypeFriendshipReceived = 24;
-
-  /// friend delete
-  MsgTypeFriendBlack = 25;
-  MsgTypeFriendDelete = 26;
+  MsgTypeRead = 23;
+  MsgTypeMsgRecResp = 24;
+  MsgTypeNotification = 25;
+  MsgTypeService = 26;
+  MsgTypeFriendshipReceived = 27;
 }
 
 /// decode message content by content type

@@ -59,6 +59,8 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - maybe we should combine the query send_seq and incr recv_seq into one operation with lua
 - group invitation is missing while invited user is offline
 - add error detail, so that we can log it, but response to frontend need to be short
+- increase the send_seq for group/friend relationship.
+- update the cache in consumer about the group operations.
 
 ## Development
 
