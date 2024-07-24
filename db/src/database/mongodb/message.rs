@@ -43,11 +43,18 @@ impl MsgBox {
 
         // create server_id index
         let index_model = IndexModel::builder()
-            .keys(doc! {"server_id": 1})
-            .options(IndexOptions::builder().unique(true).build())
+            .keys(doc! {"receiver_id": 1, "seq":1})
+            .options(IndexOptions::builder().unique(false).build())
             .build();
         mb.create_index(index_model, None).await.unwrap();
-        debug!("create index for message box");
+        debug!("create [receiver_id, seq] index for message box");
+
+        let index_model = IndexModel::builder()
+            .keys(doc! {"send_id": 1, "send_seq":1})
+            .options(IndexOptions::builder().unique(false).build())
+            .build();
+        mb.create_index(index_model, None).await.unwrap();
+        debug!("create [send_id, send_seq] index for message box");
 
         Self { mb }
     }
@@ -66,6 +73,10 @@ impl MsgRecBoxRepo for MsgBox {
         mut message: Msg,
         members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
+        debug!(
+            "save group message for members: {:?} ----- {:?}",
+            message, members
+        );
         let mut messages = Vec::with_capacity(members.len() + 1);
         // save message for sender
         messages.push(to_doc(&message)?);
