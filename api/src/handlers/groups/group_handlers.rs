@@ -100,6 +100,8 @@ pub async fn create_group_handler(
             e
         ))
     })?;
+
+    // decode the invitation to binary
     let invitation = response
         .into_inner()
         .invitation
@@ -108,8 +110,11 @@ pub async fn create_group_handler(
     let mut chat_rpc = app_state.chat_rpc.clone();
     let msg = bincode::serialize(&invitation).map_err(|e| Error::InternalServer(e.to_string()))?;
 
+    // increase the send sequence for sender
+    let (seq, _, _) = app_state.cache.incr_send_seq(&user_id).await?;
+
     // send the group invitation to the members
-    let request = SendMsgRequest::new_with_group_invitation(user_id, group_id, msg);
+    let request = SendMsgRequest::new_with_group_invitation(user_id, group_id, seq, msg);
 
     chat_rpc.send_msg(request).await.map_err(|e| {
         Error::InternalServer(format!(
@@ -150,7 +155,10 @@ pub async fn invite_new_members(
 
     let msg = bincode::serialize(&members).map_err(|e| Error::InternalServer(e.to_string()))?;
 
-    let request = SendMsgRequest::new_with_group_invite_new(user_id, group_id, msg);
+    // increase the send sequence for sender
+    let (seq, _, _) = app_state.cache.incr_send_seq(&user_id).await?;
+
+    let request = SendMsgRequest::new_with_group_invite_new(user_id, group_id, seq, msg);
     chat_rpc.send_msg(request).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",
@@ -185,7 +193,11 @@ pub async fn update_group_handler(
     let mut chat_rpc = app_state.chat_rpc.clone();
     // notify members, except self
     let msg = bincode::serialize(&inner).map_err(|e| Error::InternalServer(e.to_string()))?;
-    let req = SendMsgRequest::new_with_group_update(user_id, inner.id.clone(), msg);
+
+    // increase the send sequence for sender
+    let (seq, _, _) = app_state.cache.incr_send_seq(&user_id).await?;
+
+    let req = SendMsgRequest::new_with_group_update(user_id, inner.id.clone(), seq, msg);
     chat_rpc.send_msg(req).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",
@@ -212,8 +224,15 @@ pub async fn remove_member(
     let msg =
         bincode::serialize(&req_cloned.mem_id).map_err(|e| Error::InternalServer(e.to_string()))?;
 
-    let request =
-        SendMsgRequest::new_with_group_remove_mem(req_cloned.user_id, req_cloned.group_id, msg);
+    // increase the send sequence for sender
+    let (seq, _, _) = app_state.cache.incr_send_seq(&req_cloned.user_id).await?;
+
+    let request = SendMsgRequest::new_with_group_remove_mem(
+        req_cloned.user_id,
+        req_cloned.group_id,
+        seq,
+        msg,
+    );
     chat_rpc.send_msg(request).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",
@@ -260,7 +279,10 @@ pub async fn delete_group_handler(
 
     let mut chat_rpc = app_state.chat_rpc.clone();
     // notify members, except self
-    let ws_req = SendMsgRequest::new_with_group_operation(group.user_id, group.group_id, msg);
+
+    // increase the send sequence for sender
+    let (seq, _, _) = app_state.cache.incr_send_seq(&group.user_id).await?;
+    let ws_req = SendMsgRequest::new_with_group_operation(group.user_id, group.group_id, msg, seq);
     chat_rpc.send_msg(ws_req).await.map_err(|e| {
         Error::InternalServer(format!(
             "procedure chat rpc service error: send_msg {:?}",

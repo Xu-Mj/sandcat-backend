@@ -100,6 +100,7 @@ impl SendMsgRequest {
         send_id: String,
         receiver_id: String,
         msg_type: MsgType,
+        send_seq: i64,
     ) -> Self {
         Self {
             message: Some(Msg {
@@ -108,6 +109,7 @@ impl SendMsgRequest {
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: msg_type as i32,
+                send_seq,
                 ..Default::default()
             }),
         }
@@ -116,6 +118,7 @@ impl SendMsgRequest {
     pub fn new_with_group_invitation(
         send_id: String,
         receiver_id: String,
+        send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
@@ -126,6 +129,7 @@ impl SendMsgRequest {
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupInvitation as i32,
                 content: invitation,
+                send_seq,
                 ..Default::default()
             }),
         }
@@ -134,6 +138,7 @@ impl SendMsgRequest {
     pub fn new_with_group_invite_new(
         send_id: String,
         receiver_id: String,
+        send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
@@ -144,6 +149,7 @@ impl SendMsgRequest {
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupInviteNew as i32,
                 content: invitation,
+                send_seq,
                 ..Default::default()
             }),
         }
@@ -152,6 +158,7 @@ impl SendMsgRequest {
     pub fn new_with_group_remove_mem(
         send_id: String,
         group_id: String,
+        send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
@@ -162,12 +169,18 @@ impl SendMsgRequest {
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupRemoveMember as i32,
                 content: invitation,
+                send_seq,
                 ..Default::default()
             }),
         }
     }
 
-    pub fn new_with_group_update(send_id: String, receiver_id: String, msg: Vec<u8>) -> Self {
+    pub fn new_with_group_update(
+        send_id: String,
+        receiver_id: String,
+        send_seq: i64,
+        msg: Vec<u8>,
+    ) -> Self {
         Self {
             message: Some(Msg {
                 send_id,
@@ -176,6 +189,7 @@ impl SendMsgRequest {
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupUpdate as i32,
                 content: msg,
+                send_seq,
                 ..Default::default()
             }),
         }

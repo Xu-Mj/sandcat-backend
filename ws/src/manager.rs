@@ -177,7 +177,7 @@ impl Manager {
                 self.create_error_message(message, e);
                 return;
             }
-        };
+        }
 
         // send message through gRPC
         match self.send_rpc_message(message.clone()).await {
