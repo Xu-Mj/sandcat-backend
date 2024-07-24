@@ -101,6 +101,7 @@ impl ConsumerService {
         }
     }
 
+    // todo handle error for the task
     async fn handle_msg(&self, payload: &str) -> Result<(), Error> {
         debug!("Received message: {:#?}", payload);
 
@@ -328,7 +329,7 @@ impl ConsumerService {
     /// if the message type is related to call protocol
     #[inline]
     fn get_send_to_db_flag(msg_type: &MsgType) -> bool {
-        matches!(
+        !matches!(
             *msg_type,
             MsgType::ConnectSingleCall
                 | MsgType::AgreeSingleCall
