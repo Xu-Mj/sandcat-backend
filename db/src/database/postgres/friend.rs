@@ -125,7 +125,7 @@ impl FriendRepo for PostgresFriend {
         // }
         // Ok(rx)
         let fs = sqlx::query_as(
-            "SELECT f.id, f.user_id, f.apply_msg, f.source, f.create_time,
+            "SELECT f.id as fs_id, f.user_id, f.apply_msg, f.source, f.create_time,
              u.name, u.avatar, u.gender, u.age, u.region
              FROM friendships AS f
              JOIN users AS u ON f.user_id = u.id

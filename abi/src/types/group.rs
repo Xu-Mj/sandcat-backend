@@ -1,10 +1,14 @@
 use sqlx::postgres::PgRow;
 use sqlx::{Error, FromRow, Row};
+use tonic::Status;
 
 use crate::message::{
-    GroupCreate, GroupCreateRequest, GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember,
-    GroupMemberRole, GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest,
+    GetGroupAndMembersResp, GetGroupRequest, GetMemberReq, GroupCreate, GroupCreateRequest,
+    GroupDeleteRequest, GroupInfo, GroupMemSeq, GroupMember, GroupMemberRole,
+    GroupMembersIdRequest, GroupUpdate, GroupUpdateRequest, RemoveMemberRequest,
 };
+
+use super::Validator;
 
 impl GroupCreateRequest {
     pub fn new(group: GroupCreate) -> Self {
@@ -29,6 +33,64 @@ impl GroupMembersIdRequest {
         Self { group_id }
     }
 }
+
+impl GetGroupRequest {
+    pub fn new(user_id: String, group_id: String) -> Self {
+        Self { user_id, group_id }
+    }
+}
+
+impl Validator for GetGroupRequest {
+    fn validate(&self) -> Result<(), Status> {
+        if self.group_id.is_empty() {
+            return Err(Status::invalid_argument("group_id is empty"));
+        }
+        if self.user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        Ok(())
+    }
+}
+
+impl Validator for GetMemberReq {
+    fn validate(&self) -> Result<(), Status> {
+        if self.group_id.is_empty() {
+            return Err(Status::invalid_argument("group_id is empty"));
+        }
+        if self.user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        if self.mem_ids.is_empty() {
+            return Err(Status::invalid_argument("mem_ids is empty"));
+        }
+        Ok(())
+    }
+}
+
+impl Validator for RemoveMemberRequest {
+    fn validate(&self) -> Result<(), Status> {
+        if self.group_id.is_empty() {
+            return Err(Status::invalid_argument("group_id is empty"));
+        }
+        if self.user_id.is_empty() {
+            return Err(Status::invalid_argument("user_id is empty"));
+        }
+        if self.mem_id.is_empty() {
+            return Err(Status::invalid_argument("mem_ids is empty"));
+        }
+        Ok(())
+    }
+}
+
+impl GetGroupAndMembersResp {
+    pub fn new(group: GroupInfo, members: Vec<GroupMember>) -> Self {
+        Self {
+            group: Some(group),
+            members,
+        }
+    }
+}
+
 #[derive(sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[sqlx(type_name = "group_role")]
 pub enum GroupRole {

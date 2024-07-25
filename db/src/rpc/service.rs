@@ -1,6 +1,7 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+use abi::types::Validator;
 use futures::Stream;
 use nanoid::nanoid;
 use tokio::sync::mpsc::Receiver;
@@ -13,7 +14,8 @@ use abi::message::{
     CreateUserRequest, CreateUserResponse, DelMsgRequest, DelMsgResp, DeleteFriendRequest,
     DeleteFriendResponse, FriendInfo, FriendListRequest, FriendListResponse, FsAgreeRequest,
     FsAgreeResponse, FsCreateRequest, FsCreateResponse, FsListResponse, GetDbMessagesRequest,
-    GetDbMsgRequest, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
+    GetDbMsgRequest, GetGroupAndMembersResp, GetGroupRequest, GetGroupResponse, GetMemberReq,
+    GetMemberResp, GetMsgResp, GetUserByEmailRequest, GetUserRequest, GetUserResponse,
     GroupCreateRequest, GroupCreateResponse, GroupDeleteRequest, GroupDeleteResponse,
     GroupInviteNewRequest, GroupInviteNewResp, GroupMemberExitResponse, GroupMembersIdRequest,
     GroupMembersIdResponse, GroupUpdateRequest, GroupUpdateResponse, Msg, MsgReadReq, MsgReadResp,
@@ -201,6 +203,57 @@ impl DbService for DbRpcService {
         Ok(Response::new(response))
     }
 
+    async fn get_group(
+        &self,
+        request: Request<GetGroupRequest>,
+    ) -> Result<Response<GetGroupResponse>, Status> {
+        let inner = request.into_inner();
+        // validate
+        inner.validate()?;
+
+        let group = self
+            .db
+            .group
+            .get_group(&inner.user_id, &inner.group_id)
+            .await?;
+
+        let response = GetGroupResponse { group: Some(group) };
+        Ok(Response::new(response))
+    }
+
+    async fn get_group_and_members(
+        &self,
+        request: Request<GetGroupRequest>,
+    ) -> Result<Response<GetGroupAndMembersResp>, Status> {
+        let inner = request.into_inner();
+        inner.validate()?;
+
+        let group_and_members = self
+            .db
+            .group
+            .get_group_and_members(&inner.user_id, &inner.group_id)
+            .await?;
+
+        Ok(Response::new(group_and_members))
+    }
+
+    async fn get_group_members(
+        &self,
+        request: Request<GetMemberReq>,
+    ) -> Result<Response<GetMemberResp>, Status> {
+        let inner = request.into_inner();
+        inner.validate()?;
+
+        let members = self
+            .db
+            .group
+            .get_members(&inner.user_id, &inner.group_id, inner.mem_ids)
+            .await?;
+
+        let resp = GetMemberResp { members };
+        Ok(Response::new(resp))
+    }
+
     async fn group_invite_new(
         &self,
         request: Request<GroupInviteNewRequest>,
@@ -210,21 +263,37 @@ impl DbService for DbRpcService {
             .group_invite
             .ok_or(Status::invalid_argument("group_invite is empty"))?;
 
-        let members = self.db.group.invite_new_members(&invitation).await?;
+        self.db.group.invite_new_members(&invitation).await?;
 
         // update cache
+        // WE SHOULD ADD NEW MEMBERS TO CACHE
+        // SO THAT THE CONSUMER CAN GET THE MEMBERS' ID
         self.cache
             .save_group_members_id(&invitation.group_id, invitation.members)
             .await?;
 
-        let response = GroupInviteNewResp { members };
+        let response = GroupInviteNewResp {};
         Ok(Response::new(response))
     }
 
     async fn remove_member(
         &self,
-        _request: Request<RemoveMemberRequest>,
+        request: Request<RemoveMemberRequest>,
     ) -> Result<Response<RemoveMemberResp>, Status> {
+        let inner = request.into_inner();
+        inner.validate()?;
+
+        self.db
+            .group
+            .remove_member(&inner.group_id, &inner.user_id, &inner.mem_id)
+            .await?;
+
+        // update cache
+        // let member_ids_ref: Vec<&str> = inner.mem_id.iter().map(AsRef::as_ref).collect();
+        // self.cache
+        //     .remove_group_member_batch(&inner.group_id, &member_ids_ref)
+        //     .await?;
+
         Ok(Response::new(RemoveMemberResp {}))
     }
 
@@ -281,9 +350,9 @@ impl DbService for DbRpcService {
             .await?;
 
         // delete from cache, also get the members id
-        self.cache
-            .remove_group_member_id(&req.group_id, &req.user_id)
-            .await?;
+        // self.cache
+        //     .remove_group_member_id(&req.group_id, &req.user_id)
+        //     .await?;
         let response = GroupMemberExitResponse {};
         Ok(Response::new(response))
     }

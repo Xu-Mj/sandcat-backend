@@ -641,18 +641,15 @@ pub struct RemoveMemberRequest {
     pub user_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub mem_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub mem_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RemoveMemberResp {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInviteNewResp {
-    #[prost(message, repeated, tag = "1")]
-    pub members: ::prost::alloc::vec::Vec<GroupMember>,
-}
+pub struct GroupInviteNewResp {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupUpdateRequest {
@@ -888,6 +885,47 @@ pub struct DelMsgRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DelMsgResp {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetMemberReq {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub mem_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetMemberResp {
+    #[prost(message, repeated, tag = "1")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetGroupRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetGroupResponse {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetGroupAndMembersResp {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupCreateRequest {
@@ -1065,31 +1103,31 @@ pub enum MsgType {
     GroupInvitation = 2,
     GroupInviteNew = 3,
     GroupMemberExit = 4,
-    GroupDismiss = 5,
-    GroupDismissOrExitReceived = 6,
-    GroupInvitationReceived = 7,
-    GroupUpdate = 8,
+    GroupRemoveMember = 5,
+    GroupDismiss = 6,
+    GroupDismissOrExitReceived = 7,
+    GroupInvitationReceived = 8,
+    GroupUpdate = 9,
     /// / friend operation
-    FriendApplyReq = 9,
-    FriendApplyResp = 10,
+    FriendApplyReq = 10,
+    FriendApplyResp = 11,
+    FriendBlack = 12,
+    FriendDelete = 13,
     /// / single call operation
-    SingleCallInvite = 11,
-    RejectSingleCall = 12,
-    AgreeSingleCall = 13,
-    SingleCallInviteNotAnswer = 14,
-    SingleCallInviteCancel = 15,
-    SingleCallOffer = 16,
-    Hangup = 17,
-    ConnectSingleCall = 18,
-    Candidate = 19,
-    Read = 20,
-    MsgRecResp = 21,
-    Notification = 22,
-    Service = 23,
-    FriendshipReceived = 24,
-    /// / friend delete
-    FriendBlack = 25,
-    FriendDelete = 26,
+    SingleCallInvite = 14,
+    RejectSingleCall = 15,
+    AgreeSingleCall = 16,
+    SingleCallInviteNotAnswer = 17,
+    SingleCallInviteCancel = 18,
+    SingleCallOffer = 19,
+    Hangup = 20,
+    ConnectSingleCall = 21,
+    Candidate = 22,
+    Read = 23,
+    MsgRecResp = 24,
+    Notification = 25,
+    Service = 26,
+    FriendshipReceived = 27,
 }
 impl MsgType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1103,12 +1141,15 @@ impl MsgType {
             MsgType::GroupInvitation => "MsgTypeGroupInvitation",
             MsgType::GroupInviteNew => "MsgTypeGroupInviteNew",
             MsgType::GroupMemberExit => "MsgTypeGroupMemberExit",
+            MsgType::GroupRemoveMember => "MsgTypeGroupRemoveMember",
             MsgType::GroupDismiss => "MsgTypeGroupDismiss",
             MsgType::GroupDismissOrExitReceived => "MsgTypeGroupDismissOrExitReceived",
             MsgType::GroupInvitationReceived => "MsgTypeGroupInvitationReceived",
             MsgType::GroupUpdate => "MsgTypeGroupUpdate",
             MsgType::FriendApplyReq => "MsgTypeFriendApplyReq",
             MsgType::FriendApplyResp => "MsgTypeFriendApplyResp",
+            MsgType::FriendBlack => "MsgTypeFriendBlack",
+            MsgType::FriendDelete => "MsgTypeFriendDelete",
             MsgType::SingleCallInvite => "MsgTypeSingleCallInvite",
             MsgType::RejectSingleCall => "MsgTypeRejectSingleCall",
             MsgType::AgreeSingleCall => "MsgTypeAgreeSingleCall",
@@ -1123,8 +1164,6 @@ impl MsgType {
             MsgType::Notification => "MsgTypeNotification",
             MsgType::Service => "MsgTypeService",
             MsgType::FriendshipReceived => "MsgTypeFriendshipReceived",
-            MsgType::FriendBlack => "MsgTypeFriendBlack",
-            MsgType::FriendDelete => "MsgTypeFriendDelete",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1135,12 +1174,15 @@ impl MsgType {
             "MsgTypeGroupInvitation" => Some(Self::GroupInvitation),
             "MsgTypeGroupInviteNew" => Some(Self::GroupInviteNew),
             "MsgTypeGroupMemberExit" => Some(Self::GroupMemberExit),
+            "MsgTypeGroupRemoveMember" => Some(Self::GroupRemoveMember),
             "MsgTypeGroupDismiss" => Some(Self::GroupDismiss),
             "MsgTypeGroupDismissOrExitReceived" => Some(Self::GroupDismissOrExitReceived),
             "MsgTypeGroupInvitationReceived" => Some(Self::GroupInvitationReceived),
             "MsgTypeGroupUpdate" => Some(Self::GroupUpdate),
             "MsgTypeFriendApplyReq" => Some(Self::FriendApplyReq),
             "MsgTypeFriendApplyResp" => Some(Self::FriendApplyResp),
+            "MsgTypeFriendBlack" => Some(Self::FriendBlack),
+            "MsgTypeFriendDelete" => Some(Self::FriendDelete),
             "MsgTypeSingleCallInvite" => Some(Self::SingleCallInvite),
             "MsgTypeRejectSingleCall" => Some(Self::RejectSingleCall),
             "MsgTypeAgreeSingleCall" => Some(Self::AgreeSingleCall),
@@ -1155,8 +1197,6 @@ impl MsgType {
             "MsgTypeNotification" => Some(Self::Notification),
             "MsgTypeService" => Some(Self::Service),
             "MsgTypeFriendshipReceived" => Some(Self::FriendshipReceived),
-            "MsgTypeFriendBlack" => Some(Self::FriendBlack),
-            "MsgTypeFriendDelete" => Some(Self::FriendDelete),
             _ => None,
         }
     }
@@ -1743,6 +1783,61 @@ pub mod db_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("message.DbService", "SaveMaxSeqBatch"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / query group information
+        pub async fn get_group(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetGroupRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetGroupResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetGroup");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetGroup"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// / query group information and members
+        pub async fn get_group_and_members(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetGroupRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetGroupAndMembersResp>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/message.DbService/GetGroupAndMembers");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetGroupAndMembers"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_group_members(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetMemberReq>,
+        ) -> std::result::Result<tonic::Response<super::GetMemberResp>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/message.DbService/GetGroupMembers");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("message.DbService", "GetGroupMembers"));
             self.inner.unary(req, path, codec).await
         }
         /// / create group
@@ -2764,6 +2859,20 @@ pub mod db_service_server {
             &self,
             request: tonic::Request<super::SaveMaxSeqBatchRequest>,
         ) -> std::result::Result<tonic::Response<super::SaveMaxSeqResponse>, tonic::Status>;
+        /// / query group information
+        async fn get_group(
+            &self,
+            request: tonic::Request<super::GetGroupRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetGroupResponse>, tonic::Status>;
+        /// / query group information and members
+        async fn get_group_and_members(
+            &self,
+            request: tonic::Request<super::GetGroupRequest>,
+        ) -> std::result::Result<tonic::Response<super::GetGroupAndMembersResp>, tonic::Status>;
+        async fn get_group_members(
+            &self,
+            request: tonic::Request<super::GetMemberReq>,
+        ) -> std::result::Result<tonic::Response<super::GetMemberResp>, tonic::Status>;
         /// / create group
         async fn group_create(
             &self,
@@ -3337,6 +3446,127 @@ pub mod db_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = SaveMaxSeqBatchSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetGroup" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetGroupSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::GetGroupRequest> for GetGroupSvc<T> {
+                        type Response = super::GetGroupResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetGroupRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut =
+                                async move { <T as DbService>::get_group(&inner, request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetGroupSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetGroupAndMembers" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetGroupAndMembersSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::GetGroupRequest>
+                        for GetGroupAndMembersSvc<T>
+                    {
+                        type Response = super::GetGroupAndMembersResp;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetGroupRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_group_and_members(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetGroupAndMembersSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/message.DbService/GetGroupMembers" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetGroupMembersSvc<T: DbService>(pub Arc<T>);
+                    impl<T: DbService> tonic::server::UnaryService<super::GetMemberReq> for GetGroupMembersSvc<T> {
+                        type Response = super::GetMemberResp;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetMemberReq>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DbService>::get_group_members(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetGroupMembersSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

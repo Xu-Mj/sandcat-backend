@@ -58,6 +58,12 @@ pub trait Cache: Sync + Send + Debug {
     /// remove the group member id from the group members id set
     async fn remove_group_member_id(&self, group_id: &str, member_id: &str) -> Result<(), Error>;
 
+    async fn remove_group_member_batch(
+        &self,
+        group_id: &str,
+        member_id: &[&str],
+    ) -> Result<(), Error>;
+
     /// return the members id
     async fn del_group_members(&self, group_id: &str) -> Result<(), Error>;
 
