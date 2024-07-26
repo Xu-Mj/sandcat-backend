@@ -9,6 +9,7 @@ mod user;
 use std::sync::Arc;
 
 use abi::config::Config;
+use message::MsgRecBoxCleaner;
 use sqlx::PgPool;
 
 use crate::database::friend::FriendRepo;
@@ -49,5 +50,9 @@ impl DbRepo {
 }
 
 pub async fn msg_rec_box_repo(config: &Config) -> Arc<dyn MsgRecBoxRepo> {
+    Arc::new(mongodb::MsgBox::from_config(config).await)
+}
+
+pub async fn msg_rec_box_cleaner(config: &Config) -> Arc<dyn MsgRecBoxCleaner> {
     Arc::new(mongodb::MsgBox::from_config(config).await)
 }

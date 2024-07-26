@@ -13,7 +13,7 @@ use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupMemSeq, Msg};
 
-use crate::database::message::MsgRecBoxRepo;
+use crate::database::message::{MsgRecBoxCleaner, MsgRecBoxRepo};
 use crate::database::mongodb::utils::to_doc;
 
 /// user receive box,
@@ -73,10 +73,6 @@ impl MsgRecBoxRepo for MsgBox {
         mut message: Msg,
         members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
-        debug!(
-            "save group message for members: {:?} ----- {:?}",
-            message, members
-        );
         let mut messages = Vec::with_capacity(members.len() + 1);
         // save message for sender
         messages.push(to_doc(&message)?);
@@ -263,7 +259,9 @@ impl MsgRecBoxRepo for MsgBox {
         self.mb.update_many(query, update, None).await?;
         Ok(())
     }
+}
 
+impl MsgRecBoxCleaner for MsgBox {
     fn clean_receive_box(&self, period: i64, types: Vec<i32>) {
         let mb = self.mb.clone();
 

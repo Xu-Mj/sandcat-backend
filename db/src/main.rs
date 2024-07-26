@@ -9,6 +9,12 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .with_line_number(true)
         .init();
+
     let config = Config::load("config.yml").unwrap();
+
+    // start cleaner
+    db::clean_receive_box(&config).await;
+
+    // start rpc service
     DbRpcService::start(&config).await;
 }
