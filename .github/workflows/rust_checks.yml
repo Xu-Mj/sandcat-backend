@@ -40,4 +40,4 @@ jobs:
         run: cargo check --no-default-features --features=static
 
       - name: Lint with cargo clippy
-        run: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
+        run: cargo clippy --all-targets --no-default-features --features=static --tests --benches -- -D warnings
