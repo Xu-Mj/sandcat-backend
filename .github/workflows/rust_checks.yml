@@ -28,6 +28,11 @@ jobs:
         with:
             version: "23.x"
 
+      - name: Install dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y librdkafka-dev
+
       - name: Check formatting with rustfmt
         run: cargo fmt -- --check
 
