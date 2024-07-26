@@ -37,7 +37,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Check the package with cargo check
-        run: cargo check --all
+        run: cargo check --features=static
 
       - name: Lint with cargo clippy
         run: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
