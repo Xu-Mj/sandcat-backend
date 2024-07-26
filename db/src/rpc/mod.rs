@@ -50,6 +50,10 @@ impl DbRpcService {
         info!("<db> rpc service register to service register center");
 
         let db_rpc = DbRpcService::new(config).await;
+
+        // start clean receive box task
+        db_rpc.clean_receive_box(config).await;
+
         let service = DbServiceServer::new(db_rpc);
         info!(
             "<db> rpc service started at {}",
@@ -62,6 +66,21 @@ impl DbRpcService {
             .serve(config.rpc.db.rpc_server_url().parse().unwrap())
             .await
             .unwrap();
+    }
+
+    async fn clean_receive_box(&self, config: &Config) {
+        let types: Vec<i32> = config
+            .db
+            .mongodb
+            .clean
+            .except_types
+            .iter()
+            .filter_map(|v| MsgType::from_str_name(v))
+            .map(|v| v as i32)
+            .collect();
+        let period = config.db.mongodb.clean.period;
+
+        self.msg_rec_box.clean_receive_box(period, types);
     }
 
     pub async fn handle_message(&self, message: Msg, need_to_history: bool) -> Result<(), Error> {

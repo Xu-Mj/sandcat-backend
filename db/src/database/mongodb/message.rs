@@ -264,7 +264,7 @@ impl MsgRecBoxRepo for MsgBox {
         Ok(())
     }
 
-    async fn clean_receive_box(&self, period: i64, types: Vec<i32>) {
+    fn clean_receive_box(&self, period: i64, types: Vec<i32>) {
         let mb = self.mb.clone();
 
         tokio::spawn(async move {

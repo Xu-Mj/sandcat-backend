@@ -61,5 +61,5 @@ pub trait MsgRecBoxRepo: Sync + Send {
     /// * period: the period of time to clean, unit is day
     /// * types: the types of messages to not clean, such as group operations related; use MsgType
     ///
-    async fn clean_receive_box(&self, period: i64, types: Vec<i32>);
+    fn clean_receive_box(&self, period: i64, types: Vec<i32>);
 }
