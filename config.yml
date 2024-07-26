@@ -16,6 +16,22 @@ db:
     user:
     password:
     database: im
+    clean:
+      period: 3600 # days
+      # MsgTypeGroupInvitation = 2;
+      # MsgTypeGroupInviteNew = 3;
+      # MsgTypeGroupMemberExit = 4;
+      # MsgTypeGroupRemoveMember = 5;
+      # MsgTypeGroupDismiss = 6;
+      # MsgTypeGroupUpdate = 9;
+      except_types:
+        - "MsgTypeGroupInvitation"
+        - "MsgTypeGroupInviteNew"
+        - "MsgTypeGroupMemberExit"
+        - "MsgTypeGroupRemoveMember"
+        - "MsgTypeGroupDismiss"
+        - "MsgTypeGroupUpdate"
+
   xdb: ./api/fixtures/xdb/ip2region.xdb
 
 server:

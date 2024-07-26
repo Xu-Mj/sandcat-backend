@@ -54,3 +54,14 @@ pub trait MsgRecBoxRepo: Sync + Send {
     /// update message read status by user id and message sequence
     async fn msg_read(&self, user_id: &str, msg_seq: &[i64]) -> Result<(), Error>;
 }
+
+pub trait MsgRecBoxCleaner: Sync + Send {
+    /// run a task which use tokio to clean message receive box
+    /// clean all messages except the messages that type is group operations related
+    ///
+    /// # Params
+    /// * period: the period of time to clean, unit is day
+    /// * types: the types of messages to not clean, such as group operations related; use MsgType
+    ///
+    fn clean_receive_box(&self, period: i64, types: Vec<i32>);
+}

@@ -13,7 +13,7 @@ use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupMemSeq, Msg};
 
-use crate::database::message::MsgRecBoxRepo;
+use crate::database::message::{MsgRecBoxCleaner, MsgRecBoxRepo};
 use crate::database::mongodb::utils::to_doc;
 
 /// user receive box,
@@ -73,10 +73,6 @@ impl MsgRecBoxRepo for MsgBox {
         mut message: Msg,
         members: Vec<GroupMemSeq>,
     ) -> Result<(), Error> {
-        debug!(
-            "save group message for members: {:?} ----- {:?}",
-            message, members
-        );
         let mut messages = Vec::with_capacity(members.len() + 1);
         // save message for sender
         messages.push(to_doc(&message)?);
@@ -262,6 +258,42 @@ impl MsgRecBoxRepo for MsgBox {
         let update = doc! {"$set":{"is_read":true}};
         self.mb.update_many(query, update, None).await?;
         Ok(())
+    }
+}
+
+impl MsgRecBoxCleaner for MsgBox {
+    fn clean_receive_box(&self, period: i64, types: Vec<i32>) {
+        let mb = self.mb.clone();
+
+        tokio::spawn(async move {
+            let retention_duration = chrono::Duration::days(period);
+            let mut interval =
+                tokio::time::interval(tokio::time::Duration::from_secs(24 * 60 * 60)); // 每24小时执行一次
+            loop {
+                interval.tick().await;
+                let now = chrono::Utc::now();
+                let cutoff_time = (now - retention_duration).timestamp();
+
+                let result = mb
+                    .delete_many(
+                        doc! {
+                            "send_time": { "$lt": cutoff_time },
+                            "msg_type": { "$nin": types.clone()}
+                        },
+                        None,
+                    )
+                    .await;
+
+                match result {
+                    Ok(delete_result) => {
+                        println!("Deleted {} expired messages", delete_result.deleted_count);
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting expired messages: {:?}", e);
+                    }
+                }
+            }
+        });
     }
 }
 

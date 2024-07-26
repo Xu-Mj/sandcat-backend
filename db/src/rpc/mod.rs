@@ -50,6 +50,7 @@ impl DbRpcService {
         info!("<db> rpc service register to service register center");
 
         let db_rpc = DbRpcService::new(config).await;
+
         let service = DbServiceServer::new(db_rpc);
         info!(
             "<db> rpc service started at {}",

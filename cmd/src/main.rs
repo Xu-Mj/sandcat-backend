@@ -99,6 +99,9 @@ async fn start_all(config: Config) {
         WsServer::start(cloned_config).await;
     });
 
+    // start cleaner
+    db::clean_receive_box(&config).await;
+
     // start db rpc server
     let cloned_config = config.clone();
     let db_server = tokio::spawn(async move {
