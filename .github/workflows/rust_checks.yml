@@ -23,6 +23,11 @@ jobs:
       - name: Install clippy
         run: rustup component add clippy
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+            version: "23.x"
+
       - name: Check formatting with rustfmt
         run: cargo fmt -- --check
 
