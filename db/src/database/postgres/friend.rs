@@ -42,10 +42,10 @@ impl FriendRepo for PostgresFriend {
                 source = EXCLUDED.source, create_time = EXCLUDED.create_time, status = EXCLUDED.status
              RETURNING id",
         )
-        .bind(&nanoid!())
+        .bind(nanoid!())
         .bind(&fs.user_id)
         .bind(&fs.friend_id)
-        .bind(&FriendshipStatus::Pending.to_string())
+        .bind(FriendshipStatus::Pending.to_string())
         .bind(&fs.apply_msg)
         .bind(&fs.req_remark)
         .bind(&fs.source)
