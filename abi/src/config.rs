@@ -251,6 +251,13 @@ pub struct MongoDbConfig {
     pub user: String,
     pub password: String,
     pub database: String,
+    pub clean: CleanReceiveBox,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CleanReceiveBox {
+    pub period: i64,
+    pub except_types: Vec<String>,
 }
 
 fn default_conn() -> u32 {
