@@ -108,7 +108,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
    - **Linux：** use the static feature
 
      ```shell
-     cargo build --release --features=static
+     cargo build --release --features=static --no-default-features
      ```
 
    - **Windows:** use the dynamic feature
