@@ -162,4 +162,23 @@ impl UserRepo for PostgresUser {
         }
         Ok(Some(user))
     }
+
+    async fn modify_pwd(&self, user_id: &str, password: &str) -> Result<(), Error> {
+        let mut user: User = sqlx::query_as("SELECT * FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_one(&__self.pool)
+            .await?;
+        if user.salt.is_empty() {
+            user.salt = utils::generate_salt();
+        }
+
+        let password = utils::hash_password(password.as_bytes(), &user.salt)?;
+        sqlx::query("UPDATE users SET salt = $2, password = $3 WHERE id = $1")
+            .bind(user_id)
+            .bind(&user.salt)
+            .bind(password)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 }
