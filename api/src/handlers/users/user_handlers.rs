@@ -15,15 +15,15 @@ use tracing::{debug, error};
 
 use abi::errors::Error;
 use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserRequest, User, UserUpdate,
-    UserWithMatchType, VerifyPwdRequest,
+    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserPwdRequest, UpdateUserRequest,
+    User, UserUpdate, UserWithMatchType, VerifyPwdRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
 use crate::AppState;
 
-use super::{gen_token, REFRESH_EXPIRES};
+use super::{gen_token, ModifyPwdRequest, REFRESH_EXPIRES};
 
 /// refresh auth token
 pub async fn refresh_token(
@@ -188,6 +188,36 @@ pub async fn login(
         .ok_or(Error::AccountOrPassword)?;
 
     gen_token(&app_state, user, addr).await
+}
+
+pub async fn modify_pwd(
+    State(app_state): State<AppState>,
+    JsonExtractor(mut pwd): JsonExtractor<ModifyPwdRequest>,
+) -> Result<(), Error> {
+    // decode password from base64
+    pwd.decode()?;
+
+    // validate code
+    let code = app_state
+        .cache
+        .get_register_code(&pwd.email)
+        .await?
+        .ok_or(Error::BadRequest("code is expired".to_string()))?;
+    if code != pwd.code {
+        return Err(Error::BadRequest("code is invalied".to_string()));
+    }
+
+    let req = UpdateUserPwdRequest {
+        user_id: pwd.user_id,
+        pwd: pwd.pwd,
+    };
+
+    let mut db_rpc = app_state.db_rpc.clone();
+    db_rpc
+        .update_user_pwd(req)
+        .await
+        .map_err(|err| Error::InternalServer(err.message().to_string()))?;
+    Ok(())
 }
 
 #[derive(Deserialize, Serialize, Clone)]

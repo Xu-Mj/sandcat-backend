@@ -143,3 +143,29 @@ pub async fn gen_token(
         ws_addr,
     }))
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ModifyPwdRequest {
+    pub user_id: String,
+    pub email: String,
+    pub pwd: String,
+    pub code: String,
+}
+
+impl ModifyPwdRequest {
+    pub fn decode(&mut self) -> Result<(), Error> {
+        // base64 decode
+        if self.user_id.is_empty()
+            || self.email.is_empty()
+            || self.pwd.is_empty()
+            || self.code.is_empty()
+        {
+            return Err(Error::BadRequest("parameter is none".to_string()));
+        }
+        let pwd = BASE64_STANDARD_NO_PAD
+            .decode(&self.pwd)
+            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        self.pwd = String::from_utf8(pwd).map_err(|e| Error::InternalServer(e.to_string()))?;
+        Ok(())
+    }
+}
