@@ -1,43 +1,122 @@
 name: Rust Checks
 
-on: [push, pull_request]
+on:
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  rust_checks:
-    name: Rust Checks
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+      - uses: actions/cache@v4
         with:
-          toolchain: stable
-          profile: minimal
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-lint-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install rustfmt
-        run: rustup component add rustfmt
-
-      - name: Install clippy
-        run: rustup component add clippy
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+      - name: Cache | Protoc
+        uses: actions/cache@v3
         with:
-            version: "23.x"
+          path: /opt/protoc
+          key: protoc-${{ runner.os }}-23.x
+          restore-keys: protoc-${{ runner.os }}-
 
-      - name: Install dependencies
+      - name: Install | Protoc
+        if: steps.cache_protoc.outputs.cache-hit != 'true'
         run: |
-            sudo apt update
-            sudo apt install -y librdkafka-dev
+          mkdir -p /opt/protoc
+          cd /opt/protoc
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-x86_64.zip
+          unzip protoc-23.4-linux-x86_64.zip -d /opt/protoc
 
-      - name: Check formatting with rustfmt
+      - name: Cache | Dependencies
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/include/librdkafka
+          key: librdkafka-dev-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: librdkafka-dev-${{ runner.os }}-
+
+      - name: Install | Dependencies
+        if: steps.cache_dependencies.outputs.cache-hit != 'true'
+        run: |
+          sudo apt update
+          sudo apt install -y librdkafka-dev
+
+      - name: Setup | Install rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+
+      - name: Setup | Disable rustup self-update
+        run: |
+          rustup set auto-self-update disable
+
+      - name: Setup | Toolchain (clippy)
+        run: |
+          rustup toolchain install stable --component clippy
+          rustup default stable
+
+      - name: Build | Clippy
+        run: |
+          cargo clippy --all-targets --no-default-features --features=static -- -D warnings
+
+      - name: Build | Rustfmt
         run: cargo fmt -- --check
 
-      - name: Check the package with cargo check
-        run: cargo check --no-default-features --features=static
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - 1.80.0 # MSRV
 
-      - name: Lint with cargo clippy
-        run: cargo clippy --all-targets --no-default-features --features=static --tests --benches -- -D warnings
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup | Install rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+
+      - name: Setup | Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-check-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup | Disable rustup self-update
+        run: |
+          rustup set auto-self-update disable
+
+      - name: Setup | Rust
+        run: |
+          rustup toolchain install ${{ matrix.rust }}
+          rustup default ${{ matrix.rust }}
+
+      - name: Build | Check
+        run: cargo check --all
+
+      - name: Setup | binstall
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+      - name: Setup | check-all-features
+        run: |
+          cargo binstall -y cargo-all-features
+
+      - name: Build | Check all features
+        run: |
+          cargo check-all-features
