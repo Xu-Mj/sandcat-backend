@@ -14,7 +14,7 @@ use crate::handlers::groups::group_handlers::{
 use crate::handlers::messages::msg_handlers::{del_msg, get_seq, pull_offline_messages};
 use crate::handlers::users::{
     create_user, get_user_by_id, github_callback, github_login, google_callback, google_login,
-    login, logout, refresh_token, search_user, send_email, update_user,
+    login, logout, modify_pwd, refresh_token, search_user, send_email, update_user,
 };
 use crate::AppState;
 
@@ -43,6 +43,7 @@ fn user_routes(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_user))
         .route("/", put(update_user))
+        .route("/pwd", put(modify_pwd))
         .route("/:id", get(get_user_by_id))
         .route("/refresh_token/:token/:is_refresh", get(refresh_token))
         .route("/:user_id/search/:pattern", get(search_user))
