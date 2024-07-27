@@ -23,8 +23,8 @@ use abi::message::{
     SaveGroupMsgRequest, SaveGroupMsgResponse, SaveMaxSeqBatchRequest, SaveMaxSeqRequest,
     SaveMaxSeqResponse, SaveMessageRequest, SaveMessageResponse, SearchUserRequest,
     SearchUserResponse, UpdateRegionRequest, UpdateRegionResponse, UpdateRemarkRequest,
-    UpdateRemarkResponse, UpdateUserRequest, UpdateUserResponse, UserAndGroupId, VerifyPwdRequest,
-    VerifyPwdResponse,
+    UpdateRemarkResponse, UpdateUserPwdRequest, UpdateUserPwdResp, UpdateUserRequest,
+    UpdateUserResponse, UserAndGroupId, VerifyPwdRequest, VerifyPwdResponse,
 };
 
 use crate::rpc::DbRpcService;
@@ -422,6 +422,13 @@ impl DbService for DbRpcService {
 
         let user = self.db.user.update_user(user).await?;
         Ok(Response::new(UpdateUserResponse { user: Some(user) }))
+    }
+
+    async fn update_user_pwd(
+        &self,
+        _request: Request<UpdateUserPwdRequest>,
+    ) -> Result<Response<UpdateUserPwdResp>, Status> {
+        Ok(Response::new(UpdateUserPwdResp {}))
     }
 
     async fn update_user_region(

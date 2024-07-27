@@ -466,7 +466,13 @@ message GetUserResponse { User user = 1; }
 
 message UpdateUserRequest { UserUpdate user = 1; }
 
+message UpdateUserPwdRequest {
+  string user_id = 1;
+  string pwd = 2;
+}
+
 message UpdateUserResponse { User user = 1; }
+message UpdateUserPwdResp {}
 
 message UpdateRegionRequest {
   string user_id = 1;
@@ -646,6 +652,8 @@ service DbService {
   rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
   /// update user
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  /// update user password
+  rpc UpdateUserPwd(UpdateUserPwdRequest) returns (UpdateUserPwdResp);
   /// update user region
   rpc UpdateUserRegion(UpdateRegionRequest) returns (UpdateRegionResponse);
   /// search user
