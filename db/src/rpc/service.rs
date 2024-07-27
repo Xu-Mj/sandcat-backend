@@ -426,8 +426,10 @@ impl DbService for DbRpcService {
 
     async fn update_user_pwd(
         &self,
-        _request: Request<UpdateUserPwdRequest>,
+        request: Request<UpdateUserPwdRequest>,
     ) -> Result<Response<UpdateUserPwdResp>, Status> {
+        let req = request.into_inner();
+        self.db.user.modify_pwd(&req.user_id, &req.pwd).await?;
         Ok(Response::new(UpdateUserPwdResp {}))
     }
 
