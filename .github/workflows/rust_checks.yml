@@ -22,6 +22,7 @@ jobs:
           key: ${{ runner.os }}-lint-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache | Protoc
+        id: cache_protoc
         uses: actions/cache@v3
         with:
           path: /opt/protoc
@@ -35,6 +36,7 @@ jobs:
           cd /opt/protoc
           wget https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-x86_64.zip
           unzip protoc-23.4-linux-x86_64.zip -d /opt/protoc
+          echo "/opt/protoc/bin" >> $GITHUB_PATH
 
       - name: Cache | Dependencies
         uses: actions/cache@v3
