@@ -132,3 +132,13 @@ This project provides an implementation of a backend for an Instant Messaging (I
    if you need adjust some configuration, please modify the `config.yml`
 
 **important:** Given that our working environment may differ, should you encounter any errors during your deployment, please do let me know. Together, we'll work towards finding a solution.
+
+## Contributing
+
+We follow [Trunk's](https://github.com/trunk-rs/trunk.git) Contribution Guidelines. They are doning a great job.
+
+Anyone and everyone is welcome to contribute! Please review the CONTRIBUTING.md document for more details. The best way to get started is to find an open issue, and then start hacking on implementing it. Letting other folks know that you are working on it, and sharing progress is a great approach. Open pull requests early and often, and please use GitHub's draft pull request feature.
+
+## License
+
+sandcat is licensed under the terms of the MIT License.
