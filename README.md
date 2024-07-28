@@ -137,7 +137,7 @@ This project provides an implementation of a backend for an Instant Messaging (I
 
 We follow [Trunk's](https://github.com/trunk-rs/trunk.git) Contribution Guidelines. They are doning a great job.
 
-Anyone and everyone is welcome to contribute! Please review the CONTRIBUTING.md document for more details. The best way to get started is to find an open issue, and then start hacking on implementing it. Letting other folks know that you are working on it, and sharing progress is a great approach. Open pull requests early and often, and please use GitHub's draft pull request feature.
+Anyone and everyone is welcome to contribute! Please review the [CONTRIBUTING.md](./CONTRIBUTING.md) document for more details. The best way to get started is to find an open issue, and then start hacking on implementing it. Letting other folks know that you are working on it, and sharing progress is a great approach. Open pull requests early and often, and please use GitHub's draft pull request feature.
 
 ## License
 
