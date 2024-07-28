@@ -31,7 +31,6 @@ pub enum ErrorKind {
     IOError,
     ReqwestError,
     ServiceNotFound,
-    InvalidRegisterCode,
     BadRequest,
     AccountOrPassword,
     OSSError,
@@ -197,31 +196,30 @@ impl From<Error> for Status {
     fn from(e: Error) -> Self {
         let code = match e.kind {
             ErrorKind::UnknownError => tonic::Code::Unknown,
-            ErrorKind::DbError => tonic::Code::Internal,
-            ErrorKind::ConfigReadError => tonic::Code::Internal,
-            ErrorKind::ConfigParseError => tonic::Code::Internal,
             ErrorKind::NotFound => tonic::Code::NotFound,
-            ErrorKind::BroadCastError => tonic::Code::Internal,
-            ErrorKind::InternalServer => tonic::Code::Internal,
-            ErrorKind::BodyParsing => tonic::Code::InvalidArgument,
-            ErrorKind::PathParsing => tonic::Code::InvalidArgument,
-            ErrorKind::UnAuthorized => tonic::Code::Unauthenticated,
-            ErrorKind::ParseError => tonic::Code::Internal,
-            ErrorKind::TonicError => tonic::Code::Internal,
-            ErrorKind::MongoDbValueAccessError => tonic::Code::Internal,
-            ErrorKind::MongoDbBsonSerError => tonic::Code::Internal,
-            ErrorKind::MongoDbOperateError => tonic::Code::Internal,
-            ErrorKind::RedisError => tonic::Code::Internal,
-            ErrorKind::IOError => tonic::Code::Internal,
-            ErrorKind::ReqwestError => tonic::Code::Internal,
-            ErrorKind::ServiceNotFound => tonic::Code::Internal,
-            ErrorKind::InvalidRegisterCode => tonic::Code::InvalidArgument,
-            ErrorKind::BadRequest => tonic::Code::InvalidArgument,
             ErrorKind::AccountOrPassword => tonic::Code::Unauthenticated,
-            ErrorKind::OSSError => tonic::Code::Internal,
-            ErrorKind::CodeIsExpired => tonic::Code::InvalidArgument,
-            ErrorKind::CodeIsInvalid => tonic::Code::InvalidArgument,
-            ErrorKind::BinCode => tonic::Code::Internal,
+            ErrorKind::BodyParsing
+            | ErrorKind::PathParsing
+            | ErrorKind::UnAuthorized
+            | ErrorKind::BadRequest
+            | ErrorKind::CodeIsExpired
+            | ErrorKind::CodeIsInvalid => tonic::Code::InvalidArgument,
+            ErrorKind::OSSError
+            | ErrorKind::DbError
+            | ErrorKind::ConfigReadError
+            | ErrorKind::ConfigParseError
+            | ErrorKind::BroadCastError
+            | ErrorKind::InternalServer
+            | ErrorKind::ParseError
+            | ErrorKind::TonicError
+            | ErrorKind::MongoDbValueAccessError
+            | ErrorKind::MongoDbBsonSerError
+            | ErrorKind::MongoDbOperateError
+            | ErrorKind::RedisError
+            | ErrorKind::IOError
+            | ErrorKind::ReqwestError
+            | ErrorKind::BinCode
+            | ErrorKind::ServiceNotFound => tonic::Code::Internal,
         };
 
         error!("gRPC procedure encountered error{:?}", e);
@@ -253,7 +251,6 @@ impl From<Status> for Error {
             "IOError" => ErrorKind::IOError,
             "ReqwestError" => ErrorKind::ReqwestError,
             "ServiceNotFound" => ErrorKind::ServiceNotFound,
-            "InvalidRegisterCode" => ErrorKind::InvalidRegisterCode,
             "BadRequest" => ErrorKind::BadRequest,
             "AccountOrPassword" => ErrorKind::AccountOrPassword,
             "OSSError" => ErrorKind::OSSError,
@@ -279,31 +276,30 @@ impl From<Status> for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         let status_code = match self.kind {
-            ErrorKind::UnknownError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::BodyParsing => StatusCode::BAD_REQUEST,
-            ErrorKind::PathParsing => StatusCode::BAD_REQUEST,
-            ErrorKind::UnAuthorized => StatusCode::UNAUTHORIZED,
+            ErrorKind::BodyParsing
+            | ErrorKind::PathParsing
+            | ErrorKind::BadRequest
+            | ErrorKind::CodeIsExpired
+            | ErrorKind::CodeIsInvalid => StatusCode::BAD_REQUEST,
+            ErrorKind::AccountOrPassword | ErrorKind::UnAuthorized => StatusCode::UNAUTHORIZED,
             ErrorKind::NotFound => StatusCode::NOT_FOUND,
-            ErrorKind::DbError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::ParseError | ErrorKind::ConfigReadError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::ConfigParseError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::TonicError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::MongoDbValueAccessError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::MongoDbOperateError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::MongoDbBsonSerError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::RedisError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::ReqwestError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::IOError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::ServiceNotFound => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::BroadCastError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::InvalidRegisterCode => StatusCode::BAD_REQUEST,
-            ErrorKind::BadRequest => StatusCode::BAD_REQUEST,
-            ErrorKind::AccountOrPassword => StatusCode::UNAUTHORIZED,
-            ErrorKind::OSSError => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrorKind::CodeIsExpired => StatusCode::BAD_REQUEST,
-            ErrorKind::CodeIsInvalid => StatusCode::BAD_REQUEST,
-            ErrorKind::BinCode => StatusCode::INTERNAL_SERVER_ERROR,
+            ErrorKind::DbError
+            | ErrorKind::ParseError
+            | ErrorKind::ConfigReadError
+            | ErrorKind::ConfigParseError
+            | ErrorKind::TonicError
+            | ErrorKind::MongoDbValueAccessError
+            | ErrorKind::MongoDbOperateError
+            | ErrorKind::MongoDbBsonSerError
+            | ErrorKind::RedisError
+            | ErrorKind::ReqwestError
+            | ErrorKind::IOError
+            | ErrorKind::ServiceNotFound
+            | ErrorKind::BroadCastError
+            | ErrorKind::OSSError
+            | ErrorKind::BinCode
+            | ErrorKind::InternalServer
+            | ErrorKind::UnknownError => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         // todo is need to log error?
