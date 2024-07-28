@@ -66,7 +66,7 @@ impl ServiceRegister for Consul {
         let response = self.client.put(&url).json(&registration).send().await?;
         debug!("register service: {:?} to consul{url}", registration);
         if !response.status().is_success() {
-            return Err(Error::InternalServer(
+            return Err(Error::internal_with_details(
                 response.text().await.unwrap_or_default(),
             ));
         }
@@ -89,7 +89,7 @@ impl ServiceRegister for Consul {
         let url = self.api_url(&format!("service/deregister/{}", service_id));
         let response = self.client.put(url).send().await?;
         if !response.status().is_success() {
-            return Err(Error::InternalServer(
+            return Err(Error::internal_with_details(
                 response.text().await.unwrap_or_default(),
             ));
         }

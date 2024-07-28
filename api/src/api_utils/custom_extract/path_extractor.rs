@@ -1,7 +1,7 @@
 use abi::errors::Error;
 use axum::{
     async_trait,
-    extract::{path::ErrorKind, rejection::PathRejection, FromRequestParts},
+    extract::{rejection::PathRejection, FromRequestParts},
     http::{request::Parts, StatusCode},
 };
 use serde::de::DeserializeOwned;
@@ -24,53 +24,56 @@ where
             Err(rejection) => {
                 let (status, body) = match rejection {
                     PathRejection::FailedToDeserializePathParams(inner) => {
-                        let mut status = StatusCode::BAD_REQUEST;
+                        let status = StatusCode::BAD_REQUEST;
+                        let body = Error::path_parsing(inner);
 
-                        let kind = inner.into_kind();
-                        let body = match &kind {
-                            ErrorKind::WrongNumberOfParameters { .. } => {
-                                Error::PathParsing(kind.to_string(), None)
-                            }
+                        // let kind = inner.into_kind();
+                        // let body = match &kind {
+                        //     ErrorKind::WrongNumberOfParameters { .. } => {
+                        //         Error::PathParsing(kind.to_string(), None)
+                        //     }
 
-                            ErrorKind::ParseErrorAtKey { key, .. } => {
-                                Error::PathParsing(kind.to_string(), Some(key.clone()))
-                            }
+                        //     ErrorKind::ParseErrorAtKey { key, .. } => {
+                        //         Error::PathParsing(kind.to_string(), Some(key.clone()))
+                        //     }
 
-                            ErrorKind::ParseErrorAtIndex { index, .. } => {
-                                Error::PathParsing(kind.to_string(), Some(index.to_string()))
-                            }
+                        //     ErrorKind::ParseErrorAtIndex { index, .. } => {
+                        //         Error::PathParsing(kind.to_string(), Some(index.to_string()))
+                        //     }
 
-                            ErrorKind::ParseError { .. } => {
-                                Error::PathParsing(kind.to_string(), None)
-                            }
+                        //     ErrorKind::ParseError { .. } => {
+                        //         Error::PathParsing(kind.to_string(), None)
+                        //     }
 
-                            ErrorKind::InvalidUtf8InPathParam { key } => {
-                                Error::PathParsing(kind.to_string(), Some(key.clone()))
-                            }
+                        //     ErrorKind::InvalidUtf8InPathParam { key } => {
+                        //         Error::PathParsing(kind.to_string(), Some(key.clone()))
+                        //     }
 
-                            ErrorKind::UnsupportedType { .. } => {
-                                // this errors is caused by the programmer using an unsupported type
-                                // (such as nested maps) so respond with `500` instead
-                                status = StatusCode::INTERNAL_SERVER_ERROR;
-                                Error::InternalServer(kind.to_string())
-                            }
+                        //     ErrorKind::UnsupportedType { .. } => {
+                        //         // this errors is caused by the programmer using an unsupported type
+                        //         // (such as nested maps) so respond with `500` instead
+                        //         status = StatusCode::INTERNAL_SERVER_ERROR;
+                        //         Error::internal_with_details(kind.to_string())
+                        //     }
 
-                            ErrorKind::Message(msg) => Error::PathParsing(msg.clone(), None),
-                            _ => Error::PathParsing(
-                                format!("Unhandled deserialization errors: {kind}"),
-                                None,
-                            ),
-                        };
+                        //     ErrorKind::Message(msg) => Error::PathParsing(msg.clone(), None),
+                        //     _ => Error::PathParsing(
+                        //         format!("Unhandled deserialization errors: {kind}"),
+                        //         None,
+                        //     ),
+                        // };
 
                         (status, body)
                     }
                     PathRejection::MissingPathParams(error) => (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Error::PathParsing(error.to_string(), None),
+                        Error::path_parsing(error),
                     ),
                     _ => (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Error::PathParsing(format!("Unhandled path rejection: {rejection}"), None),
+                        Error::internal_with_details(format!(
+                            "Unhandled path rejection: {rejection}"
+                        )),
                     ),
                 };
 

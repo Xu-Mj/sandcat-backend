@@ -18,7 +18,7 @@ use oauth2::{
     TokenResponse,
 };
 use serde::Deserialize;
-use tracing::{error, info};
+use tracing::info;
 
 use crate::AppState;
 
@@ -80,19 +80,14 @@ pub async fn github_callback(
     let email = user_emails
         .into_iter()
         .find(|item| item.primary)
-        .ok_or(Error::NotFound)?;
+        .ok_or(Error::not_found())?;
 
     // select user info from db by email
     let mut db_rpc = state.db_rpc.clone();
     let req = GetUserByEmailRequest {
         email: email.email.clone(),
     };
-    let mut user_info = db_rpc
-        .get_user_by_email(req)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?
-        .into_inner()
-        .user;
+    let mut user_info = db_rpc.get_user_by_email(req).await?.into_inner().user;
 
     // if none, need to get user info from github and register
     if user_info.is_none() {
@@ -133,7 +128,7 @@ async fn get_token_result(
         .exchange_code(AuthorizationCode::new(code))
         .request_async(async_http_client)
         .await
-        .map_err(|e| Error::InternalServer(e.to_string()))
+        .map_err(Error::internal)
 }
 
 async fn download_avatar(url: &str, state: &AppState) -> Result<String, Error> {
@@ -182,13 +177,12 @@ async fn register_user(state: &AppState, email: String, access_token: &str) -> R
     let request = CreateUserRequest {
         user: Some(user2db),
     };
-    let response = db_rpc.create_user(request).await.map_err(|err| {
-        error!("create user error: {:?}", err);
-        Error::InternalServer(err.message().to_string())
-    })?;
+    let response = db_rpc.create_user(request).await?;
 
     response
         .into_inner()
         .user
-        .ok_or(Error::InternalServer("Unknown Error".to_string()))
+        .ok_or(Error::internal_with_details(
+            "create user failed, user is none",
+        ))
 }

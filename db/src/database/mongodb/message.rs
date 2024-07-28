@@ -6,7 +6,6 @@ use mongodb::{
 };
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;
-use tracing::error;
 use tracing::log::debug;
 
 use abi::config::Config;
@@ -170,17 +169,10 @@ impl MsgRecBoxRepo for MsgBox {
         let mut cursor = self.mb.find(query, Some(option)).await?;
         let mut messages = Vec::with_capacity((end - start) as usize);
         while let Some(result) = cursor.next().await {
-            match result {
-                Ok(doc) => {
-                    let msg = Msg::try_from(doc)?;
-                    messages.push(msg)
-                }
-                Err(e) => {
-                    error!("{:?}", e);
-                    return Err(Error::MongoDbOperateError(e));
-                }
-            }
+            let msg = Msg::try_from(result?)?;
+            messages.push(msg)
         }
+
         Ok(messages)
     }
 
@@ -232,20 +224,12 @@ impl MsgRecBoxRepo for MsgBox {
 
         let mut messages = Vec::with_capacity((len) as usize);
         while let Some(result) = cursor.next().await {
-            match result {
-                Ok(doc) => {
-                    let mut msg = Msg::try_from(doc)?;
-                    // set seq to 0 if the message is sent by the user
-                    if user_id == msg.send_id {
-                        msg.seq = 0;
-                    }
-                    messages.push(msg)
-                }
-                Err(e) => {
-                    error!("{:?}", e);
-                    return Err(Error::MongoDbOperateError(e));
-                }
+            let mut msg = Msg::try_from(result?)?;
+            // set seq to 0 if the message is sent by the user
+            if user_id == msg.send_id {
+                msg.seq = 0;
             }
+            messages.push(msg)
         }
         Ok(messages)
     }

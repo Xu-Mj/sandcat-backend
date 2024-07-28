@@ -110,8 +110,7 @@ impl ConsumerService {
 
         let mut msg: Msg = serde_json::from_str(payload)?;
 
-        let mt =
-            MsgType::try_from(msg.msg_type).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let mt = MsgType::try_from(msg.msg_type).map_err(Error::internal)?;
 
         // handle message read type
         if mt == MsgType::Read {
@@ -175,7 +174,7 @@ impl ConsumerService {
 
         futures::future::try_join_all(tasks)
             .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .map_err(Error::internal)?;
 
         Ok(())
     }
@@ -250,8 +249,7 @@ impl ConsumerService {
                 .save_send_max_seq(SaveMaxSeqRequest {
                     user_id: user_id.to_string(),
                 })
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+                .await?;
         }
         Ok(())
     }
@@ -264,23 +262,20 @@ impl ConsumerService {
                 .save_max_seq(SaveMaxSeqRequest {
                     user_id: user_id.to_string(),
                 })
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+                .await?;
         }
         Ok(cur_seq)
     }
 
     async fn handle_msg_read(&self, msg: Msg) -> Result<(), Error> {
-        let data =
-            bincode::deserialize(&msg.content).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let data = bincode::deserialize(&msg.content)?;
         let mut db_rpc = self.db_rpc.clone();
 
         db_rpc
             .read_msg(MsgReadReq {
                 msg_read: Some(data),
             })
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .await?;
         Ok(())
     }
 
@@ -313,8 +308,7 @@ impl ConsumerService {
                 .remove_group_member_id(&msg.receiver_id, &msg.send_id)
                 .await?;
         } else if msg.msg_type == MsgType::GroupRemoveMember as i32 {
-            let data: Vec<String> = bincode::deserialize(&msg.content)
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+            let data: Vec<String> = bincode::deserialize(&msg.content)?;
 
             let member_ids_ref: Vec<&str> = data.iter().map(AsRef::as_ref).collect();
             self.cache
@@ -350,17 +344,11 @@ impl ConsumerService {
         match msg_type {
             MsgType2::Single => {
                 let request = SaveMessageRequest::new(msg, need_to_history);
-                db_rpc
-                    .save_message(request)
-                    .await
-                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+                db_rpc.save_message(request).await?;
             }
             MsgType2::Group => {
                 let request = SaveGroupMsgRequest::new(msg, need_to_history, members);
-                db_rpc
-                    .save_group_message(request)
-                    .await
-                    .map_err(|e| Error::InternalServer(e.to_string()))?;
+                db_rpc.save_group_message(request).await?;
             }
         }
 
@@ -373,8 +361,7 @@ impl ConsumerService {
     ) -> Result<(), Error> {
         pusher
             .push_single_msg(SendMsgRequest { message: Some(msg) })
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .await?;
         Ok(())
     }
 
@@ -388,8 +375,7 @@ impl ConsumerService {
                 message: Some(msg),
                 members,
             })
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .await?;
         Ok(())
     }
 
@@ -400,25 +386,20 @@ impl ConsumerService {
             group_id: group_id.to_string(),
         };
         let mut db_rpc = self.db_rpc.clone();
-        match db_rpc.group_members_id(request).await {
-            Ok(resp) => {
-                let members_id = resp.into_inner().members_id;
+        let resp = db_rpc.group_members_id(request).await?;
+        {
+            let members_id = resp.into_inner().members_id;
 
-                // save it to cache
-                if let Err(e) = self
-                    .cache
-                    .save_group_members_id(group_id, members_id.clone())
-                    .await
-                {
-                    error!("failed to save group members id to cache: {:?}", e);
-                }
+            // save it to cache
+            if let Err(e) = self
+                .cache
+                .save_group_members_id(group_id, members_id.clone())
+                .await
+            {
+                error!("failed to save group members id to cache: {:?}", e);
+            }
 
-                Ok(members_id)
-            }
-            Err(e) => {
-                error!("failed to query group members id from db: {:?}", e);
-                Err(Error::InternalServer(e.to_string()))
-            }
+            Ok(members_id)
         }
     }
 }

@@ -79,7 +79,7 @@ impl GroupStoreRepo for PostgresGroup {
         .await?;
 
         if !user_belongs_to_group.0 {
-            return Err(Error::NotFound);
+            return Err(Error::db_not_found("user not belongs to the group"));
         }
 
         let members =
@@ -163,7 +163,7 @@ impl GroupStoreRepo for PostgresGroup {
         .await?;
 
         if !user_belongs_to_group.0 {
-            return Err(Error::NotFound);
+            return Err(Error::db_not_found("user not belongs to the group"));
         }
 
         // insert new members

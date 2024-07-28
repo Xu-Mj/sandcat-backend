@@ -1,7 +1,7 @@
 use mongodb::bson::Document;
 use tonic::Status;
 
-use crate::errors::Error;
+use crate::errors::{Error, ErrorKind};
 use crate::message::{
     GetDbMessagesRequest, GetDbMsgRequest, GroupMemSeq, Msg, MsgResponse, MsgType,
     SaveGroupMsgRequest, SaveMessageRequest, SendMsgRequest, UserAndGroupId,
@@ -205,16 +205,25 @@ impl UserAndGroupId {
 impl GetDbMsgRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
-            return Err(Error::BadRequest("user_id is empty".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "user_id is empty",
+            ));
         }
         if self.start < 0 {
-            return Err(Error::BadRequest("start is invalid".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "start is invalid".to_string(),
+            ));
         }
         if self.end < 0 {
-            return Err(Error::BadRequest("end is invalid".to_string()));
+            return Err(Error::with_details(ErrorKind::BadRequest, "end is invalid"));
         }
         if self.end < self.start {
-            return Err(Error::BadRequest("start is greater than end".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "start is greater than end",
+            ));
         }
         Ok(())
     }
@@ -223,20 +232,65 @@ impl GetDbMsgRequest {
 impl GetDbMessagesRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
-            return Err(Error::BadRequest("user_id is empty".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "user_id is empty",
+            ));
         }
         if self.start < 0 {
-            return Err(Error::BadRequest("start is invalid".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "start is invalid",
+            ));
         }
         if self.end < 0 {
-            return Err(Error::BadRequest("end is invalid".to_string()));
+            return Err(Error::with_details(ErrorKind::BadRequest, "end is invalid"));
         }
         if self.end < self.start {
-            return Err(Error::BadRequest("start is greater than end".to_string()));
+            return Err(Error::with_details(
+                ErrorKind::BadRequest,
+                "start is greater than end",
+            ));
         }
         Ok(())
     }
 }
+
+// impl GetDbMsgRequest {
+//     pub fn validate(&self) -> Result<(), Error> {
+//         if self.user_id.is_empty() {
+//             return Err(Error::BadRequest("user_id is empty".to_string()));
+//         }
+//         if self.start < 0 {
+//             return Err(Error::BadRequest("start is invalid".to_string()));
+//         }
+//         if self.end < 0 {
+//             return Err(Error::BadRequest("end is invalid".to_string()));
+//         }
+//         if self.end < self.start {
+//             return Err(Error::BadRequest("start is greater than end".to_string()));
+//         }
+//         Ok(())
+//     }
+// }
+
+// impl GetDbMessagesRequest {
+//     pub fn validate(&self) -> Result<(), Error> {
+//         if self.user_id.is_empty() {
+//             return Err(Error::BadRequest("user_id is empty".to_string()));
+//         }
+//         if self.start < 0 {
+//             return Err(Error::BadRequest("start is invalid".to_string()));
+//         }
+//         if self.end < 0 {
+//             return Err(Error::BadRequest("end is invalid".to_string()));
+//         }
+//         if self.end < self.start {
+//             return Err(Error::BadRequest("start is greater than end".to_string()));
+//         }
+//         Ok(())
+//     }
+// }
 
 impl SaveMessageRequest {
     pub fn new(msg: Msg, need_to_history: bool) -> Self {

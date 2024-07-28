@@ -33,11 +33,9 @@ pub mod sqlx_tester;
 // get host name
 pub fn get_host_name() -> Result<String, Error> {
     let hostname = hostname::get()?;
-    let hostname = hostname.into_string().map_err(|_| {
-        Error::InternalServer(String::from(
-            "get hostname error: OsString into String Failed",
-        ))
-    })?;
+    let hostname = hostname
+        .into_string()
+        .map_err(|_| Error::internal_with_details("get host name failed"))?;
     Ok(hostname)
 }
 
@@ -58,7 +56,7 @@ pub async fn get_rpc_channel_by_name(
                 break;
             }
             if i == 5 {
-                return Err(Error::ServiceNotFound(String::from(name)));
+                return Err(Error::service_not_found(name));
             }
         }
     }
@@ -84,7 +82,7 @@ pub fn hash_password(password: &[u8], salt: &str) -> Result<String, Error> {
     // Hash password to PHC string ($argon2id$v=19$...)
     Ok(argon2
         .hash_password(password, &SaltString::from_b64(salt).unwrap())
-        .map_err(|e| Error::InternalServer(e.to_string()))?
+        .map_err(|e| Error::internal_with_details(e.to_string()))?
         .to_string())
 }
 
@@ -184,9 +182,7 @@ pub async fn get_chan_(
         .connect_timeout(Duration::from_secs(5))
         .build()
         .await
-        .map_err(|_| {
-            Error::InternalServer("Connect to service register center failed".to_string())
-        })?;
+        .map_err(|e| Error::internal_with_details(e.to_string()))?;
 
     tokio::spawn(async move {
         let mut stream = match client.subscribe(name).await {
@@ -249,12 +245,9 @@ pub async fn register_service(config: &Config, com: Component) -> Result<(), Err
         "{}://{}:{}",
         config.service_center.protocol, config.service_center.host, config.service_center.port
     );
-    let endpoint = Endpoint::from_shared(addr)
-        .map_err(|e| Error::TonicError(e.to_string()))?
+    let endpoint = Endpoint::from_shared(addr)?
         .connect_timeout(Duration::from_secs(config.service_center.timeout));
-    let mut client = ServiceRegistryClient::connect(endpoint)
-        .await
-        .map_err(|e| Error::TonicError(e.to_string()))?;
+    let mut client = ServiceRegistryClient::connect(endpoint).await?;
 
     let (scheme, name, host, port, tags) = match com {
         abi::config::Component::Chat => {

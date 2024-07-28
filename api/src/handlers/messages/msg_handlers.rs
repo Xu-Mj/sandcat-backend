@@ -51,12 +51,7 @@ pub async fn pull_offline_messages(
     req.validate()?;
 
     // request db rpc
-    let response = db_rpc.get_msgs(req).await.map_err(|e| {
-        Error::InternalServer(format!(
-            "procedure db rpc service error: get_messages {:?}",
-            e
-        ))
-    })?;
+    let response = db_rpc.get_msgs(req).await?;
     Ok(Json(response.into_inner().messages))
 }
 
@@ -82,11 +77,6 @@ pub async fn del_msg(
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<DelMsgRequest>,
 ) -> Result<(), Error> {
     let mut db_rpc = state.db_rpc.clone();
-    db_rpc.del_messages(req).await.map_err(|e| {
-        Error::InternalServer(format!(
-            "procedure db rpc service error: get_messages {:?}",
-            e
-        ))
-    })?;
+    db_rpc.del_messages(req).await?;
     Ok(())
 }

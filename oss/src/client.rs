@@ -59,14 +59,14 @@ impl S3Client {
                 if e.raw().status().as_u16() == 404 {
                     Ok(false)
                 } else {
-                    Err(Error::InternalServer(
-                        "check_bucket_exists error".to_string(),
+                    Err(Error::internal_with_details(
+                        "check avatar_bucket exists error",
                     ))
                 }
             }
             Err(e) => {
                 error!("check_bucket_exists error: {:?}", e);
-                Err(Error::InternalServer(e.to_string()))
+                Err(Error::internal_with_details(e.to_string()))
             }
         }
     }
@@ -84,14 +84,14 @@ impl S3Client {
                 if e.raw().status().as_u16() == 404 {
                     Ok(false)
                 } else {
-                    Err(Error::InternalServer(
-                        "check avatar_bucket exists error".to_string(),
+                    Err(Error::internal_with_details(
+                        "check avatar_bucket exists error",
                     ))
                 }
             }
             Err(e) => {
                 error!("check avatar_bucket exists error: {:?}", e);
-                Err(Error::InternalServer(e.to_string()))
+                Err(Error::internal_with_details(e.to_string()))
             }
         }
     }
@@ -114,8 +114,7 @@ impl S3Client {
                 .create_bucket()
                 .bucket(&self.bucket)
                 .send()
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+                .await?;
         }
 
         if !self.check_avatar_bucket_exits().await? {
@@ -123,8 +122,7 @@ impl S3Client {
                 .create_bucket()
                 .bucket(&self.avatar_bucket)
                 .send()
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+                .await?;
         }
         Ok(())
     }
@@ -197,11 +195,7 @@ impl S3Client {
             .key(key)
             .body(content.into())
             .send()
-            .await
-            .map_err(|e| {
-                error!("{:?}", e);
-                Error::InternalServer(e.to_string())
-            })?;
+            .await?;
         Ok(())
     }
 
@@ -212,14 +206,9 @@ impl S3Client {
             .bucket(bucket)
             .key(key)
             .send()
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .await?;
 
-        let data = resp
-            .body
-            .collect()
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+        let data = resp.body.collect().await.map_err(Error::internal)?;
 
         Ok(data.into_bytes())
     }
@@ -231,8 +220,7 @@ impl S3Client {
             .bucket(bucket)
             .key(key)
             .send()
-            .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .await?;
 
         Ok(())
     }

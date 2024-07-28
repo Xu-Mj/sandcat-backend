@@ -14,11 +14,7 @@ pub async fn upload(
     mut multipart: Multipart,
 ) -> Result<String, Error> {
     let mut filename = String::new();
-    if let Some(field) = multipart
-        .next_field()
-        .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?
-    {
+    if let Some(field) = multipart.next_field().await.map_err(Error::internal)? {
         filename = field.file_name().unwrap_or_default().to_string();
         let extension = Path::new(&filename).extension().and_then(OsStr::to_str);
         filename = match extension {
@@ -26,10 +22,7 @@ pub async fn upload(
             Some(e) => format!("{}.{}", nanoid!(), e),
         };
 
-        let data = field
-            .bytes()
-            .await
-            .map_err(|_e| Error::InternalServer(_e.to_string()))?;
+        let data = field.bytes().await.map_err(Error::internal)?;
         state.oss.upload_file(&filename, data.into()).await?;
     }
 
@@ -67,11 +60,7 @@ pub async fn upload_avatar(
     mut multipart: Multipart,
 ) -> Result<String, Error> {
     let mut filename = String::new();
-    if let Some(field) = multipart
-        .next_field()
-        .await
-        .map_err(|err| Error::InternalServer(err.to_string()))?
-    {
+    if let Some(field) = multipart.next_field().await.map_err(Error::internal)? {
         filename = field.file_name().unwrap_or_default().to_string();
         let extension = Path::new(&filename).extension().and_then(OsStr::to_str);
         filename = match extension {
@@ -79,10 +68,7 @@ pub async fn upload_avatar(
             Some(e) => format!("{}.{}", nanoid!(), e),
         };
 
-        let data = field
-            .bytes()
-            .await
-            .map_err(|_e| Error::InternalServer(_e.to_string()))?;
+        let data = field.bytes().await.map_err(Error::internal)?;
         state.oss.upload_avatar(&filename, data.into()).await?;
     }
 

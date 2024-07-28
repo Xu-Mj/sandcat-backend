@@ -151,8 +151,9 @@ impl UserRepo for PostgresUser {
         }
 
         let mut user = user.unwrap();
-        let parsed_hash =
-            PasswordHash::new(&user.password).map_err(|e| Error::InternalServer(e.to_string()))?;
+        let parsed_hash = PasswordHash::new(&user.password)
+            .map_err(|e| Error::internal_with_details(e.to_string()))?;
+
         let is_valid = Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)
             .is_ok();
