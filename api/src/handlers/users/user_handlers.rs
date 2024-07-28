@@ -38,10 +38,7 @@ pub async fn refresh_token(
         Ok(data) => data,
         Err(err) => {
             debug!("token is expired");
-            return Err(Error::UnAuthorized(
-                format!("UnAuthorized Request: {:?}", err),
-                "/refresh_token".to_string(),
-            ));
+            return Err(Error::unauthorized(err, "/refresh_token"));
         }
     };
     let mut claims = Claims::new(claim.claims.sub.clone());
@@ -53,7 +50,7 @@ pub async fn refresh_token(
         &claims,
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
-    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    .map_err(Error::internal)?;
     Ok(token)
 }
 
@@ -63,12 +60,14 @@ pub async fn create_user(
     JsonExtractor(new_user): JsonExtractor<UserRegister>,
 ) -> Result<Json<User>, Error> {
     // verify register code
-    app_state
+    let code = app_state
         .cache
         .get_register_code(&new_user.email)
         .await?
-        .filter(|code| *code == new_user.code)
-        .ok_or(Error::InvalidRegisterCode)?;
+        .ok_or(Error::code_expired("in register"))?;
+    if code != new_user.code {
+        return Err(Error::code_invalid("in register"));
+    }
 
     // encode the password
     let salt = utils::generate_salt();
@@ -92,15 +91,12 @@ pub async fn create_user(
         user: Some(user2db),
     };
     let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc.create_user(request).await.map_err(|err| {
-        error!("create user error: {:?}", err);
-        Error::InternalServer(err.message().to_string())
-    })?;
+    let response = db_rpc.create_user(request).await?;
 
     let user = response
         .into_inner()
         .user
-        .ok_or(Error::InternalServer("Unknown Error".to_string()))?;
+        .ok_or(Error::internal_with_details("response user is empty"))?;
 
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
@@ -115,15 +111,12 @@ pub async fn update_user(
     // todo need to check the email is registered already
     let request = UpdateUserRequest { user: Some(user) };
     let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc.update_user(request).await.map_err(|err| {
-        error!("create user error: {:?}", err);
-        Error::InternalServer(err.message().to_string())
-    })?;
+    let response = db_rpc.update_user(request).await?;
 
     let user = response
         .into_inner()
         .user
-        .ok_or(Error::InternalServer("Unknown Error".to_string()))?;
+        .ok_or(Error::internal_with_details("response user is empty"))?;
 
     Ok(Json(user))
 }
@@ -136,11 +129,10 @@ pub async fn get_user_by_id(
     let request = GetUserRequest { user_id: id };
     let user = db_rpc
         .get_user(request)
-        .await
-        .map_err(|err| Error::InternalServer(err.message().to_string()))?
+        .await?
         .into_inner()
         .user
-        .ok_or(Error::NotFound)?;
+        .ok_or(Error::not_found())?;
     Ok(Json(user))
 }
 
@@ -150,12 +142,7 @@ pub async fn search_user(
 ) -> Result<Json<Option<UserWithMatchType>>, Error> {
     let mut db_rpc = app_state.db_rpc.clone();
     let request = SearchUserRequest { user_id, pattern };
-    let user = db_rpc
-        .search_user(request)
-        .await
-        .map_err(|err| Error::InternalServer(err.message().to_string()))?
-        .into_inner()
-        .user;
+    let user = db_rpc.search_user(request).await?.into_inner().user;
     Ok(Json(user))
 }
 
@@ -181,11 +168,10 @@ pub async fn login(
             account: login.account,
             password: login.password,
         })
-        .await
-        .map_err(|err| Error::InternalServer(err.message().to_string()))?
+        .await?
         .into_inner()
         .user
-        .ok_or(Error::AccountOrPassword)?;
+        .ok_or(Error::account_or_pwd())?;
 
     gen_token(&app_state, user, addr).await
 }
@@ -202,9 +188,9 @@ pub async fn modify_pwd(
         .cache
         .get_register_code(&pwd.email)
         .await?
-        .ok_or(Error::BadRequest("code is expired".to_string()))?;
+        .ok_or(Error::code_expired("code is expired"))?;
     if code != pwd.code {
-        return Err(Error::BadRequest("code is invalied".to_string()));
+        return Err(Error::code_invalid("code is invalid"));
     }
 
     let req = UpdateUserPwdRequest {
@@ -213,10 +199,7 @@ pub async fn modify_pwd(
     };
 
     let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc
-        .update_user_pwd(req)
-        .await
-        .map_err(|err| Error::InternalServer(err.message().to_string()))?;
+    db_rpc.update_user_pwd(req).await?;
     Ok(())
 }
 
@@ -230,12 +213,11 @@ pub async fn send_email(
     JsonExtractor(email): JsonExtractor<Email>,
 ) -> Result<(), Error> {
     if email.email.is_empty() {
-        return Err(Error::BadRequest("parameter is none".to_string()));
+        return Err(Error::bad_request("parameter is none".to_string()));
     }
 
     // get email template engine tera
-    let tera = Tera::new(&state.mail_config.temp_path)
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    let tera = Tera::new(&state.mail_config.temp_path).map_err(Error::internal)?;
     // generate random number(validate code)
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000..1_000_000);
@@ -245,21 +227,12 @@ pub async fn send_email(
     context.insert("numbers", &num.to_string());
     let content = tera
         .render(&state.mail_config.temp_file, &context)
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+        .map_err(Error::internal)?;
 
     // save it to redis; expire time 5 minutes
     let msg = Message::builder()
-        .from(
-            state
-                .mail_config
-                .account
-                .parse()
-                .map_err(|_| Error::InternalServer("email parse failed".to_string()))?,
-        )
-        .to(email
-            .email
-            .parse()
-            .map_err(|_| Error::InternalServer("user email parse failed".to_string()))?)
+        .from(state.mail_config.account.parse().map_err(Error::internal)?)
+        .to(email.email.parse().map_err(Error::internal)?)
         .subject("Verify Login Code")
         .header(ContentType::TEXT_PLAIN)
         .multipart(
@@ -269,20 +242,18 @@ pub async fn send_email(
                     .body(content),
             ),
         )
-        .map_err(|err| Error::InternalServer(err.to_string()))?;
+        .map_err(Error::internal)?;
 
     let creds = Credentials::new(state.mail_config.account, state.mail_config.password);
 
     // Open a remote connection to mail
     let mailer = SmtpTransport::relay(&state.mail_config.server)
-        .map_err(|err| Error::InternalServer(err.to_string()))?
+        .map_err(Error::internal)?
         .credentials(creds)
         .build();
 
     // Send the email
-    mailer
-        .send(&msg)
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    mailer.send(&msg).map_err(Error::internal)?;
     tokio::spawn(async move {
         if let Err(e) = state
             .cache

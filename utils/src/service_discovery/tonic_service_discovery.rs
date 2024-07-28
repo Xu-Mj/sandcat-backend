@@ -62,10 +62,7 @@ impl<Fetcher: ServiceFetcher> DynamicServiceDiscovery<Fetcher> {
         let x = self.service_center.fetch().await?;
         let change_set = self.change_set(&x).await;
         for change in change_set {
-            self.sender
-                .send(change)
-                .await
-                .map_err(|e| Error::InternalServer(e.to_string()))?;
+            self.sender.send(change).await.map_err(Error::internal)?;
         }
         self.services = x;
         Ok(())

@@ -102,7 +102,7 @@ impl DbRpcService {
         // wait all tasks
         futures::future::try_join_all(tasks)
             .await
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
+            .map_err(Error::internal)?;
         Ok(())
     }
 
@@ -161,8 +161,8 @@ impl DbRpcService {
         });
 
         // wait all tasks complete
-        let (db_result, msg_rec_box_result) = tokio::try_join!(db_task, msg_rec_box_task)
-            .map_err(|err| Error::InternalServer(err.to_string()))?;
+        let (db_result, msg_rec_box_result) =
+            tokio::try_join!(db_task, msg_rec_box_task).map_err(Error::internal)?;
 
         db_result?;
         msg_rec_box_result?;

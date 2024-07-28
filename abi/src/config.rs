@@ -292,8 +292,8 @@ pub struct OAuth2Item {
 
 impl Config {
     pub fn load(filename: impl AsRef<Path>) -> Result<Self, Error> {
-        let content = fs::read_to_string(filename).map_err(|_| Error::ConfigReadError)?;
-        serde_yaml::from_str(&content).map_err(Error::ConfigParseError)
+        let content = fs::read_to_string(filename)?;
+        Ok(serde_yaml::from_str(&content)?)
     }
 }
 

@@ -218,6 +218,9 @@ impl Manager {
     }
 
     pub async fn broadcast(&self, msg: Msg) -> Result<(), Error> {
-        self.tx.send(msg).await.map_err(|_| Error::BroadCastError)
+        self.tx
+            .send(msg)
+            .await
+            .map_err(|e| Error::broadcast(Box::new(e)))
     }
 }

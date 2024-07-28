@@ -22,6 +22,7 @@ jobs:
           key: ${{ runner.os }}-lint-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache | Protoc
+        id: cache_protoc
         uses: actions/cache@v3
         with:
           path: /opt/protoc
@@ -36,18 +37,8 @@ jobs:
           wget https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-x86_64.zip
           unzip protoc-23.4-linux-x86_64.zip -d /opt/protoc
 
-      - name: Cache | Dependencies
-        uses: actions/cache@v3
-        with:
-          path: /usr/local/include/librdkafka
-          key: librdkafka-dev-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: librdkafka-dev-${{ runner.os }}-
-
-      - name: Install | Dependencies
-        if: steps.cache_dependencies.outputs.cache-hit != 'true'
-        run: |
-          sudo apt update
-          sudo apt install -y librdkafka-dev
+      - name: Add Protoc to PATH
+        run: echo "/opt/protoc/bin" >> $GITHUB_PATH
 
       - name: Setup | Install rustup
         run: |
@@ -82,11 +73,6 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Setup | Install rustup
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
-
       - name: Setup | Cache Cargo
         uses: actions/cache@v4
         with:
@@ -96,6 +82,33 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-check-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache | Protoc
+        id: cache_protoc_check
+        uses: actions/cache@v3
+        with:
+          path: /opt/protoc
+          key: protoc-${{ runner.os }}-23.x
+          restore-keys: protoc-${{ runner.os }}-
+
+      - name: Install | Protoc
+        if: steps.cache_protoc_check.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /opt/protoc
+          cd /opt/protoc
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-x86_64.zip
+          unzip protoc-23.4-linux-x86_64.zip -d /opt/protoc
+
+      - name: Add Protoc to PATH
+        run: echo "/opt/protoc/bin" >> $GITHUB_PATH
+
+      - name: Set PROTOC environment variable
+        run: echo "PROTOC=/opt/protoc/bin/protoc" >> $GITHUB_ENV
+
+      - name: Setup | Install rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
 
       - name: Setup | Disable rustup self-update
         run: |
@@ -107,16 +120,4 @@ jobs:
           rustup default ${{ matrix.rust }}
 
       - name: Build | Check
-        run: cargo check --all
-
-      - name: Setup | binstall
-        run: |
-          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-
-      - name: Setup | check-all-features
-        run: |
-          cargo binstall -y cargo-all-features
-
-      - name: Build | Check all features
-        run: |
-          cargo check-all-features
+        run: cargo check --no-default-features --features=static

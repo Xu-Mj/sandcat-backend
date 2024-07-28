@@ -47,12 +47,12 @@ impl LoginRequest {
     pub fn decode(&mut self) -> Result<(), Error> {
         // base64 decode
         if self.account.is_empty() || self.password.is_empty() {
-            return Err(Error::BadRequest("parameter is none".to_string()));
+            return Err(Error::bad_request("parameter is none"));
         }
         let pwd = BASE64_STANDARD_NO_PAD
             .decode(&self.password)
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
-        self.password = String::from_utf8(pwd).map_err(|e| Error::InternalServer(e.to_string()))?;
+            .map_err(Error::internal)?;
+        self.password = String::from_utf8(pwd).map_err(Error::internal)?;
         Ok(())
     }
 }
@@ -89,26 +89,28 @@ pub async fn gen_token(
         &claims,
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
-    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    .map_err(Error::internal)?;
+
     claims.exp += REFRESH_EXPIRES;
     let refresh_token = encode(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(app_state.jwt_secret.as_bytes()),
     )
-    .map_err(|err| Error::InternalServer(err.to_string()))?;
+    .map_err(Error::internal)?;
 
     app_state.cache.user_login(&user.account).await?;
 
     // get websocket service address
     // let ws_lb = Arc::get_mut(&mut app_state.ws_lb).unwrap();
-    let ws_addr = if let Some(addr) = app_state.ws_lb.get_service().await {
-        format!("{}://{}/ws", &app_state.ws_config.protocol, addr)
-    } else {
-        return Err(Error::InternalServer(
-            "No websocket service available".to_string(),
-        ));
-    };
+    let ws_addr = app_state
+        .ws_lb
+        .get_service()
+        .await
+        .map(|addr| format!("{}://{}/ws", &app_state.ws_config.protocol, addr))
+        .ok_or(Error::internal_with_details(
+            "No websocket service available",
+        ))?;
 
     // query region
     user.region = match addr.ip() {
@@ -130,10 +132,7 @@ pub async fn gen_token(
         };
 
         let mut db_rpc = app_state.db_rpc.clone();
-        let _ = db_rpc
-            .update_user_region(request)
-            .await
-            .map_err(|err| Error::InternalServer(err.message().to_string()))?;
+        let _ = db_rpc.update_user_region(request).await?;
     }
 
     Ok(Json(Token {
@@ -160,12 +159,12 @@ impl ModifyPwdRequest {
             || self.pwd.is_empty()
             || self.code.is_empty()
         {
-            return Err(Error::BadRequest("parameter is none".to_string()));
+            return Err(Error::bad_request("parameter is none"));
         }
         let pwd = BASE64_STANDARD_NO_PAD
             .decode(&self.pwd)
-            .map_err(|e| Error::InternalServer(e.to_string()))?;
-        self.pwd = String::from_utf8(pwd).map_err(|e| Error::InternalServer(e.to_string()))?;
+            .map_err(Error::internal)?;
+        self.pwd = String::from_utf8(pwd).map_err(Error::internal)?;
         Ok(())
     }
 }

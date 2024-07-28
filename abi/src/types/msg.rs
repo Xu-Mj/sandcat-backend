@@ -205,16 +205,16 @@ impl UserAndGroupId {
 impl GetDbMsgRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
-            return Err(Error::BadRequest("user_id is empty".to_string()));
+            return Err(Error::bad_request("user_id is empty"));
         }
         if self.start < 0 {
-            return Err(Error::BadRequest("start is invalid".to_string()));
+            return Err(Error::bad_request("start is invalid"));
         }
         if self.end < 0 {
-            return Err(Error::BadRequest("end is invalid".to_string()));
+            return Err(Error::bad_request("end is invalid"));
         }
         if self.end < self.start {
-            return Err(Error::BadRequest("start is greater than end".to_string()));
+            return Err(Error::bad_request("start is greater than end"));
         }
         Ok(())
     }
@@ -223,16 +223,16 @@ impl GetDbMsgRequest {
 impl GetDbMessagesRequest {
     pub fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
-            return Err(Error::BadRequest("user_id is empty".to_string()));
+            return Err(Error::bad_request("user_id is empty"));
         }
         if self.start < 0 {
-            return Err(Error::BadRequest("start is invalid".to_string()));
+            return Err(Error::bad_request("start is invalid"));
         }
         if self.end < 0 {
-            return Err(Error::BadRequest("end is invalid".to_string()));
+            return Err(Error::bad_request("end is invalid"));
         }
         if self.end < self.start {
-            return Err(Error::BadRequest("start is greater than end".to_string()));
+            return Err(Error::bad_request("start is greater than end"));
         }
         Ok(())
     }

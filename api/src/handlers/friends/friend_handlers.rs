@@ -29,14 +29,12 @@ pub async fn get_friends_list_by_user_id(
     };
     let friends = db_rpc
         .get_friend_list(request.clone())
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?
+        .await?
         .into_inner()
         .friends;
     let fs = db_rpc
         .get_friendship_list(request)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?
+        .await?
         .into_inner()
         .friendships;
     Ok(Json(FriendShipList { friends, fs }))
@@ -53,8 +51,7 @@ pub async fn get_apply_list_by_user_id(
             user_id,
             offline_time,
         })
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+        .await?;
     let list = response.into_inner().friendships;
     Ok(Json(list))
 }
@@ -71,19 +68,18 @@ pub async fn create_friendship(
         .create_friendship(FsCreateRequest {
             fs_create: Some(new_friend),
         })
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+        .await?;
     let inner = response.into_inner();
     let fs_req = inner
         .fs_req
-        .ok_or(Error::InternalServer("create fs error".to_string()))?;
+        .ok_or(Error::internal_with_details("create fs error"))?;
 
     let fs_send = inner
         .fs_send
-        .ok_or(Error::InternalServer("send fs error".to_string()))?;
+        .ok_or(Error::internal_with_details("send fs error"))?;
 
     // decode fs
-    let fs = bincode::serialize(&fs_send).map_err(|e| Error::InternalServer(e.to_string()))?;
+    let fs = bincode::serialize(&fs_send)?;
 
     // increase send sequence
     let (cur_seq, _, _) = app_state.cache.incr_send_seq(&fs_send.user_id).await?;
@@ -92,10 +88,7 @@ pub async fn create_friendship(
     let msg = SendMsgRequest::new_with_friend_ship_req(fs_send.user_id, receiver_id, fs, cur_seq);
     let mut chat_rpc = app_state.chat_rpc.clone();
     // need to send message to mq, because need to store
-    chat_rpc
-        .send_msg(msg)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    chat_rpc.send_msg(msg).await?;
     Ok(Json(fs_req))
 }
 
@@ -109,21 +102,18 @@ pub async fn agree(
     let request = FsAgreeRequest {
         fs_reply: Some(agree),
     };
-    let response = db_rpc
-        .agree_friendship(request)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    let response = db_rpc.agree_friendship(request).await?;
     let inner = response.into_inner();
     let req = inner
         .req
-        .ok_or(Error::InternalServer("agree fs error".to_string()))?;
+        .ok_or(Error::internal_with_details("agree fs error"))?;
     let send = inner
         .send
-        .ok_or(Error::InternalServer("send fs error".to_string()))?;
+        .ok_or(Error::internal_with_details("send fs error"))?;
 
     let send_id = send.friend_id.clone();
     // decode friend
-    let friend = bincode::serialize(&send).map_err(|e| Error::InternalServer(e.to_string()))?;
+    let friend = bincode::serialize(&send)?;
 
     // increase send sequence
     let (cur_seq, _, _) = app_state.cache.incr_send_seq(&send_id).await?;
@@ -136,8 +126,7 @@ pub async fn agree(
             friend,
             cur_seq,
         ))
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+        .await?;
     Ok(Json(req))
 }
 
@@ -162,28 +151,22 @@ pub async fn delete_friend(
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<DeleteFriendRequest>,
 ) -> Result<(), Error> {
     if req.user_id.is_empty() {
-        return Err(Error::BadRequest(String::from("user id is none")));
+        return Err(Error::bad_request("user id is none"));
     }
     if req.friend_id.is_empty() {
-        return Err(Error::BadRequest(String::from("friend id is none")));
+        return Err(Error::bad_request("friend id is none"));
     }
 
     let user_id = req.user_id.clone();
     let friend_id = req.friend_id.clone();
 
     let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc
-        .delete_friend(req)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    db_rpc.delete_friend(req).await?;
 
     // send message to friend
     let msg = SendMsgRequest::new_with_friend_del(user_id, friend_id);
     let mut chat_rpc = app_state.chat_rpc.clone();
-    chat_rpc
-        .send_msg(msg)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    chat_rpc.send_msg(msg).await?;
     Ok(())
 }
 
@@ -192,13 +175,10 @@ pub async fn update_friend_remark(
     JsonWithAuthExtractor(relation): JsonWithAuthExtractor<UpdateRemarkRequest>,
 ) -> Result<(), Error> {
     if relation.remark.is_empty() {
-        return Err(Error::BadRequest(String::from("remark is none")));
+        return Err(Error::bad_request("remark is none"));
     }
     let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc
-        .update_friend_remark(relation)
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
+    db_rpc.update_friend_remark(relation).await?;
     Ok(())
 }
 
@@ -209,8 +189,7 @@ pub async fn query_friend_info(
     let mut db_rpc = app_state.db_rpc.clone();
     let friend = db_rpc
         .query_friend_info(QueryFriendInfoRequest { user_id })
-        .await
-        .map_err(|e| Error::InternalServer(e.to_string()))?;
-    let friend = friend.into_inner().friend.ok_or(Error::NotFound)?;
+        .await?;
+    let friend = friend.into_inner().friend.ok_or(Error::not_found())?;
     Ok(Json(friend))
 }

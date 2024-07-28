@@ -1,4 +1,3 @@
-use axum::extract::path::ErrorKind;
 use axum::extract::rejection::{JsonRejection, PathRejection};
 use axum::extract::{FromRef, FromRequestParts, Request};
 use axum::http::request::Parts;
@@ -53,7 +52,7 @@ where
             if !header.starts_with(BEARER) {
                 return Err((
                     StatusCode::UNAUTHORIZED,
-                    Error::UnAuthorized("UnAuthorized Request".to_string(), path),
+                    Error::unauthorized_with_details(path),
                 ));
             }
             let header: Vec<&str> = header.split_whitespace().collect();
@@ -63,10 +62,7 @@ where
                 &DecodingKey::from_secret(app_state.jwt_secret.as_bytes()),
                 &Validation::default(),
             ) {
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Error::InternalServer(err.to_string()),
-                ));
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, Error::internal(err)));
             }
 
             let req = Request::from_parts(parts, body);
@@ -75,14 +71,14 @@ where
                 Ok(value) => Ok(Self(value.0)),
                 // convert the errors from `axum::Json` into whatever we want
                 Err(rejection) => {
-                    let app_err = Error::BodyParsing(rejection.body_text(), path);
+                    let app_err = Error::body_parsing(rejection.body_text());
                     Err((rejection.status(), app_err))
                 }
             }
         } else {
             Err((
                 StatusCode::UNAUTHORIZED,
-                Error::UnAuthorized("UnAuthorized Request".to_string(), path),
+                Error::unauthorized_with_details(path),
             ))
         }
     }
@@ -115,7 +111,7 @@ where
             if !header.starts_with(BEARER) {
                 return Err((
                     StatusCode::UNAUTHORIZED,
-                    Error::UnAuthorized("UnAuthorized Request".to_string(), path),
+                    Error::unauthorized_with_details(path),
                 ));
             }
 
@@ -126,10 +122,7 @@ where
                 &DecodingKey::from_secret(app_state.jwt_secret.as_bytes()),
                 &Validation::default(),
             ) {
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    Error::UnAuthorized(err.to_string(), path),
-                ));
+                return Err((StatusCode::UNAUTHORIZED, Error::unauthorized(err, path)));
             }
 
             match axum::extract::Path::<T>::from_request_parts(parts, state).await {
@@ -137,56 +130,17 @@ where
                 Err(rejection) => {
                     let (status, body) = match rejection {
                         PathRejection::FailedToDeserializePathParams(inner) => {
-                            let mut status = StatusCode::BAD_REQUEST;
-
-                            let kind = inner.into_kind();
-                            let body = match &kind {
-                                ErrorKind::WrongNumberOfParameters { .. } => {
-                                    Error::PathParsing(kind.to_string(), None)
-                                }
-
-                                ErrorKind::ParseErrorAtKey { key, .. } => {
-                                    Error::PathParsing(kind.to_string(), Some(key.clone()))
-                                }
-
-                                ErrorKind::ParseErrorAtIndex { index, .. } => {
-                                    Error::PathParsing(kind.to_string(), Some(index.to_string()))
-                                }
-
-                                ErrorKind::ParseError { .. } => {
-                                    Error::PathParsing(kind.to_string(), None)
-                                }
-
-                                ErrorKind::InvalidUtf8InPathParam { key } => {
-                                    Error::PathParsing(kind.to_string(), Some(key.clone()))
-                                }
-
-                                ErrorKind::UnsupportedType { .. } => {
-                                    // these errors are caused by the programmer using an unsupported type
-                                    // (such as nested maps) so respond with `500` instead
-                                    status = StatusCode::INTERNAL_SERVER_ERROR;
-                                    Error::InternalServer(kind.to_string())
-                                }
-
-                                ErrorKind::Message(msg) => Error::PathParsing(msg.clone(), None),
-                                _ => Error::PathParsing(
-                                    format!("Unhandled deserialization errors: {kind}"),
-                                    None,
-                                ),
-                            };
-
-                            (status, body)
+                            (StatusCode::BAD_REQUEST, Error::path_parsing(inner))
                         }
                         PathRejection::MissingPathParams(error) => (
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Error::PathParsing(error.to_string(), None),
+                            Error::path_parsing(error),
                         ),
                         _ => (
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Error::PathParsing(
-                                format!("Unhandled path rejection: {rejection}"),
-                                None,
-                            ),
+                            Error::internal_with_details(format!(
+                                "Unhandled path rejection: {rejection}"
+                            )),
                         ),
                     };
 
@@ -196,7 +150,7 @@ where
         } else {
             Err((
                 StatusCode::UNAUTHORIZED,
-                Error::UnAuthorized("UnAuthorized Request".to_string(), path),
+                Error::unauthorized_with_details(path),
             ))
         }
     }
