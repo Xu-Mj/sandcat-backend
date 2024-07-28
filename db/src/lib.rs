@@ -18,6 +18,9 @@ pub async fn clean_receive_box(config: &Config) {
     let period = config.db.mongodb.clean.period;
 
     let msg_box = database::msg_rec_box_cleaner(config).await;
+    info!(
+        "clean receive box task started, and the period is {period}s; the except types is {:?}",
+        types
+    );
     msg_box.clean_receive_box(period, types);
-    info!("clean receive box task started");
 }
