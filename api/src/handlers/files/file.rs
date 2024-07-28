@@ -17,6 +17,7 @@ pub async fn upload(
     if let Some(field) = multipart.next_field().await.map_err(Error::internal)? {
         filename = field.file_name().unwrap_or_default().to_string();
         let extension = Path::new(&filename).extension().and_then(OsStr::to_str);
+        // filename = extension.map(|v| format!("{}.{}", nanoid!(), v)).unwrap_or(nanoid!());
         filename = match extension {
             None => nanoid!(),
             Some(e) => format!("{}.{}", nanoid!(), e),
