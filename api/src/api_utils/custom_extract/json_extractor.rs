@@ -34,15 +34,10 @@ where
         match axum::Json::<T>::from_request(req, state).await {
             Ok(value) => Ok(Self(value.0)),
             // convert the errors from `axum::Json` into whatever we want
-            Err(rejection) => {
-                // let mut ph = String::new();
-                // if path.is_some() {
-                //     ph = path.unwrap();
-                // }
-                let app_err = Error::body_parsing(rejection.body_text());
-
-                Err((rejection.status(), app_err))
-            }
+            Err(rejection) => Err((
+                rejection.status(),
+                Error::body_parsing(rejection.body_text()),
+            )),
         }
     }
 }

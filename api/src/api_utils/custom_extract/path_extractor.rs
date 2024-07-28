@@ -24,46 +24,7 @@ where
             Err(rejection) => {
                 let (status, body) = match rejection {
                     PathRejection::FailedToDeserializePathParams(inner) => {
-                        let status = StatusCode::BAD_REQUEST;
-                        let body = Error::path_parsing(inner);
-
-                        // let kind = inner.into_kind();
-                        // let body = match &kind {
-                        //     ErrorKind::WrongNumberOfParameters { .. } => {
-                        //         Error::PathParsing(kind.to_string(), None)
-                        //     }
-
-                        //     ErrorKind::ParseErrorAtKey { key, .. } => {
-                        //         Error::PathParsing(kind.to_string(), Some(key.clone()))
-                        //     }
-
-                        //     ErrorKind::ParseErrorAtIndex { index, .. } => {
-                        //         Error::PathParsing(kind.to_string(), Some(index.to_string()))
-                        //     }
-
-                        //     ErrorKind::ParseError { .. } => {
-                        //         Error::PathParsing(kind.to_string(), None)
-                        //     }
-
-                        //     ErrorKind::InvalidUtf8InPathParam { key } => {
-                        //         Error::PathParsing(kind.to_string(), Some(key.clone()))
-                        //     }
-
-                        //     ErrorKind::UnsupportedType { .. } => {
-                        //         // this errors is caused by the programmer using an unsupported type
-                        //         // (such as nested maps) so respond with `500` instead
-                        //         status = StatusCode::INTERNAL_SERVER_ERROR;
-                        //         Error::internal_with_details(kind.to_string())
-                        //     }
-
-                        //     ErrorKind::Message(msg) => Error::PathParsing(msg.clone(), None),
-                        //     _ => Error::PathParsing(
-                        //         format!("Unhandled deserialization errors: {kind}"),
-                        //         None,
-                        //     ),
-                        // };
-
-                        (status, body)
+                        (StatusCode::BAD_REQUEST, Error::path_parsing(inner))
                     }
                     PathRejection::MissingPathParams(error) => (
                         StatusCode::INTERNAL_SERVER_ERROR,
