@@ -52,5 +52,6 @@ pub trait FriendRepo: Send + Sync {
 
     /// agree friend-apply-request
     async fn agree_friend_apply_request(&self, fs: AgreeReply) -> Result<(Friend, Friend), Error>;
-    async fn delete_friend(&self, fs_id: &str, friend_id: i64) -> Result<(), Error>;
+
+    async fn delete_friend(&self, fs_id: &str, user_id: &str) -> Result<(), Error>;
 }

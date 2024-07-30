@@ -206,7 +206,7 @@ impl FriendRepo for PostgresFriend {
         offline_time: i64,
     ) -> Result<Vec<Friend>, Error> {
         let list = sqlx::query_as(
-            "SELECT u.id as friend_id, u.name, u.account, u.avatar, u.gender, u.age, u.region, u.signature,
+            "SELECT u.id as friend_id, u.name, u.account, u.email, u.avatar, u.gender, u.age, u.region, u.signature,
                         f.fs_id as fs_id, f.status, f.source, f.create_time, f.update_time, f.remark
             FROM friends AS f
             JOIN users AS u
@@ -346,15 +346,16 @@ impl FriendRepo for PostgresFriend {
         Ok((req, send))
     }
 
-    async fn delete_friend(&self, fs_id: &str, _friend_id: i64) -> Result<(), Error> {
+    async fn delete_friend(&self, fs_id: &str, user_id: &str) -> Result<(), Error> {
         // update two tables friendships and friends
         // so need to use transaction
         let update_time = chrono::Utc::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
 
-        sqlx::query("UPDATE friends SET status = 'Deleted', update_time = $2 WHERE fs_id = $1")
+        sqlx::query("UPDATE friends SET status = 'Deleted', update_time = $2 WHERE fs_id = $1 AND (EXISTS (SELECT 1 FROM friends WHERE fs_id = $1 AND user_id = $3))")
             .bind(fs_id)
             .bind(update_time)
+            .bind(user_id)
             .execute(&mut *transaction)
             .await?;
 

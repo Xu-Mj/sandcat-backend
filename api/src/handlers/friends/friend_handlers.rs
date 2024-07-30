@@ -150,12 +150,7 @@ pub async fn delete_friend(
     State(app_state): State<AppState>,
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<DeleteFriendRequest>,
 ) -> Result<(), Error> {
-    if req.user_id.is_empty() {
-        return Err(Error::bad_request("user id is none"));
-    }
-    if req.friend_id.is_empty() {
-        return Err(Error::bad_request("friend id is none"));
-    }
+    req.validate()?;
 
     let user_id = req.user_id.clone();
     let friend_id = req.friend_id.clone();
