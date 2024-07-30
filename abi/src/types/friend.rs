@@ -1,6 +1,9 @@
-use crate::message::{Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, User};
+use crate::errors::Error;
+use crate::message::{
+    DeleteFriendRequest, Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, User,
+};
 use sqlx::postgres::PgRow;
-use sqlx::{Error, FromRow, Row};
+use sqlx::{FromRow, Row};
 use std::fmt::{Display, Formatter};
 
 impl Display for FriendshipStatus {
@@ -39,7 +42,7 @@ impl From<FsStatus> for FriendshipStatus {
 }
 
 impl FromRow<'_, PgRow> for Friendship {
-    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
         let status: FsStatus = row.try_get("status")?;
         let status = FriendshipStatus::from(status);
         Ok(Self {
@@ -59,7 +62,7 @@ impl FromRow<'_, PgRow> for Friendship {
 }
 
 impl FromRow<'_, PgRow> for FriendDb {
-    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
         let status: FsStatus = row.try_get("status")?;
         let status = FriendshipStatus::from(status);
         Ok(Self {
@@ -77,7 +80,7 @@ impl FromRow<'_, PgRow> for FriendDb {
 }
 
 impl FromRow<'_, PgRow> for Friend {
-    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
         let status: FsStatus = row.try_get("status").unwrap_or_default();
         let status = FriendshipStatus::from(status);
         Ok(Self {
@@ -116,7 +119,7 @@ impl From<User> for FriendshipWithUser {
 }
 
 impl FromRow<'_, PgRow> for FriendshipWithUser {
-    fn from_row(row: &'_ PgRow) -> Result<Self, Error> {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
         Ok(Self {
             fs_id: row.try_get("fs_id").unwrap_or_default(),
             user_id: row.try_get("user_id").unwrap_or_default(),
@@ -155,5 +158,22 @@ impl From<User> for Friend {
             create_time: 0,
             email: value.email,
         }
+    }
+}
+
+impl DeleteFriendRequest {
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.user_id.is_empty() {
+            return Err(Error::bad_request("user id is none"));
+        }
+
+        if self.friend_id.is_empty() {
+            return Err(Error::bad_request("friend id is none"));
+        }
+
+        if self.fs_id.is_empty() {
+            return Err(Error::bad_request("friendship id is none"));
+        }
+        Ok(())
     }
 }

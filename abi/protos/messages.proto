@@ -390,7 +390,6 @@ message DeleteFriendRequest {
   string user_id = 1;
   string friend_id = 2;
   string fs_id = 3;
-  int64 id = 4;
 }
 
 message DeleteFriendResponse {}

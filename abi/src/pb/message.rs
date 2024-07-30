@@ -571,8 +571,6 @@ pub struct DeleteFriendRequest {
     pub friend_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub fs_id: ::prost::alloc::string::String,
-    #[prost(int64, tag = "4")]
-    pub id: i64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
