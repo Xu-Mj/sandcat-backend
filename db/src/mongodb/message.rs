@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use async_trait::async_trait;
 use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{
@@ -19,6 +21,7 @@ use crate::mongodb::utils::to_doc;
 /// need to category message
 /// like: group message, single message, system message, service message, third party message etc.
 /// or we set everyone a collection,
+#[derive(Debug)]
 pub struct MsgBox {
     /// for message box
     mb: Collection<Document>,

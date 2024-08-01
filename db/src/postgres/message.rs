@@ -6,6 +6,7 @@ use abi::message::Msg;
 
 use crate::message::MsgStoreRepo;
 
+#[derive(Debug)]
 pub struct PostgresMessage {
     pool: PgPool,
 }

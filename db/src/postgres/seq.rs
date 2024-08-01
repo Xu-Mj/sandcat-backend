@@ -7,6 +7,7 @@ use tracing::error;
 
 use crate::seq::SeqRepo;
 
+#[derive(Debug)]
 pub struct PostgresSeq {
     pool: PgPool,
     seq_step: i32,

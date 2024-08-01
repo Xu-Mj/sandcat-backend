@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use async_trait::async_trait;
 
 use abi::errors::Error;
@@ -7,7 +9,7 @@ use abi::message::{
 };
 
 #[async_trait]
-pub trait FriendRepo: Send + Sync {
+pub trait FriendRepo: Send + Sync + Debug {
     /// create friend apply request, ignore friendship status in fs, it always be pending
     async fn create_fs(
         &self,

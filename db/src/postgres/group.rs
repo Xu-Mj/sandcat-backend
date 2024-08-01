@@ -9,6 +9,7 @@ use abi::message::{
 
 use crate::group::GroupStoreRepo;
 
+#[derive(Debug)]
 pub struct PostgresGroup {
     pool: PgPool,
 }

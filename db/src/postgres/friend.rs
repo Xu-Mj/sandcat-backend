@@ -11,6 +11,7 @@ use abi::message::{
 
 use crate::friend::FriendRepo;
 
+#[derive(Debug)]
 pub struct PostgresFriend {
     pool: PgPool,
 }

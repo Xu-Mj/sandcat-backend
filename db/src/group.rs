@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use async_trait::async_trait;
 
 use abi::errors::Error;
@@ -7,7 +9,7 @@ use abi::message::{
 };
 
 #[async_trait]
-pub trait GroupStoreRepo: Sync + Send {
+pub trait GroupStoreRepo: Sync + Send + Debug {
     async fn get_group(&self, user_id: &str, group_id: &str) -> Result<GroupInfo, Error>;
 
     async fn get_group_and_members(

@@ -23,6 +23,7 @@ use sqlx::PgPool;
 
 /// shall we create a structure to hold everything we need?
 /// like db pool and mongodb's database
+#[derive(Debug)]
 pub struct DbRepo {
     pub msg: Box<dyn MsgStoreRepo>,
     pub group: Box<dyn GroupStoreRepo>,

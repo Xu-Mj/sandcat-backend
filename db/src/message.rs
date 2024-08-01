@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use async_trait::async_trait;
 use tokio::sync::mpsc;
 
@@ -6,7 +8,7 @@ use abi::message::{GroupMemSeq, Msg};
 
 /// face to postgres db
 #[async_trait]
-pub trait MsgStoreRepo: Sync + Send {
+pub trait MsgStoreRepo: Sync + Send + Debug {
     /// save message to db
     async fn save_message(&self, message: Msg) -> Result<(), Error>;
 }
@@ -15,7 +17,7 @@ pub trait MsgStoreRepo: Sync + Send {
 /// face to mongodb
 /// when user received message, will delete message from receive box
 #[async_trait]
-pub trait MsgRecBoxRepo: Sync + Send {
+pub trait MsgRecBoxRepo: Sync + Send + Debug {
     /// save message, need message structure
     async fn save_message(&self, message: &Msg) -> Result<(), Error>;
 
