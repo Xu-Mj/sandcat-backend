@@ -1,9 +1,6 @@
 use std::net::SocketAddr;
 
-use abi::{
-    errors::Error,
-    message::{CreateUserRequest, GetUserByEmailRequest, User},
-};
+use abi::{errors::Error, message::User};
 use axum::{
     extract::{ConnectInfo, Query, State},
     response::{IntoResponse, Redirect},
@@ -83,11 +80,7 @@ pub async fn github_callback(
         .ok_or(Error::not_found())?;
 
     // select user info from db by email
-    let mut db_rpc = state.db_rpc.clone();
-    let req = GetUserByEmailRequest {
-        email: email.email.clone(),
-    };
-    let mut user_info = db_rpc.get_user_by_email(req).await?.into_inner().user;
+    let mut user_info = state.db.user.get_user_by_email(&email.email).await?;
 
     // if none, need to get user info from github and register
     if user_info.is_none() {
@@ -173,16 +166,6 @@ async fn register_user(state: &AppState, email: String, access_token: &str) -> R
         ..Default::default()
     };
 
-    let mut db_rpc = state.db_rpc.clone();
-    let request = CreateUserRequest {
-        user: Some(user2db),
-    };
-    let response = db_rpc.create_user(request).await?;
-
-    response
-        .into_inner()
-        .user
-        .ok_or(Error::internal_with_details(
-            "create user failed, user is none",
-        ))
+    let user = state.db.user.create_user(user2db).await?;
+    Ok(user)
 }

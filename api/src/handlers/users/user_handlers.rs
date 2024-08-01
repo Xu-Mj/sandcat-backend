@@ -14,10 +14,7 @@ use tera::{Context, Tera};
 use tracing::{debug, error};
 
 use abi::errors::Error;
-use abi::message::{
-    CreateUserRequest, GetUserRequest, SearchUserRequest, UpdateUserPwdRequest, UpdateUserRequest,
-    User, UserUpdate, UserWithMatchType, VerifyPwdRequest,
-};
+use abi::message::{User, UserUpdate, UserWithMatchType};
 
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
@@ -87,16 +84,7 @@ pub async fn create_user(
     };
 
     // todo need to check the email is registered already
-    let request = CreateUserRequest {
-        user: Some(user2db),
-    };
-    let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc.create_user(request).await?;
-
-    let user = response
-        .into_inner()
-        .user
-        .ok_or(Error::internal_with_details("response user is empty"))?;
+    let user = app_state.db.user.create_user(user2db).await?;
 
     // delete register code from cache
     app_state.cache.del_register_code(&new_user.email).await?;
@@ -109,14 +97,7 @@ pub async fn update_user(
     JsonExtractor(user): JsonExtractor<UserUpdate>,
 ) -> Result<Json<User>, Error> {
     // todo need to check the email is registered already
-    let request = UpdateUserRequest { user: Some(user) };
-    let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc.update_user(request).await?;
-
-    let user = response
-        .into_inner()
-        .user
-        .ok_or(Error::internal_with_details("response user is empty"))?;
+    let user = app_state.db.user.update_user(user).await?;
 
     Ok(Json(user))
 }
@@ -125,13 +106,11 @@ pub async fn get_user_by_id(
     State(app_state): State<AppState>,
     PathExtractor(id): PathExtractor<String>,
 ) -> Result<Json<User>, Error> {
-    let mut db_rpc = app_state.db_rpc.clone();
-    let request = GetUserRequest { user_id: id };
-    let user = db_rpc
-        .get_user(request)
-        .await?
-        .into_inner()
+    let user = app_state
+        .db
         .user
+        .get_user_by_id(&id)
+        .await?
         .ok_or(Error::not_found())?;
     Ok(Json(user))
 }
@@ -140,9 +119,10 @@ pub async fn search_user(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, pattern)): PathWithAuthExtractor<(String, String)>,
 ) -> Result<Json<Option<UserWithMatchType>>, Error> {
-    let mut db_rpc = app_state.db_rpc.clone();
-    let request = SearchUserRequest { user_id, pattern };
-    let user = db_rpc.search_user(request).await?.into_inner().user;
+    if pattern.is_empty() || pattern.chars().count() > 32 {
+        return Err(Error::bad_request("keyword is empty or too long"));
+    }
+    let user = app_state.db.user.search_user(&user_id, &pattern).await?;
     Ok(Json(user))
 }
 
@@ -162,44 +142,35 @@ pub async fn login(
     // decode password from base64
     login.decode()?;
 
-    let mut db_rpc = app_state.db_rpc.clone();
-    let user = db_rpc
-        .verify_password(VerifyPwdRequest {
-            account: login.account,
-            password: login.password,
-        })
-        .await?
-        .into_inner()
+    let user = app_state
+        .db
         .user
-        .ok_or(Error::account_or_pwd())?;
+        .verify_pwd(&login.account, &login.password)
+        .await?
+        .ok_or(Error::not_found())?;
 
     gen_token(&app_state, user, addr).await
 }
 
 pub async fn modify_pwd(
     State(app_state): State<AppState>,
-    JsonExtractor(mut pwd): JsonExtractor<ModifyPwdRequest>,
+    JsonExtractor(mut req): JsonExtractor<ModifyPwdRequest>,
 ) -> Result<(), Error> {
     // decode password from base64
-    pwd.decode()?;
+    req.decode()?;
 
     // validate code
     let code = app_state
         .cache
-        .get_register_code(&pwd.email)
+        .get_register_code(&req.email)
         .await?
         .ok_or(Error::code_expired("code is expired"))?;
-    if code != pwd.code {
+    if code != req.code {
         return Err(Error::code_invalid("code is invalid"));
     }
 
-    let req = UpdateUserPwdRequest {
-        user_id: pwd.user_id,
-        pwd: pwd.pwd,
-    };
+    app_state.db.user.modify_pwd(&req.user_id, &req.pwd).await?;
 
-    let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc.update_user_pwd(req).await?;
     Ok(())
 }
 
