@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use abi::errors::Error;
 use abi::message::Msg;
 
-use crate::database::message::MsgStoreRepo;
+use crate::message::MsgStoreRepo;
 
 pub struct PostgresMessage {
     pool: PgPool,

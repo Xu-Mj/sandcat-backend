@@ -7,7 +7,7 @@ use abi::message::{
     GroupUpdate,
 };
 
-use crate::database::group::GroupStoreRepo;
+use crate::group::GroupStoreRepo;
 
 pub struct PostgresGroup {
     pool: PgPool,

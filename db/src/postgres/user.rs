@@ -5,7 +5,7 @@ use sqlx::PgPool;
 use abi::errors::Error;
 use abi::message::{User, UserUpdate, UserWithMatchType};
 
-use crate::database::user::UserRepo;
+use crate::user::UserRepo;
 
 #[derive(Debug)]
 pub struct PostgresUser {

@@ -11,8 +11,7 @@ use abi::message::db_service_server::DbServiceServer;
 use abi::message::{GroupMemSeq, Msg, MsgType};
 use cache::Cache;
 
-use crate::database;
-use crate::database::{DbRepo, MsgRecBoxRepo};
+use crate::{msg_rec_box_repo, DbRepo, MsgRecBoxRepo};
 
 pub mod service;
 pub use service::*;
@@ -29,7 +28,7 @@ impl DbRpcService {
         let cache = cache::cache(config);
         Self {
             db: Arc::new(DbRepo::new(config).await),
-            msg_rec_box: database::msg_rec_box_repo(config).await,
+            msg_rec_box: msg_rec_box_repo(config).await,
             cache,
         }
     }

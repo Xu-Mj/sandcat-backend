@@ -9,7 +9,7 @@ use abi::message::{
     FsUpdate, User,
 };
 
-use crate::database::friend::FriendRepo;
+use crate::friend::FriendRepo;
 
 pub struct PostgresFriend {
     pool: PgPool,

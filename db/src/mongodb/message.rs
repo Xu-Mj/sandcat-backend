@@ -12,8 +12,8 @@ use abi::config::Config;
 use abi::errors::Error;
 use abi::message::{GroupMemSeq, Msg};
 
-use crate::database::message::{MsgRecBoxCleaner, MsgRecBoxRepo};
-use crate::database::mongodb::utils::to_doc;
+use crate::message::{MsgRecBoxCleaner, MsgRecBoxRepo};
+use crate::mongodb::utils::to_doc;
 
 /// user receive box,
 /// need to category message

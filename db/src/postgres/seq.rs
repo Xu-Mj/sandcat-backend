@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{self, Receiver};
 use tonic::async_trait;
 use tracing::error;
 
-use crate::database::seq::SeqRepo;
+use crate::seq::SeqRepo;
 
 pub struct PostgresSeq {
     pool: PgPool,
