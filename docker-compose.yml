@@ -108,6 +108,22 @@ services:
     # networks:
     #   - sandcat-net
 
+  coturn:
+    image: instrumentisto/coturn
+    container_name: coturn
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "60000-60100:60000-60100/udp"
+    command: >
+      -n --log-file=stdout
+      --lt-cred-mech
+      --realm=myrealm
+      --server-name=myserver
+      --no-multicast-peers
+      --no-cli
+      --no-tls # this for test only
+
 volumes:
   mongodata:
   miniodata:
