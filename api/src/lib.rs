@@ -44,9 +44,6 @@ pub struct OAuth2Clients {
 
 impl AppState {
     pub async fn new(config: &Config) -> Self {
-        // let db_rpc = utils::get_rpc_client(config, config.rpc.db.name.clone())
-        //     .await
-        //     .unwrap();
         let db = Arc::new(DbRepo::new(config).await);
         let msg_box = msg_rec_box_repo(config).await;
 

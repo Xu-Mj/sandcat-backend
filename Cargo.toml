@@ -1,5 +1,5 @@
 [workspace]
-members = ["abi", "api", "cache", "chat", "cmd", "consumer", "db", "oss", "pusher", "utils", "ws"]
+members = ["abi", "api", "cache", "msg_server", "cmd", "consumer", "db", "oss", "pusher", "utils", "ws"]
 resolver = "2"
 default-members = ["cmd"]
 

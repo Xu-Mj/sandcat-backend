@@ -1,6 +1,8 @@
-use abi::config::Config;
-use chat::ChatRpcService;
 use tracing::Level;
+
+use abi::config::Config;
+
+use msg_server::productor::ChatRpcService;
 
 #[tokio::main]
 async fn main() {

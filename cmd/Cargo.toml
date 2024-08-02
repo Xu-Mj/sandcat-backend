@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
 api = { version = "0.1.0", path = "../api" }
-chat = { version = "0.1.0", path = "../chat" }
+msg_server= { version = "0.1.0", path = "../msg_server" }
 cache = { version = "0.1.0", path = "../cache" }
 consumer = { version = "0.1.0", path = "../consumer" }
 db = { version = "0.1.0", path = "../db" }
@@ -26,5 +26,5 @@ tracing-appender = "0.2.3"
 
 [features]
 default = ["dynamic"]
-dynamic = ["chat/dynamic", "consumer/dynamic"]
-static = ["chat/static", "consumer/static"]
+dynamic = ["msg_server/dynamic", "consumer/dynamic"]
+static = ["msg_server/static", "consumer/static"]
