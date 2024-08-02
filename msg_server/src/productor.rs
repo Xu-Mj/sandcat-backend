@@ -52,7 +52,7 @@ impl ChatRpcService {
             .expect("Topic creation error");
 
         // register service
-        utils::register_service(config, Component::Chat)
+        utils::register_service(config, Component::MessageServer)
             .await
             .expect("Service register error");
         info!("<chat> rpc service register to service register center");

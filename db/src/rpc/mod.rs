@@ -35,7 +35,7 @@ impl DbRpcService {
 
     pub async fn start(config: &Config) {
         // register service
-        utils::register_service(config, Component::Db)
+        utils::register_service(config, Component::MessageServer)
             .await
             .unwrap();
         info!("<db> rpc service health check started");

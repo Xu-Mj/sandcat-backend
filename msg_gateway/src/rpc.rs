@@ -25,7 +25,7 @@ impl MsgRpcService {
 
     pub async fn start(manager: Manager, config: &Config) -> Result<(), Error> {
         // register service to service register center
-        utils::register_service(config, Component::Ws).await?;
+        utils::register_service(config, Component::MessageGateway).await?;
         info!("<ws> rpc service register to service register center");
 
         // open health check

@@ -6,11 +6,8 @@ use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 
 use abi::config::{Component, Config};
-use consumer::ConsumerService;
-use db::rpc::DbRpcService;
 use load_seq::load_seq;
-use msg_server::productor::ChatRpcService;
-use ws::ws_server::WsServer;
+use msg_gateway::ws_server::WsServer;
 
 const DEFAULT_CONFIG_PATH: &str = "./config.yml";
 struct LocalTimer;
@@ -76,11 +73,9 @@ async fn main() {
     load_seq(&config).await;
 
     match config.component {
-        Component::Chat => ChatRpcService::start(&config).await,
-        Component::Consumer => ConsumerService::new(&config).await.consume().await.unwrap(),
-        Component::Db => DbRpcService::start(&config).await,
-        Component::Pusher => api::start(config.clone()).await,
-        Component::Ws => WsServer::start(config.clone()).await,
+        Component::Api => api::start(config.clone()).await,
+        Component::MessageGateway => WsServer::start(config.clone()).await,
+        Component::MessageServer => msg_server::start(&config).await,
         Component::All => start_all(config).await,
     }
 }

@@ -9,22 +9,20 @@ edition = "2021"
 [dependencies]
 abi = { version = "0.1.0", path = "../abi" }
 api = { version = "0.1.0", path = "../api" }
-msg_server= { version = "0.1.0", path = "../msg_server" }
 cache = { version = "0.1.0", path = "../cache" }
-consumer = { version = "0.1.0", path = "../consumer" }
 db = { version = "0.1.0", path = "../db" }
-pusher = { version = "0.1.0", path = "../pusher" }
-ws = { version = "0.1.0", path = "../ws" }
+msg_gateway = { version = "0.1.0", path = "../msg_gateway" }
+msg_server = { version = "0.1.0", path = "../msg_server" }
 utils = { version = "0.1.0", path = "../utils" }
 
 chrono = "0.4"
 clap = { version = "4.5.4", features = ["cargo"] }
 tokio = { version = "1.36.0", features = ["full"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["time"]}
+tracing-subscriber = { version = "0.3.18", features = ["time"] }
 tracing-appender = "0.2.3"
 
 [features]
 default = ["dynamic"]
-dynamic = ["msg_server/dynamic", "consumer/dynamic"]
-static = ["msg_server/static", "consumer/static"]
+dynamic = ["msg_server/dynamic"]
+static = ["msg_server/static"]

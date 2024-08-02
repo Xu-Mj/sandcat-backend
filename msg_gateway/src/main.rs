@@ -1,7 +1,7 @@
 use tracing::Level;
 
 use abi::config::Config;
-use ws::ws_server::WsServer;
+use msg_gateway::ws_server::WsServer;
 
 #[tokio::main]
 async fn main() {
@@ -14,8 +14,8 @@ async fn main() {
 mod tests {
     use abi::message::msg_service_server::MsgServiceServer;
     use abi::message::Msg;
+    use msg_gateway::rpc;
     use tonic::server::NamedService;
-    use ws::rpc;
 
     #[test]
     fn test_load() {
