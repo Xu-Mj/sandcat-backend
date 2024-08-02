@@ -1,7 +1,7 @@
 use tracing::Level;
 
 use abi::config::Config;
-use db::rpc::DbRpcService;
+// use db::rpc::DbRpcService;
 
 #[tokio::main]
 async fn main() {
@@ -16,5 +16,5 @@ async fn main() {
     db::clean_receive_box(&config).await;
 
     // start rpc service
-    DbRpcService::start(&config).await;
+    // DbRpcService::start(&config).await;
 }

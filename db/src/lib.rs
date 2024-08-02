@@ -12,7 +12,7 @@ mod postgres;
 pub mod friend;
 pub mod group;
 pub mod message;
-pub mod rpc;
+// pub mod rpc;
 pub mod seq;
 pub mod user;
 

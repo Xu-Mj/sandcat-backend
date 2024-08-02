@@ -5,8 +5,6 @@ members = [
     "cache",
     "msg_server",
     "cmd",
-    "consumer",
-    "db",
     "oss",
     "utils",
     "msg_gateway",
