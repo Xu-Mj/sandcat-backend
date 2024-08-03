@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use db::message::MsgRecBoxRepo;
 use oauth2::basic::BasicClient;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use synapse::service::client::ServiceClient;
@@ -8,8 +9,8 @@ use xdb::searcher_init;
 
 use abi::config::{Config, MailConfig, OAuth2, OAuth2Item, WsServerConfig};
 use abi::message::chat_service_client::ChatServiceClient;
-use abi::message::db_service_client::DbServiceClient;
 use cache::Cache;
+use db::{msg_rec_box_repo, DbRepo};
 use oss::Oss;
 use utils::service_discovery::LbWithServiceDiscovery;
 
@@ -21,7 +22,9 @@ pub(crate) mod routes;
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub db_rpc: DbServiceClient<LbWithServiceDiscovery>,
+    // pub db_rpc: DbServiceClient<LbWithServiceDiscovery>,
+    pub db: Arc<DbRepo>,
+    pub msg_box: Arc<dyn MsgRecBoxRepo>,
     pub chat_rpc: ChatServiceClient<LbWithServiceDiscovery>,
     pub cache: Arc<dyn Cache>,
     pub oss: Arc<dyn Oss>,
@@ -41,9 +44,9 @@ pub struct OAuth2Clients {
 
 impl AppState {
     pub async fn new(config: &Config) -> Self {
-        let db_rpc = utils::get_rpc_client(config, config.rpc.db.name.clone())
-            .await
-            .unwrap();
+        let db = Arc::new(DbRepo::new(config).await);
+        let msg_box = msg_rec_box_repo(config).await;
+
         let chat_rpc = utils::get_rpc_client(config, config.rpc.chat.name.clone())
             .await
             .unwrap();
@@ -74,7 +77,8 @@ impl AppState {
         let oauth2_clients = init_oauth2(config);
 
         Self {
-            db_rpc,
+            db,
+            msg_box,
             cache,
             oss,
             ws_lb,

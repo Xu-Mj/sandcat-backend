@@ -6,7 +6,7 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
-use abi::message::{UpdateRegionRequest, User};
+use abi::message::User;
 
 mod oauth2;
 mod user_handlers;
@@ -125,14 +125,11 @@ pub async fn gen_token(
     };
 
     if user.region.is_some() {
-        // update user region
-        let request = UpdateRegionRequest {
-            user_id: user.id.clone(),
-            region: user.region.as_ref().unwrap().clone(),
-        };
-
-        let mut db_rpc = app_state.db_rpc.clone();
-        let _ = db_rpc.update_user_region(request).await?;
+        app_state
+            .db
+            .user
+            .update_region(&user.id, user.region.as_ref().unwrap())
+            .await?;
     }
 
     Ok(Json(Token {

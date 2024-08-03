@@ -4,9 +4,8 @@ use serde::Serialize;
 
 use abi::errors::Error;
 use abi::message::{
-    AgreeReply, DeleteFriendRequest, Friend, FriendInfo, FriendListRequest, FriendshipWithUser,
-    FsAgreeRequest, FsCreate, FsCreateRequest, QueryFriendInfoRequest, SendMsgRequest,
-    UpdateRemarkRequest,
+    AgreeReply, DeleteFriendRequest, Friend, FriendInfo, FriendshipWithUser, FsCreate,
+    SendMsgRequest, UpdateRemarkRequest,
 };
 
 use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
@@ -22,21 +21,16 @@ pub async fn get_friends_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, offline_time)): PathWithAuthExtractor<(String, i64)>,
 ) -> Result<Json<FriendShipList>, Error> {
-    let mut db_rpc = app_state.db_rpc.clone();
-    let request = FriendListRequest {
-        user_id,
-        offline_time,
-    };
-    let friends = db_rpc
-        .get_friend_list(request.clone())
-        .await?
-        .into_inner()
-        .friends;
-    let fs = db_rpc
-        .get_friendship_list(request)
-        .await?
-        .into_inner()
-        .friendships;
+    let friends = app_state
+        .db
+        .friend
+        .get_friend_list(&user_id, offline_time)
+        .await?;
+    let fs = app_state
+        .db
+        .friend
+        .get_fs_list(&user_id, offline_time)
+        .await?;
     Ok(Json(FriendShipList { friends, fs }))
 }
 
@@ -45,14 +39,11 @@ pub async fn get_apply_list_by_user_id(
     State(app_state): State<AppState>,
     PathWithAuthExtractor((user_id, offline_time)): PathWithAuthExtractor<(String, i64)>,
 ) -> Result<Json<Vec<FriendshipWithUser>>, Error> {
-    let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc
-        .get_friendship_list(FriendListRequest {
-            user_id,
-            offline_time,
-        })
+    let list = app_state
+        .db
+        .friend
+        .get_fs_list(&user_id, offline_time)
         .await?;
-    let list = response.into_inner().friendships;
     Ok(Json(list))
 }
 
@@ -63,20 +54,7 @@ pub async fn create_friendship(
 ) -> Result<Json<FriendshipWithUser>, Error> {
     tracing::debug!("{:?}", &new_friend);
     let receiver_id = new_friend.friend_id.clone();
-    let mut db_rpc = app_state.db_rpc.clone();
-    let response = db_rpc
-        .create_friendship(FsCreateRequest {
-            fs_create: Some(new_friend),
-        })
-        .await?;
-    let inner = response.into_inner();
-    let fs_req = inner
-        .fs_req
-        .ok_or(Error::internal_with_details("create fs error"))?;
-
-    let fs_send = inner
-        .fs_send
-        .ok_or(Error::internal_with_details("send fs error"))?;
+    let (fs_req, fs_send) = app_state.db.friend.create_fs(new_friend).await?;
 
     // decode fs
     let fs = bincode::serialize(&fs_send)?;
@@ -98,18 +76,11 @@ pub async fn agree(
     JsonWithAuthExtractor(agree): JsonWithAuthExtractor<AgreeReply>,
 ) -> Result<Json<Friend>, Error> {
     // 同意好友添加请求，需要向同意方返回请求方的个人信息，向请求方发送同意方的个人信息
-    let mut db_rpc = app_state.db_rpc.clone();
-    let request = FsAgreeRequest {
-        fs_reply: Some(agree),
-    };
-    let response = db_rpc.agree_friendship(request).await?;
-    let inner = response.into_inner();
-    let req = inner
-        .req
-        .ok_or(Error::internal_with_details("agree fs error"))?;
-    let send = inner
-        .send
-        .ok_or(Error::internal_with_details("send fs error"))?;
+    let (req, send) = app_state
+        .db
+        .friend
+        .agree_friend_apply_request(agree)
+        .await?;
 
     let send_id = send.friend_id.clone();
     // decode friend
@@ -152,14 +123,14 @@ pub async fn delete_friend(
 ) -> Result<(), Error> {
     req.validate()?;
 
-    let user_id = req.user_id.clone();
-    let friend_id = req.friend_id.clone();
-
-    let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc.delete_friend(req).await?;
+    app_state
+        .db
+        .friend
+        .delete_friend(&req.fs_id, &req.user_id)
+        .await?;
 
     // send message to friend
-    let msg = SendMsgRequest::new_with_friend_del(user_id, friend_id);
+    let msg = SendMsgRequest::new_with_friend_del(req.user_id, req.friend_id);
     let mut chat_rpc = app_state.chat_rpc.clone();
     chat_rpc.send_msg(msg).await?;
     Ok(())
@@ -172,8 +143,11 @@ pub async fn update_friend_remark(
     if relation.remark.is_empty() {
         return Err(Error::bad_request("remark is none"));
     }
-    let mut db_rpc = app_state.db_rpc.clone();
-    db_rpc.update_friend_remark(relation).await?;
+    app_state
+        .db
+        .friend
+        .update_friend_remark(&relation.user_id, &relation.friend_id, &relation.remark)
+        .await?;
     Ok(())
 }
 
@@ -181,10 +155,22 @@ pub async fn query_friend_info(
     State(app_state): State<AppState>,
     PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
 ) -> Result<Json<FriendInfo>, Error> {
-    let mut db_rpc = app_state.db_rpc.clone();
-    let friend = db_rpc
-        .query_friend_info(QueryFriendInfoRequest { user_id })
-        .await?;
-    let friend = friend.into_inner().friend.ok_or(Error::not_found())?;
+    let user = app_state
+        .db
+        .user
+        .get_user_by_id(&user_id)
+        .await?
+        .ok_or(Error::not_found())?;
+    let friend = FriendInfo {
+        id: user.id,
+        name: user.name,
+        region: user.region,
+        gender: user.gender,
+        avatar: user.avatar,
+        account: user.account,
+        signature: user.signature,
+        email: user.email,
+        age: user.age,
+    };
     Ok(Json(friend))
 }

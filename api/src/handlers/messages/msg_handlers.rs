@@ -46,13 +46,17 @@ pub async fn pull_offline_messages(
     State(state): State<AppState>,
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<GetDbMessagesRequest>,
 ) -> Result<Json<Vec<Msg>>, Error> {
-    let mut db_rpc = state.db_rpc.clone();
-    // validate
-    req.validate()?;
-
-    // request db rpc
-    let response = db_rpc.get_msgs(req).await?;
-    Ok(Json(response.into_inner().messages))
+    let result = state
+        .msg_box
+        .get_msgs(
+            &req.user_id,
+            req.send_start,
+            req.send_end,
+            req.start,
+            req.end,
+        )
+        .await?;
+    Ok(Json(result))
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -76,7 +80,9 @@ pub async fn del_msg(
     State(state): State<AppState>,
     JsonWithAuthExtractor(req): JsonWithAuthExtractor<DelMsgRequest>,
 ) -> Result<(), Error> {
-    let mut db_rpc = state.db_rpc.clone();
-    db_rpc.del_messages(req).await?;
+    state
+        .msg_box
+        .delete_messages(&req.user_id, req.msg_id)
+        .await?;
     Ok(())
 }

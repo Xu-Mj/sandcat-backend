@@ -6,12 +6,8 @@ use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 
 use abi::config::{Component, Config};
-use chat::ChatRpcService;
-use consumer::ConsumerService;
-use db::rpc::DbRpcService;
 use load_seq::load_seq;
-use pusher::PusherRpcService;
-use ws::ws_server::WsServer;
+use msg_gateway::ws_server::WsServer;
 
 const DEFAULT_CONFIG_PATH: &str = "./config.yml";
 struct LocalTimer;
@@ -77,22 +73,14 @@ async fn main() {
     load_seq(&config).await;
 
     match config.component {
-        Component::Chat => ChatRpcService::start(&config).await,
-        Component::Consumer => ConsumerService::new(&config).await.consume().await.unwrap(),
-        Component::Db => DbRpcService::start(&config).await,
-        Component::Pusher => api::start(config.clone()).await,
-        Component::Ws => WsServer::start(config.clone()).await,
+        Component::Api => api::start(config.clone()).await,
+        Component::MessageGateway => WsServer::start(config.clone()).await,
+        Component::MessageServer => msg_server::start(&config).await,
         Component::All => start_all(config).await,
     }
 }
 
 async fn start_all(config: Config) {
-    // start chat rpc server
-    let cloned_config = config.clone();
-    let chat_server = tokio::spawn(async move {
-        ChatRpcService::start(&cloned_config).await;
-    });
-
     // start ws rpc server
     let cloned_config = config.clone();
     let ws_server = tokio::spawn(async move {
@@ -102,18 +90,6 @@ async fn start_all(config: Config) {
     // start cleaner
     db::clean_receive_box(&config).await;
 
-    // start db rpc server
-    let cloned_config = config.clone();
-    let db_server = tokio::spawn(async move {
-        DbRpcService::start(&cloned_config).await;
-    });
-
-    // start pusher rpc server
-    let cloned_config = config.clone();
-    let pusher_server = tokio::spawn(async move {
-        PusherRpcService::start(&cloned_config).await;
-    });
-
     // start api server
     let cloned_config = config.clone();
     let api_server = tokio::spawn(async move {
@@ -122,17 +98,12 @@ async fn start_all(config: Config) {
 
     // start consumer rpc server
     let consumer_server = tokio::spawn(async move {
-        if let Err(e) = ConsumerService::new(&config).await.consume().await {
-            panic!("failed to consume message, error: {:?}", e);
-        }
+        msg_server::start(&config).await;
     });
 
     // wait all server stop
     tokio::select! {
-        _ = chat_server => {error!("chat server down!")},
         _ = ws_server => {error!("ws server down!")},
-        _ = db_server => {error!("database server down!")},
-        _ = pusher_server => {error!("pusher server down!")},
         _ = api_server => {error!("api server down!")},
         _ = consumer_server => {error!("consumer server down!")},
     }

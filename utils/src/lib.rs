@@ -250,7 +250,7 @@ pub async fn register_service(config: &Config, com: Component) -> Result<(), Err
     let mut client = ServiceRegistryClient::connect(endpoint).await?;
 
     let (scheme, name, host, port, tags) = match com {
-        abi::config::Component::Chat => {
+        abi::config::Component::MessageServer => {
             let scheme = Scheme::from(config.rpc.chat.protocol.as_str()) as i32;
             let name = config.rpc.chat.name.clone();
             let host = config.rpc.chat.host.clone();
@@ -258,24 +258,9 @@ pub async fn register_service(config: &Config, com: Component) -> Result<(), Err
             let tags = config.rpc.chat.tags.clone();
             (scheme, name, host, port, tags)
         }
-        abi::config::Component::Consumer => todo!("consumer"),
-        abi::config::Component::Db => {
-            let scheme = Scheme::from(config.rpc.db.protocol.as_str()) as i32;
-            let name = config.rpc.db.name.clone();
-            let host = config.rpc.db.host.clone();
-            let port = config.rpc.db.port as i32;
-            let tags = config.rpc.db.tags.clone();
-            (scheme, name, host, port, tags)
-        }
-        abi::config::Component::Pusher => {
-            let scheme = Scheme::from(config.rpc.pusher.protocol.as_str()) as i32;
-            let name = config.rpc.pusher.name.clone();
-            let host = config.rpc.pusher.host.clone();
-            let port = config.rpc.pusher.port as i32;
-            let tags = config.rpc.pusher.tags.clone();
-            (scheme, name, host, port, tags)
-        }
-        abi::config::Component::Ws => {
+        abi::config::Component::Api => todo!("consumer"),
+
+        abi::config::Component::MessageGateway => {
             let scheme = Scheme::from(config.rpc.ws.protocol.as_str()) as i32;
             let name = config.rpc.ws.name.clone();
             let host = config.rpc.ws.host.clone();

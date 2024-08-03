@@ -196,6 +196,7 @@ enum GroupMemberRole {
   GroupMemberRoleAdmin = 1;
   GroupMemberRoleMember = 2;
 }
+
 // fixme add account field
 /// group member information also related to database table group_members
 message GroupMember {
@@ -356,8 +357,6 @@ message FriendInfo {
   optional string email = 9;
 }
 
-message FsCreateRequest { FsCreate fs_create = 1; }
-
 message FsCreate {
   string user_id = 1;
   string friend_id = 2;
@@ -366,25 +365,11 @@ message FsCreate {
   string source = 5;
 }
 
-message FsCreateResponse {
-  FriendshipWithUser fs_req = 1;
-  FriendshipWithUser fs_send = 2;
-}
-
-message FsAgreeRequest { AgreeReply fs_reply = 1; }
-
-message FsAgreeResponse {
-  Friend req = 1;
-  Friend send = 2;
-}
-
 message UpdateRemarkRequest {
   string user_id = 1;
   string friend_id = 2;
   string remark = 3;
 }
-
-message UpdateRemarkResponse {}
 
 message DeleteFriendRequest {
   string user_id = 1;
@@ -392,19 +377,10 @@ message DeleteFriendRequest {
   string fs_id = 3;
 }
 
-message DeleteFriendResponse {}
-
 message AgreeReply {
   string fs_id = 1;
   optional string resp_msg = 2;
   optional string resp_remark = 3;
-}
-
-// message FsListRequest { string user_id = 1; }
-
-message FriendListRequest {
-  string user_id = 1;
-  int64 offline_time = 2;
 }
 
 /// only for update friend apply request
@@ -414,86 +390,13 @@ message FsUpdate {
   string req_remark = 3;
 }
 
-message FsUpdateRequest { FsUpdate fs_update = 1; }
-
-message FsListResponse { repeated FriendshipWithUser friendships = 1; }
-
-message FriendListResponse { repeated Friend friends = 1; }
-
-message GroupInviteNewRequest { GroupInviteNew group_invite = 1; }
-
 message RemoveMemberRequest {
   string user_id = 1;
   string group_id = 2;
   repeated string mem_id = 3;
 }
 
-message RemoveMemberResp {}
-
-message GroupInviteNewResp {}
-
-message GroupUpdateRequest { GroupUpdate group = 1; }
-
-message GroupUpdateResponse { GroupInfo group = 1; }
-
-message GroupDeleteRequest {
-  string group_id = 1;
-  string user_id = 2;
-}
-
-message GroupDeleteResponse {
-  //  repeated string members_id = 1;
-  GroupInfo group = 1;
-}
-
-message GroupMemberExitResponse {
-  //  repeated string members_id = 1;
-}
-
 message GroupMembersIdRequest { string group_id = 1; }
-
-message GroupMembersIdResponse { repeated string members_id = 1; }
-
-message CreateUserRequest { User user = 1; }
-
-message CreateUserResponse { User user = 1; }
-
-message GetUserRequest { string user_id = 1; }
-message GetUserByEmailRequest { string email = 1; }
-
-message GetUserResponse { User user = 1; }
-
-message UpdateUserRequest { UserUpdate user = 1; }
-
-message UpdateUserPwdRequest {
-  string user_id = 1;
-  string pwd = 2;
-}
-
-message UpdateUserResponse { User user = 1; }
-message UpdateUserPwdResp {}
-
-message UpdateRegionRequest {
-  string user_id = 1;
-  string region = 2;
-}
-
-message UpdateRegionResponse {}
-
-message SearchUserRequest {
-  string user_id = 1;
-  string pattern = 2;
-}
-
-message SearchUserResponse { UserWithMatchType user = 1; }
-
-message VerifyPwdRequest {
-  /// could be account, email or phone number
-  string account = 1;
-  string password = 2;
-}
-
-message VerifyPwdResponse { User user = 1; }
 
 message SendMsgRequest { Msg message = 1; }
 
@@ -516,8 +419,6 @@ message SaveMessageRequest {
   bool need_to_history = 2;
 }
 
-message SaveMessageResponse {}
-
 message SaveGroupMsgRequest {
   Msg message = 1;
   bool need_to_history = 2;
@@ -530,8 +431,6 @@ message GroupMemSeq {
   int64 max_seq = 3;
   bool need_update = 4;
 }
-
-message SaveGroupMsgResponse {}
 
 message GetDbMsgRequest {
   string user_id = 1;
@@ -547,14 +446,10 @@ message GetDbMessagesRequest {
   int64 end = 5;
 }
 
-message GetMsgResp { repeated Msg messages = 1; }
-
 message DelMsgRequest {
   string user_id = 1;
   repeated int64 msg_id = 2;
 }
-
-message DelMsgResp {}
 
 message GetMemberReq {
   string user_id = 1;
@@ -562,33 +457,12 @@ message GetMemberReq {
   repeated string mem_ids = 3;
 }
 
-message GetMemberResp { repeated GroupMember members = 1; }
-
-message GetGroupRequest {
-  string user_id = 1;
-  string group_id = 2;
-}
-
-message GetGroupResponse { GroupInfo group = 1; }
-
 message GetGroupAndMembersResp {
   GroupInfo group = 1;
   repeated GroupMember members = 2;
 }
 
-message GroupCreateRequest { GroupCreate group = 1; }
-
-message GroupCreateResponse { GroupInvitation invitation = 1; }
-
 message SaveMaxSeqRequest { string user_id = 1; }
-
-message SaveMaxSeqBatchRequest { repeated string user_ids = 1; }
-
-message SaveMaxSeqResponse {}
-
-message QueryFriendInfoRequest { string user_id = 1; }
-
-message QueryFriendInfoResponse { FriendInfo friend = 1; }
 
 service MsgService {
   // send message through rpc
@@ -602,83 +476,3 @@ service MsgService {
 /// chat service, receive message then generate message id and send message to
 /// mq; response operation result;
 service ChatService { rpc SendMsg(SendMsgRequest) returns (MsgResponse); }
-
-/// db interface think about if it is necessary to put api interface together.
-service DbService {
-  /// save message to postgres and mongodb
-  /// use same table and collection to save the single message and group message
-  rpc SaveMessage(SaveMessageRequest) returns (SaveMessageResponse);
-  /// save group message to postgres and mongodb
-  rpc SaveGroupMessage(SaveGroupMsgRequest) returns (SaveGroupMsgResponse);
-  /// query message from mongodb by start seq to end seq
-  rpc GetMsgStream(GetDbMsgRequest) returns (stream Msg);
-  rpc GetMessages(GetDbMsgRequest) returns (GetMsgResp);
-  /// get messages with send seq and rec seq
-  rpc GetMsgs(GetDbMessagesRequest) returns (GetMsgResp);
-  /// update message read status
-  rpc ReadMsg(MsgReadReq) returns (MsgReadResp);
-  rpc DelMessages(DelMsgRequest) returns (DelMsgResp);
-  /// save message send max sequence
-  rpc SaveSendMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
-  /// save message receive max sequence
-  rpc SaveMaxSeq(SaveMaxSeqRequest) returns (SaveMaxSeqResponse);
-  /// save message receive max sequence batch
-  rpc SaveMaxSeqBatch(SaveMaxSeqBatchRequest) returns (SaveMaxSeqResponse);
-  /// query group information
-  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse);
-  /// query group information and members
-  rpc GetGroupAndMembers(GetGroupRequest) returns (GetGroupAndMembersResp);
-  rpc GetGroupMembers(GetMemberReq) returns (GetMemberResp);
-  /// create group
-  rpc GroupCreate(GroupCreateRequest) returns (GroupCreateResponse);
-  /// member invites new member
-  rpc GroupInviteNew(GroupInviteNewRequest) returns (GroupInviteNewResp);
-  /// administrator remove member
-  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResp);
-  /// update group
-  rpc GroupUpdate(GroupUpdateRequest) returns (GroupUpdateResponse);
-  /// delete group
-  rpc GroupDelete(GroupDeleteRequest) returns (GroupDeleteResponse);
-  /// member exit
-  rpc GroupMemberExit(UserAndGroupID) returns (GroupMemberExitResponse);
-  /// query group members id
-  rpc GroupMembersId(GroupMembersIdRequest) returns (GroupMembersIdResponse);
-  /// create user
-  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
-  /// get user by id
-  rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  /// get user by email
-  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
-  /// update user
-  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
-  /// update user password
-  rpc UpdateUserPwd(UpdateUserPwdRequest) returns (UpdateUserPwdResp);
-  /// update user region
-  rpc UpdateUserRegion(UpdateRegionRequest) returns (UpdateRegionResponse);
-  /// search user
-  rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
-  /// verify password
-  rpc VerifyPassword(VerifyPwdRequest) returns (VerifyPwdResponse);
-  /// create friendship
-  rpc CreateFriendship(FsCreateRequest) returns (FsCreateResponse);
-  /// reply friendship: agree, reject
-  rpc AgreeFriendship(FsAgreeRequest) returns (FsAgreeResponse);
-  /// get friendship list
-  rpc GetFriendshipList(FriendListRequest) returns (FsListResponse);
-  /// get friend list by user id
-  rpc GetFriendList(FriendListRequest) returns (FriendListResponse);
-  /// update friend remark by user id and friend id
-  rpc UpdateFriendRemark(UpdateRemarkRequest) returns (UpdateRemarkResponse);
-  /// delete friend by user id and friend id
-  rpc DeleteFriend(DeleteFriendRequest) returns (DeleteFriendResponse);
-  rpc QueryFriendInfo(QueryFriendInfoRequest) returns (QueryFriendInfoResponse);
-}
-
-service PushService {
-  /// push single message to message gateway
-  rpc PushSingleMsg(SendMsgRequest) returns (SendMsgResponse);
-  /// push group message to message gateway
-  rpc PushGroupMsg(SendGroupMsgRequest) returns (SendMsgResponse);
-  /// push other message to message gateway, need to think about it
-  rpc PushMsg(SendMsgRequest) returns (SendMsgResponse);
-}

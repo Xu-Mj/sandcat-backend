@@ -25,11 +25,9 @@ pub struct Config {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Component {
-    Chat,
-    Consumer,
-    Db,
-    Pusher,
-    Ws,
+    Api,
+    MessageServer,
+    MessageGateway,
     All,
 }
 

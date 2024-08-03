@@ -14,7 +14,7 @@ pub async fn load_seq(config: &Config) {
 
     info!("seq not loaded");
     info!("loading seq start...");
-    let db_repo = db::database::DbRepo::new(config).await;
+    let db_repo = db::DbRepo::new(config).await;
     let mut rx = db_repo.seq.get_max_seq().await.unwrap();
     let batch_size = 50;
     let mut list = Vec::with_capacity(batch_size);
