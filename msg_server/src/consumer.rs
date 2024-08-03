@@ -363,7 +363,7 @@ impl ConsumerService {
         Ok(members_id)
     }
 
-    pub async fn handle_message(
+    async fn handle_message(
         db: Arc<DbRepo>,
         msg_box: Arc<dyn MsgRecBoxRepo>,
         message: Msg,
@@ -407,7 +407,7 @@ impl ConsumerService {
         Ok(())
     }
 
-    pub async fn handle_group_message(
+    async fn handle_group_message(
         db: Arc<DbRepo>,
         msg_box: Arc<dyn MsgRecBoxRepo>,
         message: Msg,
