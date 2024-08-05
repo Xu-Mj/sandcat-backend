@@ -55,7 +55,6 @@ This project provides an implementation of a backend for an Instant Messaging (I
 - **need to handle friendship/group operations while user desktop and mobile are both online**
 - knock off desk from the mobile
 - delete minio file by period
-- support matrix protocol so that we can import some robot
 - maybe we should combine the query send_seq and incr recv_seq into one operation with lua
 - add error detail, so that we can log it, but response to frontend need to be short
 - **CONSIDER:** how to ensure the same user connect to the same message gateway, maybe we should use hash. but it doesn't compatible with the current design of load balancing.
