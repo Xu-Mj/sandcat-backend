@@ -55,9 +55,10 @@ fn main() {
         .with_serde(&[
             "PlatformType",
             "Msg",
+            "MsgContent",
+            "Mention",
             "MsgRead",
             "MsgToDb",
-            "Msg.data",
             "GetDbMsgRequest",
             "GetDbMessagesRequest",
             "DelMsgRequest",

@@ -57,6 +57,24 @@ pub struct Msg {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgContent {
+    #[prost(string, tag = "1")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub mention: ::core::option::Option<Mention>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Mention {
+    #[prost(bool, tag = "1")]
+    pub all: bool,
+    #[prost(string, repeated, tag = "2")]
+    pub user_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRead {
     #[prost(int64, repeated, tag = "1")]
     pub msg_seq: ::prost::alloc::vec::Vec<i64>,

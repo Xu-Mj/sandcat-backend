@@ -112,6 +112,16 @@ message Msg {
   int64 send_seq = 20;
 }
 
+message MsgContent {
+  string content = 1;
+  optional Mention mention = 2;
+}
+
+message Mention {
+  bool all = 1;
+  repeated string user_ids = 2;
+}
+
 message MsgRead {
   repeated int64 msg_seq = 1;
   string user_id = 2;
