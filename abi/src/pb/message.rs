@@ -34,10 +34,6 @@ pub struct Msg {
     pub content_type: i32,
     #[prost(bytes = "vec", tag = "10")]
     pub content: ::prost::alloc::vec::Vec<u8>,
-    /// it is unnecessary to put those out of content
-    /// optional string sdp = 12;
-    /// optional string sdp_mid = 13;
-    /// optional int32 sdp_m_index = 14;
     #[prost(bool, tag = "11")]
     pub is_read: bool,
     #[prost(string, tag = "15")]
