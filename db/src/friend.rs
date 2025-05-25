@@ -16,7 +16,7 @@ pub trait FriendRepo: Send + Sync + Debug {
         fs: FsCreate,
     ) -> Result<(FriendshipWithUser, FriendshipWithUser), Error>;
 
-    /// is it necessary to exists?
+    // is it necessary to exists?
     // async fn get_fs(&self, user_id: &str, friend_id: &str) -> Result<FriendshipWithUser, Error>;
 
     /// get friend apply request list
@@ -49,7 +49,7 @@ pub trait FriendRepo: Send + Sync + Debug {
     ) -> Result<Friendship, Error>;
 
     async fn get_friend_list(&self, user_id: &str, offline_time: i64)
-        -> Result<Vec<Friend>, Error>;
+    -> Result<Vec<Friend>, Error>;
     // ) -> Result<mpsc::Receiver<Result<Friend, Error>>, Error>;
 
     /// agree friend-apply-request

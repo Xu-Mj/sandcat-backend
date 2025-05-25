@@ -260,10 +260,7 @@ impl From<Status> for Error {
             _ => ErrorKind::UnknownError, // Default to UnknownError if the kind is not recognized
         };
 
-        let details = match String::from_utf8(status.details().to_vec()) {
-            Ok(details) => Some(details),
-            Err(_) => None,
-        };
+        let details = String::from_utf8(status.details().to_vec()).ok();
 
         Self {
             kind,

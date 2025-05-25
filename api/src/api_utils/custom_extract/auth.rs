@@ -2,18 +2,17 @@ use axum::extract::rejection::{JsonRejection, PathRejection};
 use axum::extract::{FromRef, FromRequestParts, Request};
 use axum::http::request::Parts;
 use axum::{
-    async_trait,
+    RequestPartsExt, async_trait,
     extract::{FromRequest, MatchedPath},
     http::StatusCode,
-    RequestPartsExt,
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::de::DeserializeOwned;
 
 use abi::errors::Error;
 
-use crate::handlers::users::Claims;
 use crate::AppState;
+use crate::handlers::users::Claims;
 
 pub struct JsonWithAuthExtractor<T>(pub T);
 

@@ -142,7 +142,7 @@ impl Cache for RedisCache {
 
     async fn set_seq_loaded(&self) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.set(IS_LOADED, SEQ_NO_NEED_LOAD).await?;
+        let _: () = conn.set(IS_LOADED, SEQ_NO_NEED_LOAD).await?;
         Ok(())
     }
 
@@ -157,7 +157,7 @@ impl Cache for RedisCache {
             pipe.hset(&key, CUR_SEQ_KEY, rec_max_seq);
             pipe.hset(&key, MAX_SEQ_KEY, rec_max_seq);
         }
-        pipe.query_async(&mut conn).await?;
+        let _: () = pipe.query_async(&mut conn).await?;
         Ok(())
     }
 
@@ -169,7 +169,7 @@ impl Cache for RedisCache {
             pipe.hset(&key, CUR_SEQ_KEY, max_seq);
             pipe.hset(&key, MAX_SEQ_KEY, max_seq);
         }
-        pipe.query_async(&mut conn).await?;
+        let _: () = pipe.query_async(&mut conn).await?;
         Ok(())
     }
 
@@ -316,21 +316,21 @@ impl Cache for RedisCache {
         for member in members_id {
             pipe.sadd(&key, &member);
         }
-        pipe.query_async(&mut conn).await?;
+        let _: () = pipe.query_async(&mut conn).await?;
         Ok(())
     }
 
     async fn add_group_member_id(&self, member_id: &str, group_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.sadd(&key, member_id).await?;
+        let _: () = conn.sadd(&key, member_id).await?;
         Ok(())
     }
 
     async fn remove_group_member_id(&self, group_id: &str, member_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.srem(&key, member_id).await?;
+        let _: () = conn.srem(&key, member_id).await?;
         Ok(())
     }
 
@@ -341,14 +341,14 @@ impl Cache for RedisCache {
     ) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.srem(&key, member_id).await?;
+        let _: () = conn.srem(&key, member_id).await?;
         Ok(())
     }
 
     async fn del_group_members(&self, group_id: &str) -> Result<(), Error> {
         let key = format!("{}:{}", GROUP_MEMBERS_ID_PREFIX, group_id);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.del(&key).await?;
+        let _: () = conn.del(&key).await?;
         Ok(())
     }
 
@@ -357,7 +357,8 @@ impl Cache for RedisCache {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         // use pipe to exec two commands
         let mut pipe = redis::pipe();
-        pipe.hset(REGISTER_CODE_KEY, email, code)
+        let _: () = pipe
+            .hset(REGISTER_CODE_KEY, email, code)
             .expire(REGISTER_CODE_KEY, REGISTER_CODE_EXPIRE)
             .query_async(&mut conn)
             .await?;
@@ -372,19 +373,19 @@ impl Cache for RedisCache {
 
     async fn del_register_code(&self, email: &str) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.hdel(REGISTER_CODE_KEY, email).await?;
+        let _: () = conn.hdel(REGISTER_CODE_KEY, email).await?;
         Ok(())
     }
 
     async fn user_login(&self, user_id: &str) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.sadd(USER_ONLINE_SET, user_id).await?;
+        let _: () = conn.sadd(USER_ONLINE_SET, user_id).await?;
         Ok(())
     }
 
     async fn user_logout(&self, user_id: &str) -> Result<(), Error> {
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        conn.srem(USER_ONLINE_SET, user_id).await?;
+        let _: () = conn.srem(USER_ONLINE_SET, user_id).await?;
         Ok(())
     }
 

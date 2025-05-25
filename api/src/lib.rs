@@ -10,7 +10,7 @@ use xdb::searcher_init;
 use abi::config::{Config, MailConfig, OAuth2, OAuth2Item, WsServerConfig};
 use abi::message::chat_service_client::ChatServiceClient;
 use cache::Cache;
-use db::{msg_rec_box_repo, DbRepo};
+use db::{DbRepo, msg_rec_box_repo};
 use oss::Oss;
 use utils::service_discovery::LbWithServiceDiscovery;
 

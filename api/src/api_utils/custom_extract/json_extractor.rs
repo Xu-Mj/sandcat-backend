@@ -1,7 +1,7 @@
 use abi::errors::Error;
 use axum::{
     async_trait,
-    extract::{rejection::JsonRejection, FromRequest, Request},
+    extract::{FromRequest, Request, rejection::JsonRejection},
     http::StatusCode,
 };
 

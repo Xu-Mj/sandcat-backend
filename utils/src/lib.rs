@@ -3,8 +3,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
+use argon2::password_hash::rand_core::OsRng;
 use argon2::{Argon2, PasswordHasher};
 use async_trait::async_trait;
 use client_factory::ClientFactory;
@@ -317,8 +317,10 @@ mod tests {
         let password = "123456";
         let hash = hash_password(password.as_bytes(), &salt).unwrap();
         let parsed_hash = PasswordHash::new(&hash).unwrap();
-        assert!(Argon2::default()
-            .verify_password(password.as_bytes(), &parsed_hash)
-            .is_ok());
+        assert!(
+            Argon2::default()
+                .verify_password(password.as_bytes(), &parsed_hash)
+                .is_ok()
+        );
     }
 }
