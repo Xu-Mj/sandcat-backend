@@ -67,7 +67,6 @@ jobs:
       matrix:
         rust:
           - stable
-          - latest
 
     steps:
       - name: Setup | Checkout
