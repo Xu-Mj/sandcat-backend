@@ -34,10 +34,6 @@ pub struct Msg {
     pub content_type: i32,
     #[prost(bytes = "vec", tag = "10")]
     pub content: ::prost::alloc::vec::Vec<u8>,
-    /// it is unnecessary to put those out of content
-    /// optional string sdp = 12;
-    /// optional string sdp_mid = 13;
-    /// optional int32 sdp_m_index = 14;
     #[prost(bool, tag = "11")]
     pub is_read: bool,
     #[prost(string, tag = "15")]
@@ -57,6 +53,24 @@ pub struct Msg {
     /// / send sequence
     #[prost(int64, tag = "20")]
     pub send_seq: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgContent {
+    #[prost(string, tag = "1")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub mention: ::core::option::Option<Mention>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Mention {
+    #[prost(bool, tag = "1")]
+    pub all: bool,
+    #[prost(string, repeated, tag = "2")]
+    pub user_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1048,11 +1062,11 @@ pub mod msg_service_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                    http::Request<tonic::body::BoxBody>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                    >,
                 >,
-            >,
             <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
                 Into<StdError> + Send + Sync,
         {
@@ -1191,11 +1205,11 @@ pub mod chat_service_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                    http::Request<tonic::body::BoxBody>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                    >,
                 >,
-            >,
             <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
                 Into<StdError> + Send + Sync,
         {

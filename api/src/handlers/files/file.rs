@@ -6,8 +6,8 @@ use std::path::Path;
 
 use abi::errors::Error;
 
-use crate::api_utils::custom_extract::PathExtractor;
 use crate::AppState;
+use crate::api_utils::custom_extract::PathExtractor;
 
 pub async fn upload(
     State(state): State<AppState>,

@@ -1,8 +1,8 @@
 use abi::errors::Error;
 use axum::{
     async_trait,
-    extract::{rejection::PathRejection, FromRequestParts},
-    http::{request::Parts, StatusCode},
+    extract::{FromRequestParts, rejection::PathRejection},
+    http::{StatusCode, request::Parts},
 };
 use serde::de::DeserializeOwned;
 

@@ -2,24 +2,24 @@ use std::net::SocketAddr;
 
 use abi::{errors::Error, message::User};
 use axum::{
+    Json,
     extract::{ConnectInfo, Query, State},
     response::{IntoResponse, Redirect},
-    Json,
 };
 use hyper::header;
 use nanoid::nanoid;
 use oauth2::{
-    basic::{BasicClient, BasicTokenType},
-    reqwest::async_http_client,
     AuthorizationCode, CsrfToken, EmptyExtraTokenFields, Scope, StandardTokenResponse,
     TokenResponse,
+    basic::{BasicClient, BasicTokenType},
+    reqwest::async_http_client,
 };
 use serde::Deserialize;
 use tracing::info;
 
 use crate::AppState;
 
-use super::{gen_token, Token};
+use super::{Token, gen_token};
 
 const AUTHORIZATION_HEADER_PREFIX: &str = "Bearer ";
 const USER_AGENT: &str = "SandCat-Auth";

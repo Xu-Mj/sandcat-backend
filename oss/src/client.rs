@@ -1,14 +1,14 @@
 use abi::config::Config;
 use abi::errors::Error;
 use async_trait::async_trait;
-use aws_sdk_s3::config::{Builder, Credentials, Region};
 use aws_sdk_s3::Client;
+use aws_sdk_s3::config::{Builder, Credentials, Region};
 use aws_smithy_runtime_api::client::result::SdkError;
 use bytes::Bytes;
 use tokio::fs;
 use tracing::error;
 
-use crate::{default_avatars, Oss};
+use crate::{Oss, default_avatars};
 
 #[derive(Debug, Clone)]
 pub(crate) struct S3Client {

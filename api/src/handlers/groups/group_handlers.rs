@@ -1,5 +1,5 @@
-use axum::extract::State;
 use axum::Json;
+use axum::extract::State;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 
@@ -9,8 +9,8 @@ use abi::message::{
     GroupUpdate, MsgType, RemoveMemberRequest, SendMsgRequest,
 };
 
-use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 /// get group information
 /// need user id and group id

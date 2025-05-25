@@ -3,11 +3,11 @@ mod strategy;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
-use synapse::service::client::ServiceClient;
 use synapse::service::ServiceStatus;
+use synapse::service::client::ServiceClient;
 use tracing::{debug, error};
 
-use crate::api_utils::lb::strategy::{get_strategy, LoadBalanceStrategy, LoadBalanceStrategyType};
+use crate::api_utils::lb::strategy::{LoadBalanceStrategy, LoadBalanceStrategyType, get_strategy};
 
 /// load balancer
 /// get the service address from consul

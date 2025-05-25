@@ -3,8 +3,8 @@ use std::fmt::Debug;
 use async_trait::async_trait;
 use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{
-    bson::{doc, Document},
     Client, Collection, Database, IndexModel,
+    bson::{Document, doc},
 };
 use tokio::sync::mpsc;
 use tonic::codegen::tokio_stream::StreamExt;

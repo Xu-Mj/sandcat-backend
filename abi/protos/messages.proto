@@ -94,10 +94,6 @@ message Msg {
   ContentType content_type = 9;
   bytes content = 10;
   bool is_read = 11;
-  // it is unnecessary to put those out of content
-  // optional string sdp = 12;
-  // optional string sdp_mid = 13;
-  // optional int32 sdp_m_index = 14;
 
   string group_id = 15;
 
@@ -114,6 +110,16 @@ message Msg {
 
   /// send sequence
   int64 send_seq = 20;
+}
+
+message MsgContent {
+  string content = 1;
+  optional Mention mention = 2;
+}
+
+message Mention {
+  bool all = 1;
+  repeated string user_ids = 2;
 }
 
 message MsgRead {

@@ -1,7 +1,8 @@
+use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
-use axum::Router;
 
+use crate::AppState;
 use crate::handlers::files::file::{get_avatar_by_name, get_file_by_name, upload, upload_avatar};
 use crate::handlers::friends::friend_handlers::{
     agree, create_friendship, delete_friend, get_apply_list_by_user_id,
@@ -16,7 +17,6 @@ use crate::handlers::users::{
     create_user, get_user_by_id, github_callback, github_login, google_callback, google_login,
     login, logout, modify_pwd, refresh_token, search_user, send_email, update_user,
 };
-use crate::AppState;
 
 pub(crate) fn app_routes(state: AppState) -> Router {
     Router::new()

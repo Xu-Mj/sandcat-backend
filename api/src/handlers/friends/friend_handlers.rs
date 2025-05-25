@@ -1,5 +1,5 @@
-use axum::extract::State;
 use axum::Json;
+use axum::extract::State;
 use serde::Serialize;
 
 use abi::errors::Error;
@@ -8,8 +8,8 @@ use abi::message::{
     SendMsgRequest, UpdateRemarkRequest,
 };
 
-use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 #[derive(Serialize)]
 pub struct FriendShipList {

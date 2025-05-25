@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::fmt::{Debug, Display, Formatter};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub fn get_strategy(lb_type: LoadBalanceStrategyType) -> Arc<dyn LoadBalanceStrategy> {
     match lb_type {

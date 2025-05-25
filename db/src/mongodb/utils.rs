@@ -1,6 +1,6 @@
 use abi::errors::Error;
 use abi::message::Msg;
-use bson::{doc, Document};
+use bson::{Document, doc};
 
 pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
     let document = doc! {

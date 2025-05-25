@@ -1,8 +1,8 @@
 use std::net::SocketAddr;
 
-use axum::extract::{ConnectInfo, State};
 use axum::Json;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use axum::extract::{ConnectInfo, State};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use lettre::message::header::ContentType;
 use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
@@ -16,11 +16,11 @@ use tracing::{debug, error};
 use abi::errors::Error;
 use abi::message::{User, UserUpdate, UserWithMatchType};
 
+use crate::AppState;
 use crate::api_utils::custom_extract::{JsonExtractor, PathExtractor, PathWithAuthExtractor};
 use crate::handlers::users::{Claims, LoginRequest, Token, UserRegister};
-use crate::AppState;
 
-use super::{gen_token, ModifyPwdRequest, REFRESH_EXPIRES};
+use super::{ModifyPwdRequest, REFRESH_EXPIRES, gen_token};
 
 /// refresh auth token
 pub async fn refresh_token(

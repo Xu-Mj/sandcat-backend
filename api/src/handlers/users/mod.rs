@@ -2,7 +2,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use axum::Json;
 use base64::prelude::*;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
@@ -16,8 +16,8 @@ use tracing::error;
 pub use user_handlers::*;
 use xdb::search_by_ip;
 
-use crate::api_utils::ip_region::parse_region;
 use crate::AppState;
+use crate::api_utils::ip_region::parse_region;
 
 // 定义request model
 #[derive(Debug, Deserialize, Serialize)]

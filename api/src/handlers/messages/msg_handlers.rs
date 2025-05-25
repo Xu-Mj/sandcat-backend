@@ -1,12 +1,12 @@
-use axum::extract::State;
 use axum::Json;
+use axum::extract::State;
 use serde::{Deserialize, Serialize};
 
 use abi::errors::Error;
 use abi::message::{DelMsgRequest, GetDbMessagesRequest, Msg};
 
-use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 use crate::AppState;
+use crate::api_utils::custom_extract::{JsonWithAuthExtractor, PathWithAuthExtractor};
 
 // message handler, offer the ability to pull offline message
 // #[allow(dead_code)]
