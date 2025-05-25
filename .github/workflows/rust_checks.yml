@@ -67,7 +67,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.80.0 # MSRV
+          - latest
 
     steps:
       - name: Setup | Checkout
