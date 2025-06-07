@@ -322,31 +322,126 @@ pub struct User {
     pub salt: ::prost::alloc::string::String,
     #[prost(string, tag = "16")]
     pub signature: ::prost::alloc::string::String,
+    /// 账号与安全
+    #[prost(int64, optional, tag = "17")]
+    pub last_login_time: ::core::option::Option<i64>,
+    #[prost(string, optional, tag = "18")]
+    pub last_login_ip: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, tag = "19")]
+    pub two_factor_enabled: bool,
+    /// "active", "disabled", "locked"
+    #[prost(string, tag = "20")]
+    pub account_status: ::prost::alloc::string::String,
+    /// 在线状态管理
+    ///
+    /// "online", "offline", "busy", "dnd", "away"
+    #[prost(string, tag = "21")]
+    pub status: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag = "22")]
+    pub last_active_time: ::core::option::Option<i64>,
+    /// 状态消息
+    #[prost(string, optional, tag = "23")]
+    pub status_message: ::core::option::Option<::prost::alloc::string::String>,
+    /// 隐私与设置
+    ///
+    /// JSON字符串
+    #[prost(string, tag = "24")]
+    pub privacy_settings: ::prost::alloc::string::String,
+    /// JSON字符串
+    #[prost(string, tag = "25")]
+    pub notification_settings: ::prost::alloc::string::String,
+    #[prost(string, tag = "26")]
+    pub language: ::prost::alloc::string::String,
+    /// 社交与关系
+    ///
+    /// "all", "friends_of_friends", "none"
+    #[prost(string, tag = "27")]
+    pub friend_requests_privacy: ::prost::alloc::string::String,
+    /// "public", "friends", "private"
+    #[prost(string, tag = "28")]
+    pub profile_visibility: ::prost::alloc::string::String,
+    /// 用户体验
+    ///
+    /// "light", "dark", "system"
+    #[prost(string, tag = "29")]
+    pub theme: ::prost::alloc::string::String,
+    #[prost(string, tag = "30")]
+    pub timezone: ::prost::alloc::string::String,
+    /// 保持与SQL一致的字段
+    #[prost(bool, tag = "31")]
+    pub is_delete: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserUpdate {
+    /// 用户ID（必需，标识要更新的用户）
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
+    /// 基本信息
+    ///
+    /// 用户名
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
+    /// 头像URL
     #[prost(string, tag = "3")]
     pub avatar: ::prost::alloc::string::String,
+    /// 性别
     #[prost(string, tag = "4")]
     pub gender: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "5")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "6")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "7")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "9")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(string, optional, tag = "10")]
-    pub signature: ::core::option::Option<::prost::alloc::string::String>,
+    /// 电话
+    #[prost(string, tag = "5")]
+    pub phone: ::prost::alloc::string::String,
+    /// 电子邮箱
+    #[prost(string, tag = "6")]
+    pub email: ::prost::alloc::string::String,
+    /// 地址
+    #[prost(string, tag = "7")]
+    pub address: ::prost::alloc::string::String,
+    /// 地区/位置
+    #[prost(string, tag = "8")]
+    pub region: ::prost::alloc::string::String,
+    /// 生日时间戳
+    #[prost(int64, tag = "9")]
+    pub birthday: i64,
+    /// 个性签名
+    #[prost(string, tag = "10")]
+    pub signature: ::prost::alloc::string::String,
+    /// 用户状态和个人偏好
+    ///
+    /// 在线状态: "online", "offline", "busy", "dnd", "away"
+    #[prost(string, tag = "11")]
+    pub status: ::prost::alloc::string::String,
+    /// 状态消息/动态
+    #[prost(string, tag = "12")]
+    pub status_message: ::prost::alloc::string::String,
+    /// 通知和隐私设置
+    ///
+    /// 隐私设置 (JSON字符串)
+    #[prost(string, tag = "13")]
+    pub privacy_settings: ::prost::alloc::string::String,
+    /// 通知设置 (JSON字符串)
+    #[prost(string, tag = "14")]
+    pub notification_settings: ::prost::alloc::string::String,
+    /// 语言偏好
+    #[prost(string, tag = "15")]
+    pub language: ::prost::alloc::string::String,
+    /// 社交设置
+    ///
+    /// 好友请求隐私设置: "all", "friends_of_friends", "none"
+    #[prost(string, tag = "16")]
+    pub friend_requests_privacy: ::prost::alloc::string::String,
+    /// 个人资料可见性: "public", "friends", "private"
+    #[prost(string, tag = "17")]
+    pub profile_visibility: ::prost::alloc::string::String,
+    /// 应用偏好
+    ///
+    /// 界面主题: "light", "dark", "system"
+    #[prost(string, tag = "18")]
+    pub theme: ::prost::alloc::string::String,
+    /// 时区
+    #[prost(string, tag = "19")]
+    pub timezone: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

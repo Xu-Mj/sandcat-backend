@@ -260,19 +260,75 @@ message User {
   int64 update_time = 14;
   string salt = 15;
   string signature = 16;
+
+  // 账号与安全
+  optional int64 last_login_time = 17;
+  optional string last_login_ip = 18;
+  bool two_factor_enabled = 19;
+  string account_status = 20; // "active", "disabled", "locked"
+
+  // 在线状态管理
+  string status = 21; // "online", "offline", "busy", "dnd", "away"
+  optional int64 last_active_time = 22;
+  optional string status_message = 23; // 状态消息
+
+  // 隐私与设置
+  string privacy_settings = 24; // JSON字符串
+  string notification_settings = 25; // JSON字符串
+  string language = 26;
+
+  // 社交与关系
+  string friend_requests_privacy = 27; // "all", "friends_of_friends", "none"
+  string profile_visibility = 28; // "public", "friends", "private"
+
+  // 用户体验
+  string theme = 29; // "light", "dark", "system"
+  string timezone = 30;
+
+  // 保持与SQL一致的字段
+  bool is_delete = 31;
 }
 
 message UserUpdate {
-  string id = 1;
-  string name = 2;
-  string avatar = 3;
-  string gender = 4;
-  optional string phone = 5;
-  optional string email = 6;
-  optional string address = 7;
-  optional string region = 8;
-  optional int64 birthday = 9;
-  optional string signature = 10;
+  string id = 1;                     // 用户ID（必需，标识要更新的用户）
+
+  // 基本信息
+  string name = 2;                   // 用户名
+  string avatar = 3;                 // 头像URL
+  string gender = 4;                 // 性别
+  string phone = 5;                  // 电话
+  string email = 6;                  // 电子邮箱
+  string address = 7;                // 地址
+  string region = 8;                 // 地区/位置
+  int64 birthday = 9;                // 生日时间戳
+  string signature = 10;             // 个性签名
+
+  // 用户状态和个人偏好
+  string status = 11;                // 在线状态: "online", "offline", "busy", "dnd", "away"
+  string status_message = 12;        // 状态消息/动态
+
+  // 通知和隐私设置
+  string privacy_settings = 13;      // 隐私设置 (JSON字符串)
+  string notification_settings = 14; // 通知设置 (JSON字符串)
+  string language = 15;              // 语言偏好
+
+  // 社交设置
+  string friend_requests_privacy = 16; // 好友请求隐私设置: "all", "friends_of_friends", "none"
+  string profile_visibility = 17;      // 个人资料可见性: "public", "friends", "private"
+
+  // 应用偏好
+  string theme = 18;                   // 界面主题: "light", "dark", "system"
+  string timezone = 19;                // 时区
+
+  // 不允许更新的安全字段（没有包括在这个消息中）:
+  // - password
+  // - salt
+  // - account_status
+  // - login_attempts
+  // - two_factor_enabled
+  // - last_login_time
+  // - last_login_ip
+  // - is_delete
 }
 
 message UserWithMatchType {

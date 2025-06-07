@@ -10,6 +10,8 @@ use std::fmt;
 use tonic::Status;
 use tracing::error;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug, Serialize)]
 pub enum ErrorKind {
     UnknownError,
