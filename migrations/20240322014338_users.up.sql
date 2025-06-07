@@ -29,8 +29,8 @@ CREATE TABLE users
     status_message      TEXT,
 
     -- 隐私与设置
-    privacy_settings    JSONB NOT NULL DEFAULT '{}',
-    notification_settings JSONB NOT NULL DEFAULT '{}',
+    privacy_settings    TEXT NOT NULL DEFAULT '{}',
+    notification_settings TEXT NOT NULL DEFAULT '{}',
     language            TEXT NOT NULL DEFAULT 'zh_CN',
 
     -- 社交与关系
