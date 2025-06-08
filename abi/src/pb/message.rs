@@ -553,6 +553,30 @@ pub struct FriendDb {
     pub create_time: i64,
     #[prost(int64, tag = "9")]
     pub update_time: i64,
+    #[prost(int64, tag = "10")]
+    pub deleted_time: i64,
+    #[prost(bool, tag = "11")]
+    pub is_starred: bool,
+    #[prost(string, tag = "12")]
+    pub group_id: ::prost::alloc::string::String,
+    /// Computed interaction score
+    #[prost(float, tag = "13")]
+    pub interaction_score: f32,
+    /// Count of interactions
+    #[prost(int32, tag = "14")]
+    pub interaction_count: i32,
+    /// Timestamp of last interaction
+    #[prost(int64, tag = "15")]
+    pub last_interaction: i64,
+    /// Associated tags
+    #[prost(string, repeated, tag = "16")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Privacy setting for this friendship
+    #[prost(string, tag = "17")]
+    pub privacy_level: ::prost::alloc::string::String,
+    /// Whether notifications are enabled
+    #[prost(bool, tag = "18")]
+    pub notifications_enabled: bool,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -588,6 +612,99 @@ pub struct Friend {
     pub create_time: i64,
     #[prost(int64, tag = "15")]
     pub update_time: i64,
+    #[prost(float, tag = "16")]
+    pub interaction_score: f32,
+    #[prost(string, repeated, tag = "17")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag = "18")]
+    pub group_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "19")]
+    pub privacy_level: ::prost::alloc::string::String,
+    #[prost(bool, tag = "20")]
+    pub notifications_enabled: bool,
+    #[prost(int64, tag = "21")]
+    pub last_interaction: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendGroup {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(int32, tag = "4")]
+    pub display_order: i32,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFriendGroupRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendTag {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub tag_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub tag_color: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManageFriendTagRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub tag_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// true to add tags, false to remove tags
+    #[prost(bool, tag = "4")]
+    pub is_add: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendPrivacySettings {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    /// "public", "limited", "restricted"
+    #[prost(string, tag = "3")]
+    pub privacy_level: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub share_timeline: bool,
+    #[prost(bool, tag = "5")]
+    pub share_location: bool,
+    #[prost(bool, tag = "6")]
+    pub share_status: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFriendPrivacyRequest {
+    #[prost(message, optional, tag = "1")]
+    pub settings: ::core::option::Option<FriendPrivacySettings>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -909,9 +1026,10 @@ pub enum FriendshipStatus {
     Pending = 0,
     Accepted = 1,
     Rejected = 2,
-    /// / blacklist
     Blacked = 3,
     Deleted = 4,
+    Muted = 5,
+    Hidden = 6,
 }
 impl FriendshipStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -925,6 +1043,8 @@ impl FriendshipStatus {
             FriendshipStatus::Rejected => "Rejected",
             FriendshipStatus::Blacked => "Blacked",
             FriendshipStatus::Deleted => "Deleted",
+            FriendshipStatus::Muted => "Muted",
+            FriendshipStatus::Hidden => "Hidden",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -935,6 +1055,8 @@ impl FriendshipStatus {
             "Rejected" => Some(Self::Rejected),
             "Blacked" => Some(Self::Blacked),
             "Deleted" => Some(Self::Deleted),
+            "Muted" => Some(Self::Muted),
+            "Hidden" => Some(Self::Hidden),
             _ => None,
         }
     }

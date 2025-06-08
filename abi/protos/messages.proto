@@ -26,9 +26,10 @@ enum FriendshipStatus {
   Pending = 0;
   Accepted = 1;
   Rejected = 2;
-  /// blacklist
   Blacked = 3;
   Deleted = 4;
+  Muted = 5;
+  Hidden = 6;
 }
 
 enum MsgType {
@@ -273,13 +274,13 @@ message User {
   optional string status_message = 23; // 状态消息
 
   // 隐私与设置
-  string privacy_settings = 24; // JSON字符串
+  string privacy_settings = 24;      // JSON字符串
   string notification_settings = 25; // JSON字符串
   string language = 26;
 
   // 社交与关系
   string friend_requests_privacy = 27; // "all", "friends_of_friends", "none"
-  string profile_visibility = 28; // "public", "friends", "private"
+  string profile_visibility = 28;      // "public", "friends", "private"
 
   // 用户体验
   string theme = 29; // "light", "dark", "system"
@@ -290,22 +291,22 @@ message User {
 }
 
 message UserUpdate {
-  string id = 1;                     // 用户ID（必需，标识要更新的用户）
+  string id = 1; // 用户ID（必需，标识要更新的用户）
 
   // 基本信息
-  string name = 2;                   // 用户名
-  string avatar = 3;                 // 头像URL
-  string gender = 4;                 // 性别
-  string phone = 5;                  // 电话
-  string email = 6;                  // 电子邮箱
-  string address = 7;                // 地址
-  string region = 8;                 // 地区/位置
-  int64 birthday = 9;                // 生日时间戳
-  string signature = 10;             // 个性签名
+  string name = 2;       // 用户名
+  string avatar = 3;     // 头像URL
+  string gender = 4;     // 性别
+  string phone = 5;      // 电话
+  string email = 6;      // 电子邮箱
+  string address = 7;    // 地址
+  string region = 8;     // 地区/位置
+  int64 birthday = 9;    // 生日时间戳
+  string signature = 10; // 个性签名
 
   // 用户状态和个人偏好
-  string status = 11;                // 在线状态: "online", "offline", "busy", "dnd", "away"
-  string status_message = 12;        // 状态消息/动态
+  string status = 11; // 在线状态: "online", "offline", "busy", "dnd", "away"
+  string status_message = 12; // 状态消息/动态
 
   // 通知和隐私设置
   string privacy_settings = 13;      // 隐私设置 (JSON字符串)
@@ -313,12 +314,14 @@ message UserUpdate {
   string language = 15;              // 语言偏好
 
   // 社交设置
-  string friend_requests_privacy = 16; // 好友请求隐私设置: "all", "friends_of_friends", "none"
-  string profile_visibility = 17;      // 个人资料可见性: "public", "friends", "private"
+  string friend_requests_privacy =
+      16; // 好友请求隐私设置: "all", "friends_of_friends", "none"
+  string profile_visibility =
+      17; // 个人资料可见性: "public", "friends", "private"
 
   // 应用偏好
-  string theme = 18;                   // 界面主题: "light", "dark", "system"
-  string timezone = 19;                // 时区
+  string theme = 18;    // 界面主题: "light", "dark", "system"
+  string timezone = 19; // 时区
 
   // 不允许更新的安全字段（没有包括在这个消息中）:
   // - password
@@ -387,6 +390,15 @@ message FriendDb {
   string source = 7;
   int64 create_time = 8;
   int64 update_time = 9;
+  int64 deleted_time = 10;
+  bool is_starred = 11;
+  string group_id = 12;
+  float interaction_score = 13;    // Computed interaction score
+  int32 interaction_count = 14;    // Count of interactions
+  int64 last_interaction = 15;     // Timestamp of last interaction
+  repeated string tags = 16;       // Associated tags
+  string privacy_level = 17;       // Privacy setting for this friendship
+  bool notifications_enabled = 18; // Whether notifications are enabled
 }
 
 message Friend {
@@ -405,6 +417,55 @@ message Friend {
   string signature = 13;
   int64 create_time = 14;
   int64 update_time = 15;
+  float interaction_score = 16;
+  repeated string tags = 17;
+  string group_name = 18;
+  string privacy_level = 19;
+  bool notifications_enabled = 20;
+  int64 last_interaction = 21;
+}
+
+message FriendGroup {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message UpdateFriendGroupRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  string group_id = 3;
+}
+
+message FriendTag {
+  string id = 1;
+  string user_id = 2;
+  string tag_name = 3;
+  string tag_color = 4;
+  int64 create_time = 5;
+}
+
+message ManageFriendTagRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  repeated string tag_ids = 3;
+  bool is_add = 4;  // true to add tags, false to remove tags
+}
+
+message FriendPrivacySettings {
+  string user_id = 1;
+  string friend_id = 2;
+  string privacy_level = 3;  // "public", "limited", "restricted"
+  bool share_timeline = 4;
+  bool share_location = 5;
+  bool share_status = 6;
+}
+
+message UpdateFriendPrivacyRequest {
+  FriendPrivacySettings settings = 1;
 }
 
 message FriendInfo {

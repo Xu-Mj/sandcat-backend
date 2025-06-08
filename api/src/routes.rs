@@ -5,8 +5,11 @@ use axum::routing::{delete, get, post, put};
 use crate::AppState;
 use crate::handlers::files::file::{get_avatar_by_name, get_file_by_name, upload, upload_avatar};
 use crate::handlers::friends::friend_handlers::{
-    agree, create_friendship, delete_friend, get_apply_list_by_user_id,
-    get_friends_list_by_user_id, query_friend_info, update_friend_remark,
+    agree, assign_friend_to_group, create_friend_group, create_friend_tag, create_friendship,
+    delete_friend, delete_friend_group, delete_friend_tag, get_apply_list_by_user_id,
+    get_friend_groups, get_friend_privacy, get_friend_tags, get_friends_list_by_user_id,
+    get_interaction_stats, manage_friend_tags, query_friend_info, update_friend_group,
+    update_friend_privacy, update_friend_remark, update_interaction_score,
 };
 use crate::handlers::groups::group_handlers::{
     create_group_handler, delete_group_handler, get_group, get_group_and_members,
@@ -36,6 +39,22 @@ fn friend_routes(state: AppState) -> Router {
         .route("/", delete(delete_friend))
         .route("/remark", put(update_friend_remark))
         .route("/query/:user_id", get(query_friend_info))
+        .route("/groups", post(create_friend_group))
+        .route("/groups", put(update_friend_group))
+        .route("/groups/:group_id", delete(delete_friend_group))
+        .route("/groups/:user_id", get(get_friend_groups))
+        .route("/assign-group", post(assign_friend_to_group))
+        .route("/tags", post(create_friend_tag))
+        .route("/tags/:tag_id", delete(delete_friend_tag))
+        .route("/tags/:user_id", get(get_friend_tags))
+        .route("/manage-tags", post(manage_friend_tags))
+        .route("/privacy", post(update_friend_privacy))
+        .route("/privacy/:user_id/:friend_id", get(get_friend_privacy))
+        .route("/interaction", post(update_interaction_score))
+        .route(
+            "/interaction/:user_id/:friend_id",
+            get(get_interaction_stats),
+        )
         .with_state(state)
 }
 
