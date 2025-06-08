@@ -179,17 +179,7 @@ pub struct UserAndGroupId {
     #[prost(string, tag = "2")]
     pub group_id: ::prost::alloc::string::String,
 }
-/// / group invitation include group information and group member information
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInvitation {
-    #[prost(message, optional, tag = "1")]
-    pub info: ::core::option::Option<GroupInfo>,
-    #[prost(message, repeated, tag = "2")]
-    pub members: ::prost::alloc::vec::Vec<GroupMember>,
-}
-/// / group information also related to database
+/// GroupInfo
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -210,9 +200,26 @@ pub struct GroupInfo {
     pub create_time: i64,
     #[prost(int64, tag = "8")]
     pub update_time: i64,
+    #[prost(int32, tag = "9")]
+    pub max_members: i32,
+    #[prost(bool, tag = "10")]
+    pub is_public: bool,
+    #[prost(bool, tag = "11")]
+    pub join_approval_required: bool,
+    #[prost(string, tag = "12")]
+    pub category: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "13")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "14")]
+    pub mute_all: bool,
+    #[prost(bool, tag = "15")]
+    pub only_admin_post: bool,
+    #[prost(enumeration = "GroupMemberRole", tag = "16")]
+    pub invite_permission: i32,
+    #[prost(string, repeated, tag = "17")]
+    pub pinned_messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-/// fixme add account field
-/// / group member information also related to database table group_members
+/// GroupMember
 #[derive(serde::Serialize, serde::Deserialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -239,6 +246,263 @@ pub struct GroupMember {
     pub signature: ::prost::alloc::string::String,
     #[prost(enumeration = "GroupMemberRole", tag = "11")]
     pub role: i32,
+    #[prost(bool, tag = "12")]
+    pub is_muted: bool,
+    #[prost(string, tag = "13")]
+    pub notification_level: ::prost::alloc::string::String,
+    #[prost(int64, tag = "14")]
+    pub last_read_time: i64,
+    #[prost(int32, tag = "15")]
+    pub display_order: i32,
+    #[prost(string, tag = "16")]
+    pub joined_by: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupCategory {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(int32, tag = "4")]
+    pub display_order: i32,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFile {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub uploader_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub file_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub file_url: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub file_size: i64,
+    #[prost(string, tag = "7")]
+    pub file_type: ::prost::alloc::string::String,
+    #[prost(int64, tag = "8")]
+    pub upload_time: i64,
+    #[prost(bool, tag = "9")]
+    pub is_pinned: bool,
+    #[prost(int32, tag = "10")]
+    pub download_count: i32,
+    #[prost(string, tag = "11")]
+    pub thumbnail_url: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PollOption {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub text: ::prost::alloc::string::String,
+    /// 非匿名投票时
+    #[prost(string, repeated, tag = "3")]
+    pub voter_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// 匿名投票时
+    #[prost(int32, tag = "4")]
+    pub vote_count: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupPoll {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "5")]
+    pub options: ::prost::alloc::vec::Vec<PollOption>,
+    #[prost(bool, tag = "6")]
+    pub is_multiple: bool,
+    #[prost(bool, tag = "7")]
+    pub is_anonymous: bool,
+    #[prost(int64, tag = "8")]
+    pub created_at: i64,
+    #[prost(int64, tag = "9")]
+    pub expires_at: i64,
+    /// "active", "closed"
+    #[prost(string, tag = "10")]
+    pub status: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMuteRecord {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub operator_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub mute_until: i64,
+    #[prost(string, tag = "6")]
+    pub reason: ::prost::alloc::string::String,
+    #[prost(int64, tag = "7")]
+    pub created_at: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInvitation {
+    #[prost(message, optional, tag = "1")]
+    pub info: ::core::option::Option<GroupInfo>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupAnnouncement {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub created_at: i64,
+    #[prost(bool, tag = "6")]
+    pub is_pinned: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateGroupCategoryRequest {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(int32, tag = "3")]
+    pub display_order: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateGroupRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub announcement: ::prost::alloc::string::String,
+    #[prost(bool, tag = "7")]
+    pub join_approval_required: bool,
+    #[prost(bool, tag = "8")]
+    pub mute_all: bool,
+    #[prost(bool, tag = "9")]
+    pub only_admin_post: bool,
+    #[prost(enumeration = "GroupMemberRole", tag = "10")]
+    pub invite_permission: i32,
+    #[prost(string, tag = "11")]
+    pub category: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "12")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFileUploadRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub uploader_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub file_name: ::prost::alloc::string::String,
+    #[prost(bytes = "vec", tag = "4")]
+    pub file_data: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "5")]
+    pub file_type: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub file_size: i64,
+    #[prost(string, tag = "7")]
+    pub file_url: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreatePollRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "5")]
+    pub is_multiple: bool,
+    #[prost(bool, tag = "6")]
+    pub is_anonymous: bool,
+    #[prost(int64, tag = "7")]
+    pub expires_at: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VotePollRequest {
+    #[prost(string, tag = "1")]
+    pub poll_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub option_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MuteGroupMemberRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub operator_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "4")]
+    pub mute_until: i64,
+    #[prost(string, tag = "5")]
+    pub reason: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAnnouncementRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub is_pinned: bool,
 }
 /// / create group object
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -1075,26 +1339,30 @@ pub enum MsgType {
     GroupDismissOrExitReceived = 7,
     GroupInvitationReceived = 8,
     GroupUpdate = 9,
+    GroupFile = 10,
+    GroupPoll = 11,
+    GroupMute = 12,
+    GroupAnnouncement = 13,
     /// / friend operation
-    FriendApplyReq = 10,
-    FriendApplyResp = 11,
-    FriendBlack = 12,
-    FriendDelete = 13,
+    FriendApplyReq = 14,
+    FriendApplyResp = 15,
+    FriendBlack = 16,
+    FriendDelete = 17,
     /// / single call operation
-    SingleCallInvite = 14,
-    RejectSingleCall = 15,
-    AgreeSingleCall = 16,
-    SingleCallInviteNotAnswer = 17,
-    SingleCallInviteCancel = 18,
-    SingleCallOffer = 19,
-    Hangup = 20,
-    ConnectSingleCall = 21,
-    Candidate = 22,
-    Read = 23,
-    MsgRecResp = 24,
-    Notification = 25,
-    Service = 26,
-    FriendshipReceived = 27,
+    SingleCallInvite = 18,
+    RejectSingleCall = 19,
+    AgreeSingleCall = 20,
+    SingleCallInviteNotAnswer = 21,
+    SingleCallInviteCancel = 22,
+    SingleCallOffer = 23,
+    Hangup = 24,
+    ConnectSingleCall = 25,
+    Candidate = 26,
+    Read = 27,
+    MsgRecResp = 28,
+    Notification = 29,
+    Service = 30,
+    FriendshipReceived = 31,
 }
 impl MsgType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -1113,6 +1381,10 @@ impl MsgType {
             MsgType::GroupDismissOrExitReceived => "MsgTypeGroupDismissOrExitReceived",
             MsgType::GroupInvitationReceived => "MsgTypeGroupInvitationReceived",
             MsgType::GroupUpdate => "MsgTypeGroupUpdate",
+            MsgType::GroupFile => "MsgTypeGroupFile",
+            MsgType::GroupPoll => "MsgTypeGroupPoll",
+            MsgType::GroupMute => "MsgTypeGroupMute",
+            MsgType::GroupAnnouncement => "MsgTypeGroupAnnouncement",
             MsgType::FriendApplyReq => "MsgTypeFriendApplyReq",
             MsgType::FriendApplyResp => "MsgTypeFriendApplyResp",
             MsgType::FriendBlack => "MsgTypeFriendBlack",
@@ -1146,6 +1418,10 @@ impl MsgType {
             "MsgTypeGroupDismissOrExitReceived" => Some(Self::GroupDismissOrExitReceived),
             "MsgTypeGroupInvitationReceived" => Some(Self::GroupInvitationReceived),
             "MsgTypeGroupUpdate" => Some(Self::GroupUpdate),
+            "MsgTypeGroupFile" => Some(Self::GroupFile),
+            "MsgTypeGroupPoll" => Some(Self::GroupPoll),
+            "MsgTypeGroupMute" => Some(Self::GroupMute),
+            "MsgTypeGroupAnnouncement" => Some(Self::GroupAnnouncement),
             "MsgTypeFriendApplyReq" => Some(Self::FriendApplyReq),
             "MsgTypeFriendApplyResp" => Some(Self::FriendApplyResp),
             "MsgTypeFriendBlack" => Some(Self::FriendBlack),

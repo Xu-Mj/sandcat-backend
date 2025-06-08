@@ -46,29 +46,33 @@ enum MsgType {
   MsgTypeGroupDismissOrExitReceived = 7;
   MsgTypeGroupInvitationReceived = 8;
   MsgTypeGroupUpdate = 9;
+  MsgTypeGroupFile = 10;
+  MsgTypeGroupPoll = 11;
+  MsgTypeGroupMute = 12;
+  MsgTypeGroupAnnouncement = 13;
 
   /// friend operation
-  MsgTypeFriendApplyReq = 10;
-  MsgTypeFriendApplyResp = 11;
-  MsgTypeFriendBlack = 12;
-  MsgTypeFriendDelete = 13;
+  MsgTypeFriendApplyReq = 14;
+  MsgTypeFriendApplyResp = 15;
+  MsgTypeFriendBlack = 16;
+  MsgTypeFriendDelete = 17;
 
   /// single call operation
-  MsgTypeSingleCallInvite = 14;
-  MsgTypeRejectSingleCall = 15;
-  MsgTypeAgreeSingleCall = 16;
-  MsgTypeSingleCallInviteNotAnswer = 17;
-  MsgTypeSingleCallInviteCancel = 18;
-  MsgTypeSingleCallOffer = 19;
-  MsgTypeHangup = 20;
-  MsgTypeConnectSingleCall = 21;
-  MsgTypeCandidate = 22;
+  MsgTypeSingleCallInvite = 18;
+  MsgTypeRejectSingleCall = 19;
+  MsgTypeAgreeSingleCall = 20;
+  MsgTypeSingleCallInviteNotAnswer = 21;
+  MsgTypeSingleCallInviteCancel = 22;
+  MsgTypeSingleCallOffer = 23;
+  MsgTypeHangup = 24;
+  MsgTypeConnectSingleCall = 25;
+  MsgTypeCandidate = 26;
 
-  MsgTypeRead = 23;
-  MsgTypeMsgRecResp = 24;
-  MsgTypeNotification = 25;
-  MsgTypeService = 26;
-  MsgTypeFriendshipReceived = 27;
+  MsgTypeRead = 27;
+  MsgTypeMsgRecResp = 28;
+  MsgTypeNotification = 29;
+  MsgTypeService = 30;
+  MsgTypeFriendshipReceived = 31;
 }
 
 /// decode message content by content type
@@ -180,13 +184,7 @@ message UserAndGroupID {
   string group_id = 2;
 }
 
-/// group invitation include group information and group member information
-message GroupInvitation {
-  GroupInfo info = 1;
-  repeated GroupMember members = 2;
-}
-
-/// group information also related to database
+// GroupInfo
 message GroupInfo {
   string id = 1;
   string owner = 2;
@@ -196,16 +194,18 @@ message GroupInfo {
   string announcement = 6;
   int64 create_time = 7;
   int64 update_time = 8;
+  int32 max_members = 9;
+  bool is_public = 10;
+  bool join_approval_required = 11;
+  string category = 12;
+  repeated string tags = 13;
+  bool mute_all = 14;
+  bool only_admin_post = 15;
+  GroupMemberRole invite_permission = 16;
+  repeated string pinned_messages = 17;
 }
 
-enum GroupMemberRole {
-  GroupMemberRoleOwner = 0;
-  GroupMemberRoleAdmin = 1;
-  GroupMemberRoleMember = 2;
-}
-
-// fixme add account field
-/// group member information also related to database table group_members
+// GroupMember
 message GroupMember {
   int32 age = 1;
   string group_id = 2;
@@ -218,6 +218,146 @@ message GroupMember {
   optional string remark = 9;
   string signature = 10;
   GroupMemberRole role = 11;
+  bool is_muted = 12;
+  string notification_level = 13;
+  int64 last_read_time = 14;
+  int32 display_order = 15;
+  string joined_by = 16;
+}
+
+message GroupCategory {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message GroupFile {
+  string id = 1;
+  string group_id = 2;
+  string uploader_id = 3;
+  string file_name = 4;
+  string file_url = 5;
+  int64 file_size = 6;
+  string file_type = 7;
+  int64 upload_time = 8;
+  bool is_pinned = 9;
+  int32 download_count = 10;
+  string thumbnail_url = 11;
+}
+
+message PollOption {
+  string id = 1;
+  string text = 2;
+  repeated string voter_ids = 3; // 非匿名投票时
+  int32 vote_count = 4;          // 匿名投票时
+}
+
+message GroupPoll {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string title = 4;
+  repeated PollOption options = 5;
+  bool is_multiple = 6;
+  bool is_anonymous = 7;
+  int64 created_at = 8;
+  int64 expires_at = 9;
+  string status = 10; // "active", "closed"
+}
+
+message GroupMuteRecord {
+  string id = 1;
+  string group_id = 2;
+  string user_id = 3;
+  string operator_id = 4;
+  int64 mute_until = 5;
+  string reason = 6;
+  int64 created_at = 7;
+}
+
+message GroupInvitation {
+  GroupInfo info = 1;
+  repeated GroupMember members = 2;
+}
+
+message GroupAnnouncement {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string content = 4;
+  int64 created_at = 5;
+  bool is_pinned = 6;
+}
+
+message CreateGroupCategoryRequest {
+  string name = 1;
+  string description = 2;
+  int32 display_order = 3;
+}
+
+message UpdateGroupRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  bool join_approval_required = 7;
+  bool mute_all = 8;
+  bool only_admin_post = 9;
+  GroupMemberRole invite_permission = 10;
+  string category = 11;
+  repeated string tags = 12;
+}
+
+message GroupFileUploadRequest {
+  string group_id = 1;
+  string uploader_id = 2;
+  string file_name = 3;
+  bytes file_data = 4;
+  string file_type = 5;
+  int64 file_size = 6;
+  string file_url = 7;
+}
+
+message CreatePollRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string title = 3;
+  repeated string options = 4;
+  bool is_multiple = 5;
+  bool is_anonymous = 6;
+  int64 expires_at = 7;
+}
+
+message VotePollRequest {
+  string poll_id = 1;
+  string user_id = 2;
+  repeated string option_ids = 3;
+}
+
+message MuteGroupMemberRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string operator_id = 3;
+  int64 mute_until = 4;
+  string reason = 5;
+}
+
+message CreateAnnouncementRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string content = 3;
+  bool is_pinned = 4;
+}
+
+enum GroupMemberRole {
+  GroupMemberRoleOwner = 0;
+  GroupMemberRoleAdmin = 1;
+  GroupMemberRoleMember = 2;
 }
 
 /// create group object
@@ -452,21 +592,19 @@ message ManageFriendTagRequest {
   string user_id = 1;
   string friend_id = 2;
   repeated string tag_ids = 3;
-  bool is_add = 4;  // true to add tags, false to remove tags
+  bool is_add = 4; // true to add tags, false to remove tags
 }
 
 message FriendPrivacySettings {
   string user_id = 1;
   string friend_id = 2;
-  string privacy_level = 3;  // "public", "limited", "restricted"
+  string privacy_level = 3; // "public", "limited", "restricted"
   bool share_timeline = 4;
   bool share_location = 5;
   bool share_status = 6;
 }
 
-message UpdateFriendPrivacyRequest {
-  FriendPrivacySettings settings = 1;
-}
+message UpdateFriendPrivacyRequest { FriendPrivacySettings settings = 1; }
 
 message FriendInfo {
   string id = 1;

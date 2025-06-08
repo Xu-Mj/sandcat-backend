@@ -194,6 +194,82 @@ impl SendMsgRequest {
             }),
         }
     }
+
+    // 群组文件消息
+    pub fn new_with_group_file(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupFile as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组投票消息
+    pub fn new_with_group_poll(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupPoll as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组禁言消息
+    pub fn new_with_group_mute(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupMute as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组公告消息
+    pub fn new_with_group_announcement(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupAnnouncement as i32,
+                ..Default::default()
+            }),
+        }
+    }
 }
 
 impl UserAndGroupId {
