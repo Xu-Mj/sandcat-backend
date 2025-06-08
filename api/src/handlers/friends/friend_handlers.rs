@@ -215,18 +215,18 @@ pub async fn update_friend_group(
 
 pub async fn delete_friend_group(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(group_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<(), Error> {
-    app_state.db.friend.delete_friend_group(&group_id).await?;
+    app_state.db.friend.delete_friend_group(&id).await?;
 
     Ok(())
 }
 
 pub async fn get_friend_groups(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<Json<Vec<FriendGroup>>, Error> {
-    let groups = app_state.db.friend.get_friend_groups(&user_id).await?;
+    let groups = app_state.db.friend.get_friend_groups(&id).await?;
 
     Ok(Json(groups))
 }
@@ -268,18 +268,18 @@ pub async fn create_friend_tag(
 
 pub async fn delete_friend_tag(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(tag_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<(), Error> {
-    app_state.db.friend.delete_friend_tag(&tag_id).await?;
+    app_state.db.friend.delete_friend_tag(&id).await?;
 
     Ok(())
 }
 
 pub async fn get_friend_tags(
     State(app_state): State<AppState>,
-    PathWithAuthExtractor(user_id): PathWithAuthExtractor<String>,
+    PathWithAuthExtractor(id): PathWithAuthExtractor<String>,
 ) -> Result<Json<Vec<FriendTag>>, Error> {
-    let tags = app_state.db.friend.get_friend_tags(&user_id).await?;
+    let tags = app_state.db.friend.get_friend_tags(&id).await?;
 
     Ok(Json(tags))
 }
