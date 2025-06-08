@@ -29,18 +29,29 @@ impl FriendRepo for PostgresFriend {
         let now = chrono::Utc::now().timestamp_millis();
         let mut transaction = self.pool.begin().await?;
         debug!("create_fs: {:?}", &fs);
+
+        // 生成唯一ID
+        let fs_id = nanoid!();
+
+        // 插入好友申请记录，更新为新表结构
         let fs_id: (String,) = sqlx::query_as(
             "INSERT INTO friendships
-                (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time, update_time)
+                (id, user_id, friend_id, status, apply_msg, req_remark, source, create_time, update_time, operator_id, last_operation)
              VALUES
-                ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8, $8)
+                ($1, $2, $3, $4::friend_request_status, $5, $6, $7, $8, $8, $2, 'create')
              ON CONFLICT (user_id, friend_id)
              DO UPDATE
-                SET apply_msg = EXCLUDED.apply_msg, req_remark = EXCLUDED.req_remark,
-                source = EXCLUDED.source, create_time = EXCLUDED.create_time, status = EXCLUDED.status
+                SET apply_msg = EXCLUDED.apply_msg,
+                    req_remark = EXCLUDED.req_remark,
+                    source = EXCLUDED.source,
+                    create_time = EXCLUDED.create_time,
+                    update_time = EXCLUDED.update_time,
+                    status = EXCLUDED.status,
+                    operator_id = EXCLUDED.operator_id,
+                    last_operation = 'update'
              RETURNING id",
         )
-        .bind(nanoid!())
+        .bind(&fs_id)
         .bind(&fs.user_id)
         .bind(&fs.friend_id)
         .bind(FriendshipStatus::Pending.to_string())
@@ -51,12 +62,28 @@ impl FriendRepo for PostgresFriend {
         .fetch_one(&mut *transaction)
         .await?;
 
-        // select user information
+        // 查询用户信息
         let mut users: Vec<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1 OR id = $2")
             .bind(&fs.user_id)
             .bind(&fs.friend_id)
             .fetch_all(&mut *transaction)
             .await?;
+
+        // 预创建互动记录以便追踪后续互动
+        sqlx::query(
+            "INSERT INTO friend_interactions
+                (user_id, friend_id, last_interact_time)
+             VALUES
+                ($1, $2, $3),
+                ($2, $1, $3)
+             ON CONFLICT DO NOTHING",
+        )
+        .bind(&fs.user_id)
+        .bind(&fs.friend_id)
+        .bind(now)
+        .execute(&mut *transaction)
+        .await?;
+
         transaction.commit().await?;
 
         let user1 = users.remove(0);
@@ -89,6 +116,7 @@ impl FriendRepo for PostgresFriend {
             remark: None,
             email: None,
         };
+
         Ok((fs_req, fs_send))
     }
 
