@@ -81,7 +81,7 @@ message Msg {
   // must have
   string receiver_id = 2;
   // must have
-  string local_id = 3;
+  string client_id = 3;
   string server_id = 4;
   // timestamp
   int64 create_time = 5;
@@ -95,21 +95,21 @@ message Msg {
   bytes content = 10;
   bool is_read = 11;
 
-  string group_id = 15;
+  string group_id = 12;
 
   // platform of the sender
-  PlatformType platform = 16;
+  PlatformType platform = 13;
 
   // user avatar
-  string avatar = 17;
+  string avatar = 14;
   // user nickname
-  string nickname = 18;
+  string nickname = 15;
 
   // related message id
-  optional string related_msg_id = 19;
+  optional string related_msg_id = 16;
 
   /// send sequence
-  int64 send_seq = 20;
+  int64 send_seq = 17;
 }
 
 message MsgContent {
@@ -470,7 +470,7 @@ message SendGroupMsgRequest {
 message SendMsgResponse {}
 
 message MsgResponse {
-  string local_id = 1;
+  string client_id = 1;
   string server_id = 2;
   int64 send_time = 3;
   string err = 4;

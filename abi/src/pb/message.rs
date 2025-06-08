@@ -16,7 +16,7 @@ pub struct Msg {
     pub receiver_id: ::prost::alloc::string::String,
     /// must have
     #[prost(string, tag = "3")]
-    pub local_id: ::prost::alloc::string::String,
+    pub client_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub server_id: ::prost::alloc::string::String,
     /// timestamp
@@ -36,22 +36,22 @@ pub struct Msg {
     pub content: ::prost::alloc::vec::Vec<u8>,
     #[prost(bool, tag = "11")]
     pub is_read: bool,
-    #[prost(string, tag = "15")]
+    #[prost(string, tag = "12")]
     pub group_id: ::prost::alloc::string::String,
     /// platform of the sender
-    #[prost(enumeration = "PlatformType", tag = "16")]
+    #[prost(enumeration = "PlatformType", tag = "13")]
     pub platform: i32,
     /// user avatar
-    #[prost(string, tag = "17")]
+    #[prost(string, tag = "14")]
     pub avatar: ::prost::alloc::string::String,
     /// user nickname
-    #[prost(string, tag = "18")]
+    #[prost(string, tag = "15")]
     pub nickname: ::prost::alloc::string::String,
     /// related message id
-    #[prost(string, optional, tag = "19")]
+    #[prost(string, optional, tag = "16")]
     pub related_msg_id: ::core::option::Option<::prost::alloc::string::String>,
     /// / send sequence
-    #[prost(int64, tag = "20")]
+    #[prost(int64, tag = "17")]
     pub send_seq: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -711,7 +711,7 @@ pub struct SendMsgResponse {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgResponse {
     #[prost(string, tag = "1")]
-    pub local_id: ::prost::alloc::string::String,
+    pub client_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub server_id: ::prost::alloc::string::String,
     #[prost(int64, tag = "3")]
