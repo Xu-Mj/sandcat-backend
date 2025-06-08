@@ -1,6 +1,9 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
+use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::Duration;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use axum::extract::ws::CloseFrame;
 use axum::extract::{Path, State, WebSocketUpgrade};
@@ -19,7 +22,7 @@ use tracing::{error, info, warn};
 
 use abi::config::Config;
 use abi::errors::Error;
-use abi::message::{Msg, PlatformType};
+use abi::message::PlatformType;
 use synapse::service::{Scheme, ServiceInstance, ServiceRegistryClient};
 
 use crate::client::Client;
@@ -27,13 +30,22 @@ use crate::manager::Manager;
 use crate::rpc::MsgRpcService;
 
 pub const HEART_BEAT_INTERVAL: u64 = 30;
+
 pub const KNOCK_OFF_CODE: u16 = 4001;
 pub const UNAUTHORIZED_CODE: u16 = 4002;
+pub const MESSAGE_TOO_LARGE_CODE: u16 = 4003;
+pub const RATE_LIMITED_CODE: u16 = 4004;
+pub const INVALID_MESSAGE_FORMAT_CODE: u16 = 4005;
+
+const MAX_CONN_PER_MINUTE: u32 = 10; // 每分钟最大连接数
+const RATE_LIMIT_WINDOW: Duration = Duration::from_secs(60);
+const MAX_MESSAGE_SIZE: usize = 1_048_576; // 1 MB
 
 #[derive(Clone)]
 pub struct AppState {
     manager: Manager,
     jwt_secret: String,
+    rate_limiter: Arc<Mutex<HashMap<IpAddr, (u32, Instant)>>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -99,12 +111,13 @@ impl WsServer {
         let app_state = AppState {
             manager: hub.clone(),
             jwt_secret: config.server.jwt_secret.clone(),
+            rate_limiter: Arc::new(Mutex::new(HashMap::new())),
         };
 
         // run axum server
         let router = Router::new()
             .route(
-                "/ws/:user_id/conn/:pointer_id/:platform/:token",
+                "/ws/:user_id/:device_id/:platform",
                 get(Self::websocket_handler),
             )
             .route("/test", get(Self::test))
@@ -131,31 +144,106 @@ impl WsServer {
         }
     }
 
-    fn verify_token(token: String, jwt_secret: &String) -> Result<(), Error> {
-        if let Err(err) = decode::<Claims>(
+    fn verify_token(token: String, user_id: &str, jwt_secret: &String) -> Result<Claims, Error> {
+        let validation = Validation::default();
+
+        let token_data = match decode::<Claims>(
             &token,
             &DecodingKey::from_secret(jwt_secret.as_bytes()),
-            &Validation::default(),
+            &validation,
         ) {
-            return Err(Error::unauthorized(err, "/ws"));
+            Ok(data) => data,
+            Err(err) => match *err.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                    return Err(Error::unauthorized(err, "Token expired"))
+                }
+                jsonwebtoken::errors::ErrorKind::InvalidToken => {
+                    return Err(Error::unauthorized(err, "Invalid token format"))
+                }
+                _ => return Err(Error::unauthorized(err, "Token expired")),
+            },
+        };
+
+        // 验证token中的用户ID与请求的用户ID匹配
+        if token_data.claims.sub != user_id {
+            return Err(Error::unauthorized_with_details(
+                "User ID mismatch in token",
+            ));
         }
-        Ok(())
+
+        Ok(token_data.claims)
     }
 
     pub async fn websocket_handler(
-        Path((user_id, pointer_id, platform, token)): Path<(String, String, i32, String)>,
+        Path((user_id, device_id, platform)): Path<(String, String, i32)>,
+        headers: axum::http::HeaderMap,
         ws: WebSocketUpgrade,
+        client_ip: axum::extract::ConnectInfo<std::net::SocketAddr>,
         State(state): State<AppState>,
     ) -> impl IntoResponse {
+        // 获取客户端IP
+        let ip = client_ip.0.ip();
+
+        // 检查连接速率
+        let rate_limited = {
+            let mut rate_limiter = state.rate_limiter.lock().unwrap();
+            let now = Instant::now();
+
+            if let Some((count, timestamp)) = rate_limiter.get(&ip).map(|(c, t)| (*c, *t)) {
+                if now.duration_since(timestamp) < RATE_LIMIT_WINDOW && count >= MAX_CONN_PER_MINUTE
+                {
+                    true
+                } else if now.duration_since(timestamp) >= RATE_LIMIT_WINDOW {
+                    rate_limiter.insert(ip, (1, now));
+                    false
+                } else {
+                    rate_limiter.insert(ip, (count + 1, timestamp));
+                    false
+                }
+            } else {
+                // 第一次连接
+                rate_limiter.insert(ip, (1, now));
+                false
+            }
+        };
+
+        if rate_limited {
+            return (
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Connection rate limit exceeded".to_string(),
+            )
+                .into_response();
+        }
+
+        // 从Authorization头获取token
+        let token = match headers.get("Authorization") {
+            Some(auth_header) => {
+                let auth_str = auth_header.to_str().unwrap_or_default();
+                // 支持"Bearer {token}"格式
+                if let Some(prefix) = auth_str.strip_prefix("Bearer ") {
+                    prefix.to_string()
+                } else {
+                    auth_str.to_string()
+                }
+            }
+            None => {
+                return (
+                    axum::http::StatusCode::UNAUTHORIZED,
+                    "Missing Authorization header".to_string(),
+                )
+                    .into_response();
+            }
+        };
+
         let platform = PlatformType::try_from(platform).unwrap_or_default();
         ws.on_upgrade(move |socket| {
-            Self::websocket(user_id, pointer_id, token, platform, socket, state)
+            Self::websocket(user_id, device_id, token, platform, socket, state)
         })
     }
 
     pub async fn websocket(
         user_id: String,
-        pointer_id: String,
+        device_id: String,
         token: String,
         platform: PlatformType,
         ws: WebSocket,
@@ -164,20 +252,20 @@ impl WsServer {
         tracing::info!(
             "client {} connected, user id : {}",
             user_id.clone(),
-            pointer_id.clone()
+            device_id.clone()
         );
         let (mut ws_tx, mut ws_rx) = ws.split();
         // validate token
-        if let Err(err) = Self::verify_token(token, &app_state.jwt_secret) {
+        if let Err(err) = Self::verify_token(token, &user_id, &app_state.jwt_secret) {
             warn!("verify token error: {:?}", err);
             if let Err(e) = ws_tx
                 .send(Message::Close(Some(CloseFrame {
                     code: UNAUTHORIZED_CODE,
-                    reason: Cow::Owned("knock off".to_string()),
+                    reason: Cow::Owned(format!("Authentication failed: {}", err)),
                 })))
                 .await
             {
-                error!("send verify failed to client error: {}", e);
+                error!("send auth error to client failed: {}", e);
             }
             return;
         }
@@ -186,7 +274,7 @@ impl WsServer {
         let mut hub = app_state.manager.clone();
         let client = Client {
             user_id: user_id.clone(),
-            platform_id: pointer_id.clone(),
+            platform_id: device_id.clone(),
             sender: shared_tx.clone(),
             platform,
             notify_sender,
@@ -214,8 +302,10 @@ impl WsServer {
         let shared_clone = shared_tx.clone();
         // watch knock off signal
         let mut watch_task = tokio::spawn(async move {
+            // if the client is dropped, the notify_receiver will be closed
+            // it will receive a None value
             if notify_receiver.recv().await.is_none() {
-                info!("client {} knock off", pointer_id);
+                info!("client {} knock off", device_id);
                 // send knock off signal to ws server
                 if let Err(e) = shared_clone
                     .write()
@@ -236,19 +326,62 @@ impl WsServer {
         let shared_tx = shared_tx.clone();
         // receive message from client
         let mut rec_task = tokio::spawn(async move {
+            let closure = async |e: Error| {
+                error!("deserialize error: {:?}", e);
+                if let Err(e) = shared_tx
+                    .write()
+                    .await
+                    .send(Message::Close(Some(CloseFrame {
+                        code: INVALID_MESSAGE_FORMAT_CODE,
+                        reason: Cow::Owned("Invalid message format".to_string()),
+                    })))
+                    .await
+                {
+                    error!("Failed to send close frame: {}", e);
+                }
+            };
             while let Some(Ok(msg)) = ws_rx.next().await {
                 // 处理消息
                 match msg {
                     Message::Text(text) => {
-                        let result = serde_json::from_str(&text);
-                        if result.is_err() {
-                            error!("deserialize error: {:?}； source: {text}", result.err());
-                            continue;
+                        if text.len() > MAX_MESSAGE_SIZE {
+                            error!("Message too large: {} bytes", text.len());
+                            if let Err(e) = shared_tx
+                                .write()
+                                .await
+                                .send(Message::Close(Some(CloseFrame {
+                                    code: MESSAGE_TOO_LARGE_CODE,
+                                    reason: Cow::Owned("Message too large".to_string()),
+                                })))
+                                .await
+                            {
+                                error!("Failed to send close frame: {}", e);
+                            }
+                            break;
                         }
 
-                        if cloned_hub.broadcast(result.unwrap()).await.is_err() {
-                            // if broadcast not available, close the connection
-                            break;
+                        match serde_json::from_str(&text) {
+                            Ok(msg) => {
+                                if cloned_hub.broadcast(msg).await.is_err() {
+                                    break;
+                                }
+                            }
+                            Err(e) => {
+                                closure(e.into()).await;
+                                // error!("deserialize error: {:?}; source: {text}", e);
+                                // if let Err(e) = shared_tx
+                                //     .write()
+                                //     .await
+                                //     .send(Message::Close(Some(CloseFrame {
+                                //         code: INVALID_MESSAGE_FORMAT_CODE,
+                                //         reason: Cow::Owned("Invalid message format".to_string()),
+                                //     })))
+                                //     .await
+                                // {
+                                //     error!("Failed to send close frame: {}", e);
+                                // }
+                                continue;
+                            }
                         }
                     }
                     Message::Ping(_) => {
@@ -272,19 +405,44 @@ impl WsServer {
                         break;
                     }
                     Message::Binary(b) => {
-                        let result = bincode::deserialize(&b);
-                        if result.is_err() {
-                            error!("deserialize error: {:?}； source: {:?}", result.err(), b);
-                            continue;
-                        }
-                        let msg: Msg = result.unwrap();
-                        // todo need to judge the local id is empty by message type
-                        // if msg.local_id.is_empty() {
-                        //     warn!("receive empty message");
-                        //     continue;
-                        // }
-                        if cloned_hub.broadcast(msg).await.is_err() {
+                        if b.len() > MAX_MESSAGE_SIZE {
+                            error!("Binary message too large: {} bytes", b.len());
+                            if let Err(e) = shared_tx
+                                .write()
+                                .await
+                                .send(Message::Close(Some(CloseFrame {
+                                    code: MESSAGE_TOO_LARGE_CODE,
+                                    reason: Cow::Owned("Message too large".to_string()),
+                                })))
+                                .await
+                            {
+                                error!("Failed to send close frame: {}", e);
+                            }
                             break;
+                        }
+
+                        match bincode::deserialize(&b) {
+                            Ok(msg) => {
+                                if cloned_hub.broadcast(msg).await.is_err() {
+                                    break;
+                                }
+                            }
+                            Err(e) => {
+                                closure(e.into()).await;
+                                // error!("deserialize error: {:?}； source: {:?}", e, b);
+                                // if let Err(e) = shared_tx
+                                //     .write()
+                                //     .await
+                                //     .send(Message::Close(Some(CloseFrame {
+                                //         code: INVALID_MESSAGE_FORMAT_CODE,
+                                //         reason: Cow::Owned("Invalid message format".to_string()),
+                                //     })))
+                                //     .await
+                                // {
+                                //     error!("Failed to send close frame: {}", e);
+                                // }
+                                continue;
+                            }
                         }
                     }
                 }
