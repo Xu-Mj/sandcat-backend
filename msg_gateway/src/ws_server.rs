@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -221,20 +222,6 @@ impl ConnectionTasks {
         hub: Manager,
     ) -> JoinHandle<()> {
         tokio::spawn(async move {
-            let closure = async |e: Error| {
-                error!("deserialize error: {:?}", e);
-                if let Err(e) = shared_tx
-                    .write()
-                    .await
-                    .send(Message::Close(Some(CloseFrame {
-                        code: INVALID_MESSAGE_FORMAT_CODE,
-                        reason: Cow::Owned("Invalid message format".to_string()),
-                    })))
-                    .await
-                {
-                    error!("Failed to send close frame: {}", e);
-                }
-            };
             while let Some(Ok(msg)) = ws_rx.next().await {
                 // 更新活动时间
                 {
@@ -275,7 +262,18 @@ impl ConnectionTasks {
                                 }
                             }
                             Err(e) => {
-                                closure(e.into()).await;
+                                error!("deserialize error: {:?}, msg: {}", e, text);
+                                if let Err(e) = shared_tx
+                                    .write()
+                                    .await
+                                    .send(Message::Close(Some(CloseFrame {
+                                        code: INVALID_MESSAGE_FORMAT_CODE,
+                                        reason: Cow::Owned("Invalid message format".to_string()),
+                                    })))
+                                    .await
+                                {
+                                    error!("Failed to send close frame: {}", e);
+                                }
                                 continue;
                             }
                         }
@@ -324,7 +322,18 @@ impl ConnectionTasks {
                                 }
                             }
                             Err(e) => {
-                                closure(e.into()).await;
+                                error!("deserialize error: {:?}", e);
+                                if let Err(e) = shared_tx
+                                    .write()
+                                    .await
+                                    .send(Message::Close(Some(CloseFrame {
+                                        code: INVALID_MESSAGE_FORMAT_CODE,
+                                        reason: Cow::Owned("Invalid message format".to_string()),
+                                    })))
+                                    .await
+                                {
+                                    error!("Failed to send close frame: {}", e);
+                                }
                                 continue;
                             }
                         }
@@ -440,10 +449,11 @@ impl WsServer {
             .with_state(app_state);
         let addr = format!("{}:{}", config.websocket.host, config.websocket.port);
 
+        let service = router.into_make_service_with_connect_info::<SocketAddr>();
         let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
         let mut ws = tokio::spawn(async move {
             info!("start websocket server on {}", addr);
-            axum::serve(listener, router).await.unwrap();
+            axum::serve(listener, service).await.unwrap();
         });
 
         // register websocket service to consul
@@ -493,9 +503,9 @@ impl WsServer {
     pub async fn websocket_handler(
         Path((user_id, device_id, platform)): Path<(String, String, i32)>,
         headers: axum::http::HeaderMap,
-        ws: WebSocketUpgrade,
         client_ip: axum::extract::ConnectInfo<std::net::SocketAddr>,
         State(state): State<AppState>,
+        ws: WebSocketUpgrade,
     ) -> impl IntoResponse {
         // 获取客户端IP
         let ip = client_ip.0.ip();
