@@ -5,12 +5,21 @@ use axum::routing::{delete, get, post, put};
 use crate::AppState;
 use crate::handlers::files::file::{get_avatar_by_name, get_file_by_name, upload, upload_avatar};
 use crate::handlers::friends::friend_handlers::{
-    agree, create_friendship, delete_friend, get_apply_list_by_user_id,
-    get_friends_list_by_user_id, query_friend_info, update_friend_remark,
+    agree, assign_friend_to_group, create_friend_group, create_friend_tag, create_friendship,
+    delete_friend, delete_friend_group, delete_friend_tag, get_apply_list_by_user_id,
+    get_friend_groups, get_friend_privacy, get_friend_tags, get_friends_list_by_user_id,
+    get_interaction_stats, manage_friend_tags, query_friend_info, update_friend_group,
+    update_friend_privacy, update_friend_remark, update_interaction_score,
 };
 use crate::handlers::groups::group_handlers::{
-    create_group_handler, delete_group_handler, get_group, get_group_and_members,
-    get_group_members, invite_new_members, remove_member, update_group_handler,
+    change_member_role, close_poll, create_announcement, create_group_category,
+    create_group_handler, create_poll, delete_announcement, delete_group_category,
+    delete_group_file, delete_group_handler, get_group, get_group_and_members,
+    get_group_announcements, get_group_categories, get_group_files, get_group_members,
+    get_group_muted_members, get_group_polls, get_poll_details, invite_new_members,
+    mute_group_member, pin_announcement, remove_member, unmute_group_member,
+    update_file_pin_status, update_group_category, update_group_handler, update_group_settings,
+    update_member_settings, upload_group_file, vote_poll,
 };
 use crate::handlers::messages::msg_handlers::{del_msg, get_seq, pull_offline_messages};
 use crate::handlers::users::{
@@ -36,6 +45,22 @@ fn friend_routes(state: AppState) -> Router {
         .route("/", delete(delete_friend))
         .route("/remark", put(update_friend_remark))
         .route("/query/:user_id", get(query_friend_info))
+        .route("/groups", post(create_friend_group))
+        .route("/groups", put(update_friend_group))
+        .route("/groups/:id", delete(delete_friend_group))
+        .route("/groups/:id", get(get_friend_groups))
+        .route("/assign-group", post(assign_friend_to_group))
+        .route("/tags", post(create_friend_tag))
+        .route("/tags/:id", delete(delete_friend_tag))
+        .route("/tags/:id", get(get_friend_tags))
+        .route("/manage-tags", post(manage_friend_tags))
+        .route("/privacy", post(update_friend_privacy))
+        .route("/privacy/:user_id/:friend_id", get(get_friend_privacy))
+        .route("/interaction", post(update_interaction_score))
+        .route(
+            "/interaction/:user_id/:friend_id",
+            get(get_interaction_stats),
+        )
         .with_state(state)
 }
 
@@ -67,6 +92,36 @@ fn group_routes(state: AppState) -> Router {
         .route("/member/:user_id/:group_id", get(get_group_and_members))
         .route("/member", post(get_group_members))
         .route("/member", delete(remove_member))
+        // 群组设置相关
+        .route("/settings", post(update_group_settings))
+        .route("/member/settings", post(update_member_settings))
+        // 群组分类相关
+        .route("/categories", get(get_group_categories))
+        .route("/category", post(create_group_category))
+        .route("/category", put(update_group_category))
+        .route("/category/:id", delete(delete_group_category))
+        // 群组文件相关
+        .route("/files/:group_id", get(get_group_files))
+        .route("/file", post(upload_group_file))
+        .route("/file", delete(delete_group_file))
+        .route("/file/pin", post(update_file_pin_status))
+        // 群组投票相关
+        .route("/polls/:group_id", get(get_group_polls))
+        .route("/poll/:poll_id", get(get_poll_details))
+        .route("/poll", post(create_poll))
+        .route("/poll/vote", post(vote_poll))
+        .route("/poll/close", post(close_poll))
+        // 群组禁言相关
+        .route("/muted/:group_id", get(get_group_muted_members))
+        .route("/mute", post(mute_group_member))
+        .route("/unmute", post(unmute_group_member))
+        // 群组公告相关
+        .route("/announcements/:group_id", get(get_group_announcements))
+        .route("/announcement", post(create_announcement))
+        .route("/announcement", delete(delete_announcement))
+        .route("/announcement/pin", post(pin_announcement))
+        // 成员管理增强
+        .route("/member/role", post(change_member_role))
         .with_state(state)
 }
 

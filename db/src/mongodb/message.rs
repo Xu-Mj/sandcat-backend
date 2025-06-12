@@ -352,7 +352,7 @@ mod tests {
 
     fn get_test_msg(msg_id: String) -> Msg {
         Msg {
-            local_id: "123".to_string(),
+            client_id: "123".to_string(),
             server_id: msg_id,
             create_time: 0,
             send_time: chrono::Local::now().timestamp(),

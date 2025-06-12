@@ -1,6 +1,7 @@
 use crate::errors::Error;
 use crate::message::{
-    DeleteFriendRequest, Friend, FriendDb, Friendship, FriendshipStatus, FriendshipWithUser, User,
+    DeleteFriendRequest, Friend, FriendDb, FriendGroup, FriendPrivacySettings, FriendTag,
+    Friendship, FriendshipStatus, FriendshipWithUser, User,
 };
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
@@ -14,6 +15,8 @@ impl Display for FriendshipStatus {
             FriendshipStatus::Rejected => write!(f, "Rejected"),
             FriendshipStatus::Blacked => write!(f, "Blacked"),
             FriendshipStatus::Deleted => write!(f, "Deleted"),
+            FriendshipStatus::Muted => write!(f, "Muted"),
+            FriendshipStatus::Hidden => write!(f, "Hidden"),
         }
     }
 }
@@ -75,6 +78,15 @@ impl FromRow<'_, PgRow> for FriendDb {
             source: row.try_get("source")?,
             create_time: row.try_get("create_time")?,
             update_time: row.try_get("update_time")?,
+            deleted_time: row.try_get("deleted_time")?,
+            is_starred: row.try_get("is_starred")?,
+            group_id: row.try_get("group_id")?,
+            interaction_score: row.try_get("interaction_score")?,
+            interaction_count: row.try_get("interaction_count")?,
+            last_interaction: row.try_get("last_interaction")?,
+            tags: row.try_get("tags")?,
+            privacy_level: row.try_get("privacy_level")?,
+            notifications_enabled: row.try_get("notifications_enabled")?,
         })
     }
 }
@@ -99,6 +111,12 @@ impl FromRow<'_, PgRow> for Friend {
             signature: row.try_get("signature").unwrap_or_default(),
             create_time: row.try_get("create_time").unwrap_or_default(),
             email: row.try_get("email").unwrap_or_default(),
+            interaction_score: row.try_get("interaction_score").unwrap_or_default(),
+            tags: row.try_get("tags").unwrap_or_default(),
+            group_name: row.try_get("group_name").unwrap_or_default(),
+            privacy_level: row.try_get("privacy_level").unwrap_or_default(),
+            notifications_enabled: row.try_get("notifications_enabled").unwrap_or_default(),
+            last_interaction: row.try_get("last_interaction").unwrap_or_default(),
         })
     }
 }
@@ -157,6 +175,12 @@ impl From<User> for Friend {
             signature: value.signature,
             create_time: 0,
             email: value.email,
+            interaction_score: 0.0,
+            tags: vec![],
+            group_name: "".to_string(),
+            privacy_level: "".to_string(),
+            notifications_enabled: false,
+            last_interaction: 0,
         }
     }
 }
@@ -175,5 +199,43 @@ impl DeleteFriendRequest {
             return Err(Error::bad_request("friendship id is none"));
         }
         Ok(())
+    }
+}
+
+impl FromRow<'_, PgRow> for FriendGroup {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            id: row.try_get("id").unwrap_or_default(),
+            user_id: row.try_get("user_id").unwrap_or_default(),
+            name: row.try_get("name").unwrap_or_default(),
+            display_order: row.try_get("display_order").unwrap_or_default(),
+            create_time: row.try_get("create_time").unwrap_or_default(),
+            update_time: row.try_get("update_time").unwrap_or_default(),
+        })
+    }
+}
+
+impl FromRow<'_, PgRow> for FriendTag {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            id: row.try_get("id").unwrap_or_default(),
+            user_id: row.try_get("user_id").unwrap_or_default(),
+            tag_name: row.try_get("tag_name").unwrap_or_default(),
+            tag_color: row.try_get("tag_color").unwrap_or_default(),
+            create_time: row.try_get("create_time").unwrap_or_default(),
+        })
+    }
+}
+
+impl FromRow<'_, PgRow> for FriendPrivacySettings {
+    fn from_row(row: &'_ PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            user_id: row.try_get("user_id").unwrap_or_default(),
+            friend_id: row.try_get("friend_id").unwrap_or_default(),
+            privacy_level: row.try_get("privacy_level").unwrap_or_default(),
+            share_timeline: row.try_get("share_timeline").unwrap_or_default(),
+            share_location: row.try_get("share_location").unwrap_or_default(),
+            share_status: row.try_get("share_status").unwrap_or_default(),
+        })
     }
 }

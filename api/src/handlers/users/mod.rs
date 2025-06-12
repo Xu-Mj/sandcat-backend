@@ -82,7 +82,7 @@ pub async fn gen_token(
     addr: SocketAddr,
 ) -> Result<Json<Token>, Error> {
     // generate token
-    let mut claims = Claims::new(user.name.clone());
+    let mut claims = Claims::new(user.id.clone());
 
     let token = encode(
         &Header::default(),

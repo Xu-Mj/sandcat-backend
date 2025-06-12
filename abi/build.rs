@@ -44,6 +44,7 @@ impl BuilderExt for tonic_build::Builder {
     fn with_serde(self, path: &[&str]) -> Self {
         path.iter().fold(self, |acc, path| {
             acc.type_attribute(path, "#[derive(serde::Serialize, serde::Deserialize)]")
+                .type_attribute(path, "#[serde(rename_all = \"camelCase\")]")
         })
     }
 }
@@ -70,6 +71,11 @@ fn main() {
             "FriendInfo",
             "Friendship",
             "FriendshipWithUser",
+            "FriendGroup",
+            "UpdateFriendGroupRequest",
+            "FriendTag",
+            "FriendPrivacySettings",
+            "ManageFriendTagRequest",
             "FsCreate",
             "FsCreateRequest",
             "FsUpdate",
@@ -88,6 +94,22 @@ fn main() {
             "GroupUpdate",
             "GroupInvitation",
             "GetGroupAndMembersResp",
+            "PollOption",
+            "MuteGroupMemberRequest",
+            "GroupMuteRecord",
+            "GroupPoll",
+            "GroupFile",
+            "GroupAnnouncement",
+            "CreateAnnouncementRequest",
+            "UnmuteRequest",
+            "CreatePollRequest",
+            "GroupFileUploadRequest",
+            "GroupCategory",
+            "CreateGroupCategoryRequest",
+            "UpdateGroupRequest",
+            "VotePollRequest",
+            "ClosePollRequest",
+            "UpdateFilePinRequest",
             "SingleCallInvite",
             "SingleCallInviteAnswer",
             "SingleCallInviteNotAnswer",

@@ -21,6 +21,28 @@ impl FromRow<'_, PgRow> for User {
             update_time: row.try_get("update_time")?,
             salt: row.try_get("salt")?,
             signature: row.try_get("signature")?,
+
+            // 新增字段
+            last_login_time: row.try_get("last_login_time")?,
+            last_login_ip: row.try_get("last_login_ip")?,
+            two_factor_enabled: row.try_get("two_factor_enabled")?,
+            account_status: row.try_get("account_status")?,
+
+            status: row.try_get("status")?,
+            last_active_time: row.try_get("last_active_time")?,
+            status_message: row.try_get("status_message")?,
+
+            privacy_settings: row.try_get("privacy_settings")?,
+            notification_settings: row.try_get("notification_settings")?,
+            language: row.try_get("language")?,
+
+            friend_requests_privacy: row.try_get("friend_requests_privacy")?,
+            profile_visibility: row.try_get("profile_visibility")?,
+
+            theme: row.try_get("theme")?,
+            timezone: row.try_get("timezone")?,
+
+            is_delete: row.try_get("is_delete")?,
         })
     }
 }

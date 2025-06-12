@@ -194,7 +194,11 @@ impl ConsumerService {
                 msg_type = MsgType2::Single;
                 need_increase_seq = true;
             }
-            MsgType::GroupMsg => {
+            MsgType::GroupMsg
+            | MsgType::GroupFile
+            | MsgType::GroupPoll
+            | MsgType::GroupAnnouncement => {
+                // 这些群组消息需要增加序列号并保存历史记录
                 // group message and need to increase seq
                 // but not here, need to increase everyone's seq
                 msg_type = MsgType2::Group;
@@ -204,7 +208,9 @@ impl ConsumerService {
             | MsgType::GroupMemberExit
             | MsgType::GroupRemoveMember
             | MsgType::GroupDismiss
-            | MsgType::GroupUpdate => {
+            | MsgType::GroupUpdate
+            | MsgType::GroupMute => {
+                // 群组操作类消息，不需要保存历史记录
                 // group message and need to increase seq
                 msg_type = MsgType2::Group;
                 need_history = false;

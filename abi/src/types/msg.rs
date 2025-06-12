@@ -10,7 +10,7 @@ use crate::message::{
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
         MsgResponse {
-            local_id: String::new(),
+            client_id: String::new(),
             server_id: String::new(),
             send_time: 0,
             err: status.message().to_string(),
@@ -24,7 +24,7 @@ impl TryFrom<Document> for Msg {
 
     fn try_from(value: Document) -> Result<Self, Self::Error> {
         Ok(Self {
-            local_id: value.get_str("local_id").unwrap_or_default().to_string(),
+            client_id: value.get_str("client_id").unwrap_or_default().to_string(),
             server_id: value.get_str("server_id").unwrap_or_default().to_string(),
             create_time: value.get_i64("create_time").unwrap_or_default(),
             send_time: value.get_i64("send_time").unwrap_or_default(),
@@ -190,6 +190,82 @@ impl SendMsgRequest {
                 msg_type: MsgType::GroupUpdate as i32,
                 content: msg,
                 send_seq,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组文件消息
+    pub fn new_with_group_file(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupFile as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组投票消息
+    pub fn new_with_group_poll(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupPoll as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组禁言消息
+    pub fn new_with_group_mute(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupMute as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组公告消息
+    pub fn new_with_group_announcement(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                send_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupAnnouncement as i32,
                 ..Default::default()
             }),
         }
