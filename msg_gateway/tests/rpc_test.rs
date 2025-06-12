@@ -16,7 +16,7 @@ async fn send_msg_should_work() {
     client
         .send_message(SendMsgRequest {
             message: Some(Msg {
-                send_id: "".to_string(),
+                sender_id: "".to_string(),
                 receiver_id: "".to_string(),
                 local_id: "".to_string(),
                 server_id: "".to_string(),

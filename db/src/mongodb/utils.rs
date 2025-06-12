@@ -10,7 +10,7 @@ pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
         "send_time": msg.send_time,
         "content_type": msg.content_type,
         "content": bson::Binary { subtype: bson::spec::BinarySubtype::Generic, bytes: msg.content.clone() },
-        "send_id": &msg.send_id,
+        "sender_id": &msg.sender_id,
         "receiver_id": &msg.receiver_id,
         "seq": msg.seq,
         "send_seq": msg.send_seq,

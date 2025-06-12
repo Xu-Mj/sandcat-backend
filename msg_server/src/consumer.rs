@@ -112,7 +112,7 @@ impl ConsumerService {
         let (msg_type, need_increase_seq, need_history) = self.classify_msg_type(mt).await;
 
         // check send seq if need to increase max_seq
-        self.handle_send_seq(&msg.send_id).await?;
+        self.handle_send_seq(&msg.sender_id).await?;
 
         // handle receiver seq
         if need_increase_seq {
@@ -289,7 +289,7 @@ impl ConsumerService {
         let mut members = self.get_members_id(&msg.receiver_id).await?;
 
         // retain the members id
-        members.retain(|id| id != &msg.send_id);
+        members.retain(|id| id != &msg.sender_id);
 
         // increase the members seq
         let seq = self.cache.incr_group_seq(members).await?;
@@ -303,7 +303,7 @@ impl ConsumerService {
             self.cache.del_group_members(&msg.receiver_id).await?;
         } else if msg.msg_type == MsgType::GroupMemberExit as i32 {
             self.cache
-                .remove_group_member_id(&msg.receiver_id, &msg.send_id)
+                .remove_group_member_id(&msg.receiver_id, &msg.sender_id)
                 .await?;
         } else if msg.msg_type == MsgType::GroupRemoveMember as i32 {
             let data: Vec<String> = bincode::deserialize(&msg.content)?;

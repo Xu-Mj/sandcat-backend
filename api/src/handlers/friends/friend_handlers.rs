@@ -83,12 +83,12 @@ pub async fn agree(
         .agree_friend_apply_request(agree)
         .await?;
 
-    let send_id = send.friend_id.clone();
+    let sender_id = send.friend_id.clone();
     // decode friend
     let friend = bincode::serialize(&send)?;
 
     // increase send sequence
-    let (cur_seq, _, _) = app_state.cache.incr_send_seq(&send_id).await?;
+    let (cur_seq, _, _) = app_state.cache.incr_send_seq(&sender_id).await?;
 
     // send message
     let mut chat_rpc = app_state.chat_rpc.clone();

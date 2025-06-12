@@ -82,7 +82,7 @@ enum MsgType {
 /// other message type, the content is bincode::serialize(&T)
 message Msg {
   // must have
-  string send_id = 1;
+  string sender_id = 1;
   // must have
   string receiver_id = 2;
   // must have

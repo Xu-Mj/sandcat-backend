@@ -2,7 +2,7 @@
 CREATE TABLE messages
 (
     -- Basic identifiers (required)
-    send_id        VARCHAR NOT NULL,
+    sender_id        VARCHAR NOT NULL,
     receiver_id    VARCHAR NOT NULL,
     client_id      VARCHAR NOT NULL,
     server_id      VARCHAR NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE messages
     -- Complete message content (binary)
     content        BYTEA NOT NULL,
 
-    PRIMARY KEY (send_id, server_id, send_time)
+    PRIMARY KEY (sender_id, server_id, send_time)
 ) PARTITION BY RANGE (send_time);
 
 -- Indexes for common audit queries
