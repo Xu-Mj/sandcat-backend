@@ -1,0 +1,432 @@
+syntax = "proto3";
+package message;
+
+import "common.proto";
+import "client_messages.proto";
+
+message FriendDb {
+  int64 id = 1;
+  string fs_id = 2;
+  string user_id = 3;
+  string friend_id = 4;
+  FriendshipStatus status = 5;
+  optional string remark = 6;
+  string source = 7;
+  int64 create_time = 8;
+  int64 update_time = 9;
+  int64 deleted_time = 10;
+  bool is_starred = 11;
+  string group_id = 12;
+  float interaction_score = 13;    // Computed interaction score
+  int32 interaction_count = 14;    // Count of interactions
+  int64 last_interaction = 15;     // Timestamp of last interaction
+  repeated string tags = 16;       // Associated tags
+  string privacy_level = 17;       // Privacy setting for this friendship
+  bool notifications_enabled = 18; // Whether notifications are enabled
+}
+
+message MsgReadReq { MsgRead msg_read = 1; }
+
+message MsgReadResp {}
+
+message UserAndGroupId {
+  string user_id = 1;
+  string group_id = 2;
+}
+
+message GroupCategory {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message GroupFile {
+  string id = 1;
+  string group_id = 2;
+  string uploader_id = 3;
+  string file_name = 4;
+  string file_url = 5;
+  int64 file_size = 6;
+  string file_type = 7;
+  int64 upload_time = 8;
+  bool is_pinned = 9;
+  int32 download_count = 10;
+  string thumbnail_url = 11;
+}
+
+message PollOption {
+  string id = 1;
+  string text = 2;
+  repeated string voter_ids = 3;
+  int32 vote_count = 4;
+}
+
+message GroupPoll {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string title = 4;
+  repeated PollOption options = 5;
+  bool is_multiple = 6;
+  bool is_anonymous = 7;
+  int64 created_at = 8;
+  int64 expires_at = 9;
+  string status = 10;
+}
+
+message GroupMuteRecord {
+  string id = 1;
+  string group_id = 2;
+  string user_id = 3;
+  string operator_id = 4;
+  int64 mute_until = 5;
+  string reason = 6;
+  int64 created_at = 7;
+}
+
+message GroupAnnouncement {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string content = 4;
+  int64 created_at = 5;
+  bool is_pinned = 6;
+}
+
+message CreateGroupCategoryRequest {
+  string name = 1;
+  string description = 2;
+  int32 display_order = 3;
+}
+
+message UpdateGroupRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  bool join_approval_required = 7;
+  bool mute_all = 8;
+  bool only_admin_post = 9;
+  GroupMemberRole invite_permission = 10;
+  string category = 11;
+  repeated string tags = 12;
+}
+
+message GroupFileUploadRequest {
+  string group_id = 1;
+  string uploader_id = 2;
+  string file_name = 3;
+  bytes file_data = 4;
+  string file_type = 5;
+  int64 file_size = 6;
+  string file_url = 7;
+}
+
+message CreatePollRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string title = 3;
+  repeated string options = 4;
+  bool is_multiple = 5;
+  bool is_anonymous = 6;
+  int64 expires_at = 7;
+}
+
+message VotePollRequest {
+  string poll_id = 1;
+  string user_id = 2;
+  repeated string option_ids = 3;
+}
+
+message MuteGroupMemberRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string operator_id = 3;
+  int64 mute_until = 4;
+  string reason = 5;
+}
+
+message CreateAnnouncementRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string content = 3;
+  bool is_pinned = 4;
+}
+
+message GroupCreate {
+  string id = 1;
+  string owner = 2;
+  string avatar = 3;
+  string group_name = 4;
+  repeated string members_id = 5;
+}
+
+message FriendGroup {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message UpdateFriendGroupRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  string group_id = 3;
+}
+
+message FriendTag {
+  string id = 1;
+  string user_id = 2;
+  string tag_name = 3;
+  string tag_color = 4;
+  int64 create_time = 5;
+}
+
+message ManageFriendTagRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  repeated string tag_ids = 3;
+  bool is_add = 4;
+}
+
+message FriendPrivacySettings {
+  string user_id = 1;
+  string friend_id = 2;
+  string privacy_level = 3;
+  bool share_timeline = 4;
+  bool share_location = 5;
+  bool share_status = 6;
+}
+
+message UpdateFriendPrivacyRequest { FriendPrivacySettings settings = 1; }
+
+message UpdateRemarkRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  string remark = 3;
+}
+
+message DeleteFriendRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  string fs_id = 3;
+}
+
+message RemoveMemberRequest {
+  string user_id = 1;
+  string group_id = 2;
+  repeated string mem_id = 3;
+}
+
+message GroupMembersIdRequest { string group_id = 1; }
+
+message SendMsgRequest { Msg message = 1; }
+
+message SendGroupMsgRequest {
+  Msg message = 1;
+  repeated GroupMemSeq members = 2;
+}
+
+message SendMsgResponse {}
+
+message SaveMessageRequest {
+  Msg message = 1;
+  bool need_to_history = 2;
+}
+
+message SaveGroupMsgRequest {
+  Msg message = 1;
+  bool need_to_history = 2;
+  repeated GroupMemSeq members = 3;
+}
+
+message GroupMemSeq {
+  string mem_id = 1;
+  int64 cur_seq = 2;
+  int64 max_seq = 3;
+  bool need_update = 4;
+}
+
+message GetDbMsgRequest {
+  string user_id = 1;
+  int64 start = 2;
+  int64 end = 3;
+}
+
+message GetDbMessagesRequest {
+  string user_id = 1;
+  int64 send_start = 2;
+  int64 send_end = 3;
+  int64 start = 4;
+  int64 end = 5;
+}
+
+message DelMsgRequest {
+  string user_id = 1;
+  repeated int64 msg_id = 2;
+}
+
+message GetMemberReq {
+  string user_id = 1;
+  string group_id = 2;
+  repeated string mem_ids = 3;
+}
+
+message GroupInviteNewRequest { GroupInviteNew group_invite = 1; }
+
+message RemoveMemberResp {}
+
+message GroupInviteNewResp { repeated GroupMember members = 1; }
+
+message GroupUpdateRequest { GroupUpdate group = 1; }
+
+message GroupUpdateResponse { GroupInfo group = 1; }
+
+message GroupDeleteRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message GroupDeleteResponse { GroupInfo group = 1; }
+
+message GroupMemberExitResponse {}
+
+message GroupMembersIdResponse { repeated string members_id = 1; }
+
+message CreateUserRequest { User user = 1; }
+
+message CreateUserResponse { User user = 1; }
+
+message GetUserRequest { string user_id = 1; }
+
+message GetUserByEmailRequest { string email = 1; }
+
+message GetUserResponse { User user = 1; }
+
+message UpdateUserRequest { UserUpdate user = 1; }
+
+message UpdateUserResponse { User user = 1; }
+
+message UpdateRegionRequest {
+  string user_id = 1;
+  string region = 2;
+}
+
+message UpdateRegionResponse {}
+
+message SearchUserRequest {
+  string user_id = 1;
+  string pattern = 2;
+}
+
+message SearchUserResponse { UserWithMatchType user = 1; }
+
+message FsCreateRequest { FsCreate fs_create = 1; }
+
+message FsCreateResponse {
+  FriendshipWithUser fs_req = 1;
+  FriendshipWithUser fs_send = 2;
+}
+
+message FsAgreeRequest { AgreeReply fs_reply = 1; }
+
+message FsAgreeResponse {
+  Friend req = 1;
+  Friend send = 2;
+}
+
+message UpdateRemarkResponse {}
+
+message DeleteFriendResponse {}
+
+message FsUpdateRequest { FsUpdate fs_update = 1; }
+
+message FriendListRequest {
+  string user_id = 1;
+  int64 offline_time = 2;
+}
+
+message FsListResponse { repeated FriendshipWithUser friendships = 1; }
+
+message FriendListResponse { repeated Friend friends = 1; }
+
+message ClosePollRequest {
+  string poll_id = 1;
+  string user_id = 2;
+}
+
+message UpdateFilePinRequest {
+  string file_id = 1;
+  string user_id = 2;
+  bool is_pinned = 3;
+}
+
+message UnmuteRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string operator_id = 3;
+}
+
+message UserUpdate {
+  string id = 1; // 用户ID（必需，标识要更新的用户）
+
+  // 基本信息
+  string name = 2;       // 用户名
+  string avatar = 3;     // 头像URL
+  string gender = 4;     // 性别
+  string phone = 5;      // 电话
+  string email = 6;      // 电子邮箱
+  string address = 7;    // 地址
+  string region = 8;     // 地区/位置
+  int64 birthday = 9;    // 生日时间戳
+  string signature = 10; // 个性签名
+
+  // 用户状态和个人偏好
+  string status = 11; // 在线状态: "online", "offline", "busy", "dnd", "away"
+  string status_message = 12; // 状态消息/动态
+
+  // 通知和隐私设置
+  string privacy_settings = 13;      // 隐私设置 (JSON字符串)
+  string notification_settings = 14; // 通知设置 (JSON字符串)
+  string language = 15;              // 语言偏好
+
+  // 社交设置
+  string friend_requests_privacy =
+      16; // 好友请求隐私设置: "all", "friends_of_friends", "none"
+  string profile_visibility =
+      17; // 个人资料可见性: "public", "friends", "private"
+
+  // 应用偏好
+  string theme = 18;    // 界面主题: "light", "dark", "system"
+  string timezone = 19; // 时区
+
+  // 不允许更新的安全字段（没有包括在这个消息中）:
+  // - password
+  // - salt
+  // - account_status
+  // - login_attempts
+  // - two_factor_enabled
+  // - last_login_time
+  // - last_login_ip
+  // - is_delete
+}
+
+service MsgService {
+  // send message through rpc
+  rpc SendMessage(SendMsgRequest) returns (SendMsgResponse);
+  // send single message to user by websocket
+  rpc SendMsgToUser(SendMsgRequest) returns (SendMsgResponse);
+  // send group message to user by websocket
+  rpc SendGroupMsgToUser(SendGroupMsgRequest) returns (SendMsgResponse);
+}
+
+/// chat service, receive message then generate message id and send message to
+/// mq; response operation result;
+service ChatService { rpc SendMsg(SendMsgRequest) returns (MsgResponse); }
