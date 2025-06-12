@@ -16,7 +16,7 @@ http = "0.2.12"
 mongodb = "2.8.2"
 reqwest = { version = "0.12.2", features = ["json"] }
 serde = "1.0.197"
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres"] }
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres"] }
 tokio = { version = "1.36.0", features = ["macros", "rt", "rt-multi-thread"] }
 tonic = "0.11.0"
 tower = "0.4.13"
