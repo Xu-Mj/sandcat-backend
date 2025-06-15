@@ -60,6 +60,7 @@ pub async fn pull_offline_messages(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Seq {
     pub seq: i64,
     pub send_seq: i64,

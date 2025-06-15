@@ -5,18 +5,19 @@
 /// / the content is String::to_vec(), when message type is SingleMsg/GroupMsg
 /// / other message type, the content is bincode::serialize(&T)
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Msg {
     /// must have
     #[prost(string, tag = "1")]
-    pub send_id: ::prost::alloc::string::String,
+    pub sender_id: ::prost::alloc::string::String,
     /// must have
     #[prost(string, tag = "2")]
     pub receiver_id: ::prost::alloc::string::String,
     /// must have
     #[prost(string, tag = "3")]
-    pub local_id: ::prost::alloc::string::String,
+    pub client_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub server_id: ::prost::alloc::string::String,
     /// timestamp
@@ -36,25 +37,26 @@ pub struct Msg {
     pub content: ::prost::alloc::vec::Vec<u8>,
     #[prost(bool, tag = "11")]
     pub is_read: bool,
-    #[prost(string, tag = "15")]
+    #[prost(string, tag = "12")]
     pub group_id: ::prost::alloc::string::String,
     /// platform of the sender
-    #[prost(enumeration = "PlatformType", tag = "16")]
+    #[prost(enumeration = "PlatformType", tag = "13")]
     pub platform: i32,
     /// user avatar
-    #[prost(string, tag = "17")]
+    #[prost(string, tag = "14")]
     pub avatar: ::prost::alloc::string::String,
     /// user nickname
-    #[prost(string, tag = "18")]
+    #[prost(string, tag = "15")]
     pub nickname: ::prost::alloc::string::String,
     /// related message id
-    #[prost(string, optional, tag = "19")]
+    #[prost(string, optional, tag = "16")]
     pub related_msg_id: ::core::option::Option<::prost::alloc::string::String>,
     /// / send sequence
-    #[prost(int64, tag = "20")]
+    #[prost(int64, tag = "17")]
     pub send_seq: i64,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgContent {
@@ -64,6 +66,7 @@ pub struct MsgContent {
     pub mention: ::core::option::Option<Mention>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Mention {
@@ -73,6 +76,7 @@ pub struct Mention {
     pub user_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRead {
@@ -81,16 +85,8 @@ pub struct MsgRead {
     #[prost(string, tag = "2")]
     pub user_id: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgReadReq {
-    #[prost(message, optional, tag = "1")]
-    pub msg_read: ::core::option::Option<MsgRead>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgReadResp {}
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Candidate {
@@ -102,6 +98,7 @@ pub struct Candidate {
     pub sdp_m_index: ::core::option::Option<i32>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AgreeSingleCall {
@@ -109,6 +106,7 @@ pub struct AgreeSingleCall {
     pub sdp: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SingleCallInvite {
@@ -116,6 +114,7 @@ pub struct SingleCallInvite {
     pub invite_type: i32,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SingleCallInviteAnswer {
@@ -125,6 +124,7 @@ pub struct SingleCallInviteAnswer {
     pub invite_type: i32,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SingleCallInviteNotAnswer {
@@ -132,6 +132,7 @@ pub struct SingleCallInviteNotAnswer {
     pub invite_type: i32,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SingleCallInviteCancel {
@@ -139,6 +140,7 @@ pub struct SingleCallInviteCancel {
     pub invite_type: i32,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SingleCallOffer {
@@ -146,6 +148,7 @@ pub struct SingleCallOffer {
     pub sdp: ::prost::alloc::string::String,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Hangup {
@@ -159,6 +162,7 @@ pub struct Hangup {
 /// / and it receive message from clients; then send message to mq;
 /// / so only provide the send message function for other rpc service;
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Single {
@@ -169,454 +173,13 @@ pub struct Single {
     #[prost(enumeration = "ContentType", tag = "3")]
     pub content_type: i32,
 }
-/// / user and group id
 #[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserAndGroupId {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub group_id: ::prost::alloc::string::String,
-}
-/// / group invitation include group information and group member information
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInvitation {
-    #[prost(message, optional, tag = "1")]
-    pub info: ::core::option::Option<GroupInfo>,
-    #[prost(message, repeated, tag = "2")]
-    pub members: ::prost::alloc::vec::Vec<GroupMember>,
-}
-/// / group information also related to database
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInfo {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub owner: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub description: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub announcement: ::prost::alloc::string::String,
-    #[prost(int64, tag = "7")]
-    pub create_time: i64,
-    #[prost(int64, tag = "8")]
-    pub update_time: i64,
-}
-/// fixme add account field
-/// / group member information also related to database table group_members
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMember {
-    #[prost(int32, tag = "1")]
-    pub age: i32,
-    #[prost(string, tag = "2")]
-    pub group_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub group_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(int64, tag = "6")]
-    pub joined_at: i64,
-    #[prost(string, optional, tag = "7")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "8")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "9")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "10")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(enumeration = "GroupMemberRole", tag = "11")]
-    pub role: i32,
-}
-/// / create group object
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupCreate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub owner: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub group_name: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "5")]
-    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupInviteNew {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub group_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub members: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupUpdate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub description: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub announcement: ::prost::alloc::string::String,
-    #[prost(int64, tag = "6")]
-    pub update_time: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct User {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    #[serde(skip_serializing)]
-    pub password: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "7")]
-    pub age: i32,
-    #[prost(string, optional, tag = "8")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "9")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "11")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "12")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(int64, tag = "13")]
-    pub create_time: i64,
-    #[prost(int64, tag = "14")]
-    pub update_time: i64,
-    #[prost(string, tag = "15")]
-    #[serde(skip_serializing)]
-    pub salt: ::prost::alloc::string::String,
-    #[prost(string, tag = "16")]
-    pub signature: ::prost::alloc::string::String,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserUpdate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "5")]
-    pub phone: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "6")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "7")]
-    pub address: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "9")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(string, optional, tag = "10")]
-    pub signature: ::core::option::Option<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserWithMatchType {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "6")]
-    pub age: i32,
-    #[prost(string, optional, tag = "7")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int64, optional, tag = "9")]
-    pub birthday: ::core::option::Option<i64>,
-    #[prost(string, optional, tag = "10")]
-    pub match_type: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "11")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(bool, tag = "12")]
-    pub is_friend: bool,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Friendship {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "4")]
-    pub status: i32,
-    #[prost(string, optional, tag = "5")]
-    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "6")]
-    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "7")]
-    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
-    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "9")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "10")]
-    pub create_time: i64,
-    #[prost(int64, tag = "11")]
-    pub update_time: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FriendshipWithUser {
-    #[prost(string, tag = "1")]
-    pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "6")]
-    pub age: i32,
-    #[prost(string, optional, tag = "7")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(enumeration = "FriendshipStatus", tag = "8")]
-    pub status: i32,
-    #[prost(string, optional, tag = "9")]
-    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "10")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "11")]
-    pub create_time: i64,
-    #[prost(string, tag = "12")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "13")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "14")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FriendDb {
-    #[prost(int64, tag = "1")]
-    pub id: i64,
-    #[prost(string, tag = "2")]
-    pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "FriendshipStatus", tag = "5")]
-    pub status: i32,
-    #[prost(string, optional, tag = "6")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "7")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(int64, tag = "8")]
-    pub create_time: i64,
-    #[prost(int64, tag = "9")]
-    pub update_time: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Friend {
-    #[prost(string, tag = "1")]
-    pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "7")]
-    pub age: i32,
-    #[prost(string, optional, tag = "8")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(enumeration = "FriendshipStatus", tag = "9")]
-    pub status: i32,
-    #[prost(string, optional, tag = "10")]
-    pub remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "11")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "12")]
-    pub source: ::prost::alloc::string::String,
-    #[prost(string, tag = "13")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(int64, tag = "14")]
-    pub create_time: i64,
-    #[prost(int64, tag = "15")]
-    pub update_time: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FriendInfo {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub avatar: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub gender: ::prost::alloc::string::String,
-    #[prost(int32, tag = "5")]
-    pub age: i32,
-    #[prost(string, optional, tag = "6")]
-    pub region: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "7")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(string, tag = "8")]
-    pub signature: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "9")]
-    pub email: ::core::option::Option<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsCreate {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "3")]
-    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "4")]
-    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, tag = "5")]
-    pub source: ::prost::alloc::string::String,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateRemarkRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub remark: ::prost::alloc::string::String,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeleteFriendRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub friend_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub fs_id: ::prost::alloc::string::String,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AgreeReply {
-    #[prost(string, tag = "1")]
-    pub fs_id: ::prost::alloc::string::String,
-    #[prost(string, optional, tag = "2")]
-    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "3")]
-    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
-}
-/// / only for update friend apply request
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FsUpdate {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub apply_msg: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub req_remark: ::prost::alloc::string::String,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RemoveMemberRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub group_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub mem_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMembersIdRequest {
-    #[prost(string, tag = "1")]
-    pub group_id: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SendMsgRequest {
-    #[prost(message, optional, tag = "1")]
-    pub message: ::core::option::Option<Msg>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SendGroupMsgRequest {
-    #[prost(message, optional, tag = "1")]
-    pub message: ::core::option::Option<Msg>,
-    #[prost(message, repeated, tag = "2")]
-    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SendMsgResponse {}
-#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgResponse {
     #[prost(string, tag = "1")]
-    pub local_id: ::prost::alloc::string::String,
+    pub client_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub server_id: ::prost::alloc::string::String,
     #[prost(int64, tag = "3")]
@@ -624,111 +187,10 @@ pub struct MsgResponse {
     #[prost(string, tag = "4")]
     pub err: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SaveMessageRequest {
-    #[prost(message, optional, tag = "1")]
-    pub message: ::core::option::Option<Msg>,
-    #[prost(bool, tag = "2")]
-    pub need_to_history: bool,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SaveGroupMsgRequest {
-    #[prost(message, optional, tag = "1")]
-    pub message: ::core::option::Option<Msg>,
-    #[prost(bool, tag = "2")]
-    pub need_to_history: bool,
-    #[prost(message, repeated, tag = "3")]
-    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GroupMemSeq {
-    #[prost(string, tag = "1")]
-    pub mem_id: ::prost::alloc::string::String,
-    #[prost(int64, tag = "2")]
-    pub cur_seq: i64,
-    #[prost(int64, tag = "3")]
-    pub max_seq: i64,
-    #[prost(bool, tag = "4")]
-    pub need_update: bool,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetDbMsgRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(int64, tag = "2")]
-    pub start: i64,
-    #[prost(int64, tag = "3")]
-    pub end: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetDbMessagesRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(int64, tag = "2")]
-    pub send_start: i64,
-    #[prost(int64, tag = "3")]
-    pub send_end: i64,
-    #[prost(int64, tag = "4")]
-    pub start: i64,
-    #[prost(int64, tag = "5")]
-    pub end: i64,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DelMsgRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(int64, repeated, tag = "2")]
-    pub msg_id: ::prost::alloc::vec::Vec<i64>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetMemberReq {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub group_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub mem_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(serde::Serialize, serde::Deserialize)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetGroupAndMembersResp {
-    #[prost(message, optional, tag = "1")]
-    pub group: ::core::option::Option<GroupInfo>,
-    #[prost(message, repeated, tag = "2")]
-    pub members: ::prost::alloc::vec::Vec<GroupMember>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SaveMaxSeqRequest {
-    #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
-}
 /// / user platform which login the system
-#[derive(
-    serde::Serialize,
-    serde::Deserialize,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    ::prost::Enumeration,
-)]
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum PlatformType {
     Desktop = 0,
@@ -755,6 +217,8 @@ impl PlatformType {
     }
 }
 /// / message content type
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum ContentType {
@@ -806,6 +270,8 @@ impl ContentType {
     }
 }
 /// / friendship status
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[derive(
     sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
 )]
@@ -814,9 +280,10 @@ pub enum FriendshipStatus {
     Pending = 0,
     Accepted = 1,
     Rejected = 2,
-    /// / blacklist
     Blacked = 3,
     Deleted = 4,
+    Muted = 5,
+    Hidden = 6,
 }
 impl FriendshipStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -830,6 +297,8 @@ impl FriendshipStatus {
             FriendshipStatus::Rejected => "Rejected",
             FriendshipStatus::Blacked => "Blacked",
             FriendshipStatus::Deleted => "Deleted",
+            FriendshipStatus::Muted => "Muted",
+            FriendshipStatus::Hidden => "Hidden",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -840,10 +309,14 @@ impl FriendshipStatus {
             "Rejected" => Some(Self::Rejected),
             "Blacked" => Some(Self::Blacked),
             "Deleted" => Some(Self::Deleted),
+            "Muted" => Some(Self::Muted),
+            "Hidden" => Some(Self::Hidden),
             _ => None,
         }
     }
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum MsgType {
@@ -858,26 +331,30 @@ pub enum MsgType {
     GroupDismissOrExitReceived = 7,
     GroupInvitationReceived = 8,
     GroupUpdate = 9,
+    GroupFile = 10,
+    GroupPoll = 11,
+    GroupMute = 12,
+    GroupAnnouncement = 13,
     /// / friend operation
-    FriendApplyReq = 10,
-    FriendApplyResp = 11,
-    FriendBlack = 12,
-    FriendDelete = 13,
+    FriendApplyReq = 14,
+    FriendApplyResp = 15,
+    FriendBlack = 16,
+    FriendDelete = 17,
     /// / single call operation
-    SingleCallInvite = 14,
-    RejectSingleCall = 15,
-    AgreeSingleCall = 16,
-    SingleCallInviteNotAnswer = 17,
-    SingleCallInviteCancel = 18,
-    SingleCallOffer = 19,
-    Hangup = 20,
-    ConnectSingleCall = 21,
-    Candidate = 22,
-    Read = 23,
-    MsgRecResp = 24,
-    Notification = 25,
-    Service = 26,
-    FriendshipReceived = 27,
+    SingleCallInvite = 18,
+    RejectSingleCall = 19,
+    AgreeSingleCall = 20,
+    SingleCallInviteNotAnswer = 21,
+    SingleCallInviteCancel = 22,
+    SingleCallOffer = 23,
+    Hangup = 24,
+    ConnectSingleCall = 25,
+    Candidate = 26,
+    Read = 27,
+    MsgRecResp = 28,
+    Notification = 29,
+    Service = 30,
+    FriendshipReceived = 31,
 }
 impl MsgType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -896,6 +373,10 @@ impl MsgType {
             MsgType::GroupDismissOrExitReceived => "MsgTypeGroupDismissOrExitReceived",
             MsgType::GroupInvitationReceived => "MsgTypeGroupInvitationReceived",
             MsgType::GroupUpdate => "MsgTypeGroupUpdate",
+            MsgType::GroupFile => "MsgTypeGroupFile",
+            MsgType::GroupPoll => "MsgTypeGroupPoll",
+            MsgType::GroupMute => "MsgTypeGroupMute",
+            MsgType::GroupAnnouncement => "MsgTypeGroupAnnouncement",
             MsgType::FriendApplyReq => "MsgTypeFriendApplyReq",
             MsgType::FriendApplyResp => "MsgTypeFriendApplyResp",
             MsgType::FriendBlack => "MsgTypeFriendBlack",
@@ -929,6 +410,10 @@ impl MsgType {
             "MsgTypeGroupDismissOrExitReceived" => Some(Self::GroupDismissOrExitReceived),
             "MsgTypeGroupInvitationReceived" => Some(Self::GroupInvitationReceived),
             "MsgTypeGroupUpdate" => Some(Self::GroupUpdate),
+            "MsgTypeGroupFile" => Some(Self::GroupFile),
+            "MsgTypeGroupPoll" => Some(Self::GroupPoll),
+            "MsgTypeGroupMute" => Some(Self::GroupMute),
+            "MsgTypeGroupAnnouncement" => Some(Self::GroupAnnouncement),
             "MsgTypeFriendApplyReq" => Some(Self::FriendApplyReq),
             "MsgTypeFriendApplyResp" => Some(Self::FriendApplyResp),
             "MsgTypeFriendBlack" => Some(Self::FriendBlack),
@@ -951,6 +436,8 @@ impl MsgType {
         }
     }
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum SingleCallInviteType {
@@ -977,19 +464,10 @@ impl SingleCallInviteType {
         }
     }
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[derive(
-    serde::Serialize,
-    serde::Deserialize,
-    sqlx::Type,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    ::prost::Enumeration,
+    sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
 )]
 #[repr(i32)]
 pub enum GroupMemberRole {
@@ -1018,6 +496,1369 @@ impl GroupMemberRole {
             _ => None,
         }
     }
+}
+/// GroupInfo
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInfo {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub owner: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub announcement: ::prost::alloc::string::String,
+    #[prost(int64, tag = "7")]
+    pub create_time: i64,
+    #[prost(int64, tag = "8")]
+    pub update_time: i64,
+    #[prost(int32, tag = "9")]
+    pub max_members: i32,
+    #[prost(bool, tag = "10")]
+    pub is_public: bool,
+    #[prost(bool, tag = "11")]
+    pub join_approval_required: bool,
+    #[prost(string, tag = "12")]
+    pub category: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "13")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "14")]
+    pub mute_all: bool,
+    #[prost(bool, tag = "15")]
+    pub only_admin_post: bool,
+    #[prost(enumeration = "GroupMemberRole", tag = "16")]
+    pub invite_permission: i32,
+    #[prost(string, repeated, tag = "17")]
+    pub pinned_messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// GroupMember
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMember {
+    #[prost(int32, tag = "1")]
+    pub age: i32,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub group_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub joined_at: i64,
+    #[prost(string, optional, tag = "7")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "8")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "9")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "10")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(enumeration = "GroupMemberRole", tag = "11")]
+    pub role: i32,
+    #[prost(bool, tag = "12")]
+    pub is_muted: bool,
+    #[prost(string, tag = "13")]
+    pub notification_level: ::prost::alloc::string::String,
+    #[prost(int64, tag = "14")]
+    pub last_read_time: i64,
+    #[prost(int32, tag = "15")]
+    pub display_order: i32,
+    #[prost(string, tag = "16")]
+    pub joined_by: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInvitation {
+    #[prost(message, optional, tag = "1")]
+    pub info: ::core::option::Option<GroupInfo>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInviteNew {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub members: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub announcement: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct User {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    #[serde(skip_serializing)]
+    pub password: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub phone: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "9")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "10")]
+    pub address: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "12")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(int64, tag = "13")]
+    pub create_time: i64,
+    #[prost(int64, tag = "14")]
+    pub update_time: i64,
+    #[prost(string, tag = "15")]
+    #[serde(skip_serializing)]
+    pub salt: ::prost::alloc::string::String,
+    #[prost(string, tag = "16")]
+    pub signature: ::prost::alloc::string::String,
+    /// 账号与安全
+    #[prost(int64, optional, tag = "17")]
+    pub last_login_time: ::core::option::Option<i64>,
+    #[prost(string, optional, tag = "18")]
+    pub last_login_ip: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, tag = "19")]
+    pub two_factor_enabled: bool,
+    /// "active", "disabled", "locked"
+    #[prost(string, tag = "20")]
+    pub account_status: ::prost::alloc::string::String,
+    /// 在线状态管理
+    ///
+    /// "online", "offline", "busy", "dnd", "away"
+    #[prost(string, tag = "21")]
+    pub status: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag = "22")]
+    pub last_active_time: ::core::option::Option<i64>,
+    /// 状态消息
+    #[prost(string, optional, tag = "23")]
+    pub status_message: ::core::option::Option<::prost::alloc::string::String>,
+    /// 隐私与设置
+    ///
+    /// JSON字符串
+    #[prost(string, tag = "24")]
+    pub privacy_settings: ::prost::alloc::string::String,
+    /// JSON字符串
+    #[prost(string, tag = "25")]
+    pub notification_settings: ::prost::alloc::string::String,
+    #[prost(string, tag = "26")]
+    pub language: ::prost::alloc::string::String,
+    /// 社交与关系
+    ///
+    /// "all", "friends_of_friends", "none"
+    #[prost(string, tag = "27")]
+    pub friend_requests_privacy: ::prost::alloc::string::String,
+    /// "public", "friends", "private"
+    #[prost(string, tag = "28")]
+    pub profile_visibility: ::prost::alloc::string::String,
+    /// 用户体验
+    ///
+    /// "light", "dark", "system"
+    #[prost(string, tag = "29")]
+    pub theme: ::prost::alloc::string::String,
+    #[prost(string, tag = "30")]
+    pub timezone: ::prost::alloc::string::String,
+    /// 保持与SQL一致的字段
+    #[prost(bool, tag = "31")]
+    pub is_delete: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserWithMatchType {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "6")]
+    pub age: i32,
+    #[prost(string, optional, tag = "7")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "8")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag = "9")]
+    pub birthday: ::core::option::Option<i64>,
+    #[prost(string, optional, tag = "10")]
+    pub match_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "11")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(bool, tag = "12")]
+    pub is_friend: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Friendship {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "4")]
+    pub status: i32,
+    #[prost(string, optional, tag = "5")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "6")]
+    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "7")]
+    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "8")]
+    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "9")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "10")]
+    pub create_time: i64,
+    #[prost(int64, tag = "11")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendshipWithUser {
+    #[prost(string, tag = "1")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "6")]
+    pub age: i32,
+    #[prost(string, optional, tag = "7")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration = "FriendshipStatus", tag = "8")]
+    pub status: i32,
+    #[prost(string, optional, tag = "9")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "10")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "11")]
+    pub create_time: i64,
+    #[prost(string, tag = "12")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "13")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "14")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Friend {
+    #[prost(string, tag = "1")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub age: i32,
+    #[prost(string, optional, tag = "8")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration = "FriendshipStatus", tag = "9")]
+    pub status: i32,
+    #[prost(string, optional, tag = "10")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "11")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "12")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(string, tag = "13")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(int64, tag = "14")]
+    pub create_time: i64,
+    #[prost(int64, tag = "15")]
+    pub update_time: i64,
+    #[prost(float, tag = "16")]
+    pub interaction_score: f32,
+    #[prost(string, repeated, tag = "17")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag = "18")]
+    pub group_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "19")]
+    pub privacy_level: ::prost::alloc::string::String,
+    #[prost(bool, tag = "20")]
+    pub notifications_enabled: bool,
+    #[prost(int64, tag = "21")]
+    pub last_interaction: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendInfo {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub gender: ::prost::alloc::string::String,
+    #[prost(int32, tag = "5")]
+    pub age: i32,
+    #[prost(string, optional, tag = "6")]
+    pub region: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "7")]
+    pub account: ::prost::alloc::string::String,
+    #[prost(string, tag = "8")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "9")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsCreate {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "3")]
+    pub apply_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "4")]
+    pub req_remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "5")]
+    pub source: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AgreeReply {
+    #[prost(string, tag = "1")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, optional, tag = "2")]
+    pub resp_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "3")]
+    pub resp_remark: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsUpdate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub apply_msg: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub req_remark: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetGroupAndMembersResp {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
+/// HTTP API 请求/响应结构
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PullOfflineRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub send_start: i64,
+    #[prost(int64, tag = "3")]
+    pub send_end: i64,
+    #[prost(int64, tag = "4")]
+    pub rec_start: i64,
+    #[prost(int64, tag = "5")]
+    pub rec_end: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PullOfflineResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub messages: ::prost::alloc::vec::Vec<Msg>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendDb {
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    #[prost(string, tag = "2")]
+    pub fs_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "FriendshipStatus", tag = "5")]
+    pub status: i32,
+    #[prost(string, optional, tag = "6")]
+    pub remark: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, tag = "7")]
+    pub source: ::prost::alloc::string::String,
+    #[prost(int64, tag = "8")]
+    pub create_time: i64,
+    #[prost(int64, tag = "9")]
+    pub update_time: i64,
+    #[prost(int64, tag = "10")]
+    pub deleted_time: i64,
+    #[prost(bool, tag = "11")]
+    pub is_starred: bool,
+    #[prost(string, tag = "12")]
+    pub group_id: ::prost::alloc::string::String,
+    /// Computed interaction score
+    #[prost(float, tag = "13")]
+    pub interaction_score: f32,
+    /// Count of interactions
+    #[prost(int32, tag = "14")]
+    pub interaction_count: i32,
+    /// Timestamp of last interaction
+    #[prost(int64, tag = "15")]
+    pub last_interaction: i64,
+    /// Associated tags
+    #[prost(string, repeated, tag = "16")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Privacy setting for this friendship
+    #[prost(string, tag = "17")]
+    pub privacy_level: ::prost::alloc::string::String,
+    /// Whether notifications are enabled
+    #[prost(bool, tag = "18")]
+    pub notifications_enabled: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgReadReq {
+    #[prost(message, optional, tag = "1")]
+    pub msg_read: ::core::option::Option<MsgRead>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgReadResp {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserAndGroupId {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupCategory {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(int32, tag = "4")]
+    pub display_order: i32,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFile {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub uploader_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub file_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub file_url: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub file_size: i64,
+    #[prost(string, tag = "7")]
+    pub file_type: ::prost::alloc::string::String,
+    #[prost(int64, tag = "8")]
+    pub upload_time: i64,
+    #[prost(bool, tag = "9")]
+    pub is_pinned: bool,
+    #[prost(int32, tag = "10")]
+    pub download_count: i32,
+    #[prost(string, tag = "11")]
+    pub thumbnail_url: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PollOption {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub text: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub voter_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int32, tag = "4")]
+    pub vote_count: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupPoll {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "5")]
+    pub options: ::prost::alloc::vec::Vec<PollOption>,
+    #[prost(bool, tag = "6")]
+    pub is_multiple: bool,
+    #[prost(bool, tag = "7")]
+    pub is_anonymous: bool,
+    #[prost(int64, tag = "8")]
+    pub created_at: i64,
+    #[prost(int64, tag = "9")]
+    pub expires_at: i64,
+    #[prost(string, tag = "10")]
+    pub status: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMuteRecord {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub operator_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub mute_until: i64,
+    #[prost(string, tag = "6")]
+    pub reason: ::prost::alloc::string::String,
+    #[prost(int64, tag = "7")]
+    pub created_at: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupAnnouncement {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub created_at: i64,
+    #[prost(bool, tag = "6")]
+    pub is_pinned: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateGroupCategoryRequest {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(int32, tag = "3")]
+    pub display_order: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateGroupRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub announcement: ::prost::alloc::string::String,
+    #[prost(bool, tag = "7")]
+    pub join_approval_required: bool,
+    #[prost(bool, tag = "8")]
+    pub mute_all: bool,
+    #[prost(bool, tag = "9")]
+    pub only_admin_post: bool,
+    #[prost(enumeration = "GroupMemberRole", tag = "10")]
+    pub invite_permission: i32,
+    #[prost(string, tag = "11")]
+    pub category: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "12")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFileUploadRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub uploader_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub file_name: ::prost::alloc::string::String,
+    #[prost(bytes = "vec", tag = "4")]
+    pub file_data: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "5")]
+    pub file_type: ::prost::alloc::string::String,
+    #[prost(int64, tag = "6")]
+    pub file_size: i64,
+    #[prost(string, tag = "7")]
+    pub file_url: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreatePollRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "5")]
+    pub is_multiple: bool,
+    #[prost(bool, tag = "6")]
+    pub is_anonymous: bool,
+    #[prost(int64, tag = "7")]
+    pub expires_at: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VotePollRequest {
+    #[prost(string, tag = "1")]
+    pub poll_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub option_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MuteGroupMemberRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub operator_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "4")]
+    pub mute_until: i64,
+    #[prost(string, tag = "5")]
+    pub reason: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAnnouncementRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub creator_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub is_pinned: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupCreate {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub owner: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub group_name: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "5")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendGroup {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(int32, tag = "4")]
+    pub display_order: i32,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+    #[prost(int64, tag = "6")]
+    pub update_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFriendGroupRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendTag {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub tag_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub tag_color: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
+    pub create_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManageFriendTagRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub tag_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "4")]
+    pub is_add: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendPrivacySettings {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub privacy_level: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub share_timeline: bool,
+    #[prost(bool, tag = "5")]
+    pub share_location: bool,
+    #[prost(bool, tag = "6")]
+    pub share_status: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFriendPrivacyRequest {
+    #[prost(message, optional, tag = "1")]
+    pub settings: ::core::option::Option<FriendPrivacySettings>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateRemarkRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub remark: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFriendRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub friend_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub fs_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveMemberRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub mem_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMembersIdRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SendMsgRequest {
+    #[prost(message, optional, tag = "1")]
+    pub message: ::core::option::Option<Msg>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SendGroupMsgRequest {
+    #[prost(message, optional, tag = "1")]
+    pub message: ::core::option::Option<Msg>,
+    #[prost(message, repeated, tag = "2")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SendMsgResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SaveMessageRequest {
+    #[prost(message, optional, tag = "1")]
+    pub message: ::core::option::Option<Msg>,
+    #[prost(bool, tag = "2")]
+    pub need_to_history: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SaveGroupMsgRequest {
+    #[prost(message, optional, tag = "1")]
+    pub message: ::core::option::Option<Msg>,
+    #[prost(bool, tag = "2")]
+    pub need_to_history: bool,
+    #[prost(message, repeated, tag = "3")]
+    pub members: ::prost::alloc::vec::Vec<GroupMemSeq>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMemSeq {
+    #[prost(string, tag = "1")]
+    pub mem_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub cur_seq: i64,
+    #[prost(int64, tag = "3")]
+    pub max_seq: i64,
+    #[prost(bool, tag = "4")]
+    pub need_update: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDbMsgRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub start: i64,
+    #[prost(int64, tag = "3")]
+    pub end: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDbMessagesRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub send_start: i64,
+    #[prost(int64, tag = "3")]
+    pub send_end: i64,
+    #[prost(int64, tag = "4")]
+    pub start: i64,
+    #[prost(int64, tag = "5")]
+    pub end: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DelMsgRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, repeated, tag = "2")]
+    pub msg_id: ::prost::alloc::vec::Vec<i64>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetMemberReq {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub mem_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInviteNewRequest {
+    #[prost(message, optional, tag = "1")]
+    pub group_invite: ::core::option::Option<GroupInviteNew>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveMemberResp {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupInviteNewResp {
+    #[prost(message, repeated, tag = "1")]
+    pub members: ::prost::alloc::vec::Vec<GroupMember>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupUpdate>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupUpdateResponse {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupDeleteRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupDeleteResponse {
+    #[prost(message, optional, tag = "1")]
+    pub group: ::core::option::Option<GroupInfo>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMemberExitResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMembersIdResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub members_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserRequest {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserByEmailRequest {
+    #[prost(string, tag = "1")]
+    pub email: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserRequest {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<UserUpdate>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<User>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateRegionRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub region: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateRegionResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchUserRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub pattern: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchUserResponse {
+    #[prost(message, optional, tag = "1")]
+    pub user: ::core::option::Option<UserWithMatchType>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsCreateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_create: ::core::option::Option<FsCreate>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsCreateResponse {
+    #[prost(message, optional, tag = "1")]
+    pub fs_req: ::core::option::Option<FriendshipWithUser>,
+    #[prost(message, optional, tag = "2")]
+    pub fs_send: ::core::option::Option<FriendshipWithUser>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsAgreeRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_reply: ::core::option::Option<AgreeReply>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsAgreeResponse {
+    #[prost(message, optional, tag = "1")]
+    pub req: ::core::option::Option<Friend>,
+    #[prost(message, optional, tag = "2")]
+    pub send: ::core::option::Option<Friend>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateRemarkResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFriendResponse {}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsUpdateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub fs_update: ::core::option::Option<FsUpdate>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendListRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "2")]
+    pub offline_time: i64,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FsListResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub friendships: ::prost::alloc::vec::Vec<FriendshipWithUser>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendListResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub friends: ::prost::alloc::vec::Vec<Friend>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ClosePollRequest {
+    #[prost(string, tag = "1")]
+    pub poll_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFilePinRequest {
+    #[prost(string, tag = "1")]
+    pub file_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub is_pinned: bool,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnmuteRequest {
+    #[prost(string, tag = "1")]
+    pub group_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub user_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub operator_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserUpdate {
+    /// 用户ID（必需，标识要更新的用户）
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    /// 基本信息
+    ///
+    /// 用户名
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    /// 头像URL
+    #[prost(string, tag = "3")]
+    pub avatar: ::prost::alloc::string::String,
+    /// 性别
+    #[prost(string, tag = "4")]
+    pub gender: ::prost::alloc::string::String,
+    /// 电话
+    #[prost(string, tag = "5")]
+    pub phone: ::prost::alloc::string::String,
+    /// 电子邮箱
+    #[prost(string, tag = "6")]
+    pub email: ::prost::alloc::string::String,
+    /// 地址
+    #[prost(string, tag = "7")]
+    pub address: ::prost::alloc::string::String,
+    /// 地区/位置
+    #[prost(string, tag = "8")]
+    pub region: ::prost::alloc::string::String,
+    /// 生日时间戳
+    #[prost(int64, tag = "9")]
+    pub birthday: i64,
+    /// 个性签名
+    #[prost(string, tag = "10")]
+    pub signature: ::prost::alloc::string::String,
+    /// 用户状态和个人偏好
+    ///
+    /// 在线状态: "online", "offline", "busy", "dnd", "away"
+    #[prost(string, tag = "11")]
+    pub status: ::prost::alloc::string::String,
+    /// 状态消息/动态
+    #[prost(string, tag = "12")]
+    pub status_message: ::prost::alloc::string::String,
+    /// 通知和隐私设置
+    ///
+    /// 隐私设置 (JSON字符串)
+    #[prost(string, tag = "13")]
+    pub privacy_settings: ::prost::alloc::string::String,
+    /// 通知设置 (JSON字符串)
+    #[prost(string, tag = "14")]
+    pub notification_settings: ::prost::alloc::string::String,
+    /// 语言偏好
+    #[prost(string, tag = "15")]
+    pub language: ::prost::alloc::string::String,
+    /// 社交设置
+    ///
+    /// 好友请求隐私设置: "all", "friends_of_friends", "none"
+    #[prost(string, tag = "16")]
+    pub friend_requests_privacy: ::prost::alloc::string::String,
+    /// 个人资料可见性: "public", "friends", "private"
+    #[prost(string, tag = "17")]
+    pub profile_visibility: ::prost::alloc::string::String,
+    /// 应用偏好
+    ///
+    /// 界面主题: "light", "dark", "system"
+    #[prost(string, tag = "18")]
+    pub theme: ::prost::alloc::string::String,
+    /// 时区
+    #[prost(string, tag = "19")]
+    pub timezone: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod msg_service_client {

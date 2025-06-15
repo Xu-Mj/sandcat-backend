@@ -4,13 +4,13 @@ use bson::{Document, doc};
 
 pub(crate) fn to_doc(msg: &Msg) -> Result<Document, Error> {
     let document = doc! {
-        "local_id": &msg.local_id,
+        "client_id": &msg.client_id,
         "server_id": &msg.server_id,
         "create_time": msg.create_time,
         "send_time": msg.send_time,
         "content_type": msg.content_type,
         "content": bson::Binary { subtype: bson::spec::BinarySubtype::Generic, bytes: msg.content.clone() },
-        "send_id": &msg.send_id,
+        "sender_id": &msg.sender_id,
         "receiver_id": &msg.receiver_id,
         "seq": msg.seq,
         "send_seq": msg.send_seq,

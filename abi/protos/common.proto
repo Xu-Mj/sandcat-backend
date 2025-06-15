@@ -1,0 +1,197 @@
+syntax = "proto3";
+package message;
+
+/// user platform which login the system
+enum PlatformType {
+  Desktop = 0;
+  Mobile = 1;
+}
+
+/// message content type
+enum ContentType {
+  Default = 0;
+  Text = 1;
+  Image = 2;
+  Video = 3;
+  Audio = 4;
+  File = 5;
+  Emoji = 6;
+  VideoCall = 7;
+  AudioCall = 8;
+  Error = 9;
+}
+
+/// friendship status
+enum FriendshipStatus {
+  Pending = 0;
+  Accepted = 1;
+  Rejected = 2;
+  Blacked = 3;
+  Deleted = 4;
+  Muted = 5;
+  Hidden = 6;
+}
+
+enum MsgType {
+  MsgTypeSingleMsg = 0;
+  MsgTypeGroupMsg = 1;
+
+  /// group operation
+  MsgTypeGroupInvitation = 2;
+  MsgTypeGroupInviteNew = 3;
+  MsgTypeGroupMemberExit = 4;
+  MsgTypeGroupRemoveMember = 5;
+  MsgTypeGroupDismiss = 6;
+  MsgTypeGroupDismissOrExitReceived = 7;
+  MsgTypeGroupInvitationReceived = 8;
+  MsgTypeGroupUpdate = 9;
+  MsgTypeGroupFile = 10;
+  MsgTypeGroupPoll = 11;
+  MsgTypeGroupMute = 12;
+  MsgTypeGroupAnnouncement = 13;
+
+  /// friend operation
+  MsgTypeFriendApplyReq = 14;
+  MsgTypeFriendApplyResp = 15;
+  MsgTypeFriendBlack = 16;
+  MsgTypeFriendDelete = 17;
+
+  /// single call operation
+  MsgTypeSingleCallInvite = 18;
+  MsgTypeRejectSingleCall = 19;
+  MsgTypeAgreeSingleCall = 20;
+  MsgTypeSingleCallInviteNotAnswer = 21;
+  MsgTypeSingleCallInviteCancel = 22;
+  MsgTypeSingleCallOffer = 23;
+  MsgTypeHangup = 24;
+  MsgTypeConnectSingleCall = 25;
+  MsgTypeCandidate = 26;
+
+  MsgTypeRead = 27;
+  MsgTypeMsgRecResp = 28;
+  MsgTypeNotification = 29;
+  MsgTypeService = 30;
+  MsgTypeFriendshipReceived = 31;
+}
+
+enum SingleCallInviteType {
+  SingleAudio = 0;
+  SingleVideo = 1;
+}
+
+enum GroupMemberRole {
+  GroupMemberRoleOwner = 0;
+  GroupMemberRoleAdmin = 1;
+  GroupMemberRoleMember = 2;
+}
+
+/// decode message content by content type
+/// the content is candidate, when message type is Candidate
+/// the content is sustain, when message type is Hangup
+/// the content is String::to_vec(), when message type is SingleMsg/GroupMsg
+/// other message type, the content is bincode::serialize(&T)
+message Msg {
+  // must have
+  string sender_id = 1;
+  // must have
+  string receiver_id = 2;
+  // must have
+  string client_id = 3;
+  string server_id = 4;
+  // timestamp
+  int64 create_time = 5;
+  int64 send_time = 6;
+
+  // receiver sequence
+  int64 seq = 7;
+  // is there necessary to cary the user's avatar and nickname?
+  MsgType msg_type = 8;
+  ContentType content_type = 9;
+  bytes content = 10;
+  bool is_read = 11;
+
+  string group_id = 12;
+
+  // platform of the sender
+  PlatformType platform = 13;
+
+  // user avatar
+  string avatar = 14;
+  // user nickname
+  string nickname = 15;
+
+  // related message id
+  optional string related_msg_id = 16;
+
+  /// send sequence
+  int64 send_seq = 17;
+}
+
+message MsgContent {
+  string content = 1;
+  optional Mention mention = 2;
+}
+
+message Mention {
+  bool all = 1;
+  repeated string user_ids = 2;
+}
+
+message MsgRead {
+  repeated int64 msg_seq = 1;
+  string user_id = 2;
+}
+
+message Candidate {
+  string candidate = 1;
+  optional string sdp_mid = 2;
+  optional int32 sdp_m_index = 3;
+}
+
+message AgreeSingleCall {
+  string sdp = 1;
+}
+
+message SingleCallInvite {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteAnswer {
+  bool agree = 1;
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallInviteNotAnswer {
+  SingleCallInviteType invite_type = 1;
+}
+
+message SingleCallInviteCancel {
+  SingleCallInviteType invite_type = 2;
+}
+
+message SingleCallOffer {
+  string sdp = 1;
+}
+
+message Hangup {
+  SingleCallInviteType invite_type = 1;
+  int64 sustain = 2;
+}
+
+/// use to send single message or group message;
+/// message ws is used to connect the client by websocket;
+/// and it receive message from clients; then send message to mq;
+/// so only provide the send message function for other rpc service;
+message Single {
+  // message content
+  string content = 2;
+  // message type
+  ContentType content_type = 3;
+}
+
+message MsgResponse {
+  string client_id = 1;
+  string server_id = 2;
+  int64 send_time = 3;
+  string err = 4;
+}

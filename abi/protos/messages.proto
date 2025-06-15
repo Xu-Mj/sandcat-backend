@@ -26,9 +26,10 @@ enum FriendshipStatus {
   Pending = 0;
   Accepted = 1;
   Rejected = 2;
-  /// blacklist
   Blacked = 3;
   Deleted = 4;
+  Muted = 5;
+  Hidden = 6;
 }
 
 enum MsgType {
@@ -45,29 +46,33 @@ enum MsgType {
   MsgTypeGroupDismissOrExitReceived = 7;
   MsgTypeGroupInvitationReceived = 8;
   MsgTypeGroupUpdate = 9;
+  MsgTypeGroupFile = 10;
+  MsgTypeGroupPoll = 11;
+  MsgTypeGroupMute = 12;
+  MsgTypeGroupAnnouncement = 13;
 
   /// friend operation
-  MsgTypeFriendApplyReq = 10;
-  MsgTypeFriendApplyResp = 11;
-  MsgTypeFriendBlack = 12;
-  MsgTypeFriendDelete = 13;
+  MsgTypeFriendApplyReq = 14;
+  MsgTypeFriendApplyResp = 15;
+  MsgTypeFriendBlack = 16;
+  MsgTypeFriendDelete = 17;
 
   /// single call operation
-  MsgTypeSingleCallInvite = 14;
-  MsgTypeRejectSingleCall = 15;
-  MsgTypeAgreeSingleCall = 16;
-  MsgTypeSingleCallInviteNotAnswer = 17;
-  MsgTypeSingleCallInviteCancel = 18;
-  MsgTypeSingleCallOffer = 19;
-  MsgTypeHangup = 20;
-  MsgTypeConnectSingleCall = 21;
-  MsgTypeCandidate = 22;
+  MsgTypeSingleCallInvite = 18;
+  MsgTypeRejectSingleCall = 19;
+  MsgTypeAgreeSingleCall = 20;
+  MsgTypeSingleCallInviteNotAnswer = 21;
+  MsgTypeSingleCallInviteCancel = 22;
+  MsgTypeSingleCallOffer = 23;
+  MsgTypeHangup = 24;
+  MsgTypeConnectSingleCall = 25;
+  MsgTypeCandidate = 26;
 
-  MsgTypeRead = 23;
-  MsgTypeMsgRecResp = 24;
-  MsgTypeNotification = 25;
-  MsgTypeService = 26;
-  MsgTypeFriendshipReceived = 27;
+  MsgTypeRead = 27;
+  MsgTypeMsgRecResp = 28;
+  MsgTypeNotification = 29;
+  MsgTypeService = 30;
+  MsgTypeFriendshipReceived = 31;
 }
 
 /// decode message content by content type
@@ -77,11 +82,11 @@ enum MsgType {
 /// other message type, the content is bincode::serialize(&T)
 message Msg {
   // must have
-  string send_id = 1;
+  string sender_id = 1;
   // must have
   string receiver_id = 2;
   // must have
-  string local_id = 3;
+  string client_id = 3;
   string server_id = 4;
   // timestamp
   int64 create_time = 5;
@@ -95,21 +100,21 @@ message Msg {
   bytes content = 10;
   bool is_read = 11;
 
-  string group_id = 15;
+  string group_id = 12;
 
   // platform of the sender
-  PlatformType platform = 16;
+  PlatformType platform = 13;
 
   // user avatar
-  string avatar = 17;
+  string avatar = 14;
   // user nickname
-  string nickname = 18;
+  string nickname = 15;
 
   // related message id
-  optional string related_msg_id = 19;
+  optional string related_msg_id = 16;
 
   /// send sequence
-  int64 send_seq = 20;
+  int64 send_seq = 17;
 }
 
 message MsgContent {
@@ -179,13 +184,7 @@ message UserAndGroupID {
   string group_id = 2;
 }
 
-/// group invitation include group information and group member information
-message GroupInvitation {
-  GroupInfo info = 1;
-  repeated GroupMember members = 2;
-}
-
-/// group information also related to database
+// GroupInfo
 message GroupInfo {
   string id = 1;
   string owner = 2;
@@ -195,16 +194,18 @@ message GroupInfo {
   string announcement = 6;
   int64 create_time = 7;
   int64 update_time = 8;
+  int32 max_members = 9;
+  bool is_public = 10;
+  bool join_approval_required = 11;
+  string category = 12;
+  repeated string tags = 13;
+  bool mute_all = 14;
+  bool only_admin_post = 15;
+  GroupMemberRole invite_permission = 16;
+  repeated string pinned_messages = 17;
 }
 
-enum GroupMemberRole {
-  GroupMemberRoleOwner = 0;
-  GroupMemberRoleAdmin = 1;
-  GroupMemberRoleMember = 2;
-}
-
-// fixme add account field
-/// group member information also related to database table group_members
+// GroupMember
 message GroupMember {
   int32 age = 1;
   string group_id = 2;
@@ -217,6 +218,146 @@ message GroupMember {
   optional string remark = 9;
   string signature = 10;
   GroupMemberRole role = 11;
+  bool is_muted = 12;
+  string notification_level = 13;
+  int64 last_read_time = 14;
+  int32 display_order = 15;
+  string joined_by = 16;
+}
+
+message GroupCategory {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message GroupFile {
+  string id = 1;
+  string group_id = 2;
+  string uploader_id = 3;
+  string file_name = 4;
+  string file_url = 5;
+  int64 file_size = 6;
+  string file_type = 7;
+  int64 upload_time = 8;
+  bool is_pinned = 9;
+  int32 download_count = 10;
+  string thumbnail_url = 11;
+}
+
+message PollOption {
+  string id = 1;
+  string text = 2;
+  repeated string voter_ids = 3; // 非匿名投票时
+  int32 vote_count = 4;          // 匿名投票时
+}
+
+message GroupPoll {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string title = 4;
+  repeated PollOption options = 5;
+  bool is_multiple = 6;
+  bool is_anonymous = 7;
+  int64 created_at = 8;
+  int64 expires_at = 9;
+  string status = 10; // "active", "closed"
+}
+
+message GroupMuteRecord {
+  string id = 1;
+  string group_id = 2;
+  string user_id = 3;
+  string operator_id = 4;
+  int64 mute_until = 5;
+  string reason = 6;
+  int64 created_at = 7;
+}
+
+message GroupInvitation {
+  GroupInfo info = 1;
+  repeated GroupMember members = 2;
+}
+
+message GroupAnnouncement {
+  string id = 1;
+  string group_id = 2;
+  string creator_id = 3;
+  string content = 4;
+  int64 created_at = 5;
+  bool is_pinned = 6;
+}
+
+message CreateGroupCategoryRequest {
+  string name = 1;
+  string description = 2;
+  int32 display_order = 3;
+}
+
+message UpdateGroupRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  bool join_approval_required = 7;
+  bool mute_all = 8;
+  bool only_admin_post = 9;
+  GroupMemberRole invite_permission = 10;
+  string category = 11;
+  repeated string tags = 12;
+}
+
+message GroupFileUploadRequest {
+  string group_id = 1;
+  string uploader_id = 2;
+  string file_name = 3;
+  bytes file_data = 4;
+  string file_type = 5;
+  int64 file_size = 6;
+  string file_url = 7;
+}
+
+message CreatePollRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string title = 3;
+  repeated string options = 4;
+  bool is_multiple = 5;
+  bool is_anonymous = 6;
+  int64 expires_at = 7;
+}
+
+message VotePollRequest {
+  string poll_id = 1;
+  string user_id = 2;
+  repeated string option_ids = 3;
+}
+
+message MuteGroupMemberRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string operator_id = 3;
+  int64 mute_until = 4;
+  string reason = 5;
+}
+
+message CreateAnnouncementRequest {
+  string group_id = 1;
+  string creator_id = 2;
+  string content = 3;
+  bool is_pinned = 4;
+}
+
+enum GroupMemberRole {
+  GroupMemberRoleOwner = 0;
+  GroupMemberRoleAdmin = 1;
+  GroupMemberRoleMember = 2;
 }
 
 /// create group object
@@ -260,19 +401,77 @@ message User {
   int64 update_time = 14;
   string salt = 15;
   string signature = 16;
+
+  // 账号与安全
+  optional int64 last_login_time = 17;
+  optional string last_login_ip = 18;
+  bool two_factor_enabled = 19;
+  string account_status = 20; // "active", "disabled", "locked"
+
+  // 在线状态管理
+  string status = 21; // "online", "offline", "busy", "dnd", "away"
+  optional int64 last_active_time = 22;
+  optional string status_message = 23; // 状态消息
+
+  // 隐私与设置
+  string privacy_settings = 24;      // JSON字符串
+  string notification_settings = 25; // JSON字符串
+  string language = 26;
+
+  // 社交与关系
+  string friend_requests_privacy = 27; // "all", "friends_of_friends", "none"
+  string profile_visibility = 28;      // "public", "friends", "private"
+
+  // 用户体验
+  string theme = 29; // "light", "dark", "system"
+  string timezone = 30;
+
+  // 保持与SQL一致的字段
+  bool is_delete = 31;
 }
 
 message UserUpdate {
-  string id = 1;
-  string name = 2;
-  string avatar = 3;
-  string gender = 4;
-  optional string phone = 5;
-  optional string email = 6;
-  optional string address = 7;
-  optional string region = 8;
-  optional int64 birthday = 9;
-  optional string signature = 10;
+  string id = 1; // 用户ID（必需，标识要更新的用户）
+
+  // 基本信息
+  string name = 2;       // 用户名
+  string avatar = 3;     // 头像URL
+  string gender = 4;     // 性别
+  string phone = 5;      // 电话
+  string email = 6;      // 电子邮箱
+  string address = 7;    // 地址
+  string region = 8;     // 地区/位置
+  int64 birthday = 9;    // 生日时间戳
+  string signature = 10; // 个性签名
+
+  // 用户状态和个人偏好
+  string status = 11; // 在线状态: "online", "offline", "busy", "dnd", "away"
+  string status_message = 12; // 状态消息/动态
+
+  // 通知和隐私设置
+  string privacy_settings = 13;      // 隐私设置 (JSON字符串)
+  string notification_settings = 14; // 通知设置 (JSON字符串)
+  string language = 15;              // 语言偏好
+
+  // 社交设置
+  string friend_requests_privacy =
+      16; // 好友请求隐私设置: "all", "friends_of_friends", "none"
+  string profile_visibility =
+      17; // 个人资料可见性: "public", "friends", "private"
+
+  // 应用偏好
+  string theme = 18;    // 界面主题: "light", "dark", "system"
+  string timezone = 19; // 时区
+
+  // 不允许更新的安全字段（没有包括在这个消息中）:
+  // - password
+  // - salt
+  // - account_status
+  // - login_attempts
+  // - two_factor_enabled
+  // - last_login_time
+  // - last_login_ip
+  // - is_delete
 }
 
 message UserWithMatchType {
@@ -331,6 +530,15 @@ message FriendDb {
   string source = 7;
   int64 create_time = 8;
   int64 update_time = 9;
+  int64 deleted_time = 10;
+  bool is_starred = 11;
+  string group_id = 12;
+  float interaction_score = 13;    // Computed interaction score
+  int32 interaction_count = 14;    // Count of interactions
+  int64 last_interaction = 15;     // Timestamp of last interaction
+  repeated string tags = 16;       // Associated tags
+  string privacy_level = 17;       // Privacy setting for this friendship
+  bool notifications_enabled = 18; // Whether notifications are enabled
 }
 
 message Friend {
@@ -349,7 +557,54 @@ message Friend {
   string signature = 13;
   int64 create_time = 14;
   int64 update_time = 15;
+  float interaction_score = 16;
+  repeated string tags = 17;
+  string group_name = 18;
+  string privacy_level = 19;
+  bool notifications_enabled = 20;
+  int64 last_interaction = 21;
 }
+
+message FriendGroup {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  int32 display_order = 4;
+  int64 create_time = 5;
+  int64 update_time = 6;
+}
+
+message UpdateFriendGroupRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  string group_id = 3;
+}
+
+message FriendTag {
+  string id = 1;
+  string user_id = 2;
+  string tag_name = 3;
+  string tag_color = 4;
+  int64 create_time = 5;
+}
+
+message ManageFriendTagRequest {
+  string user_id = 1;
+  string friend_id = 2;
+  repeated string tag_ids = 3;
+  bool is_add = 4; // true to add tags, false to remove tags
+}
+
+message FriendPrivacySettings {
+  string user_id = 1;
+  string friend_id = 2;
+  string privacy_level = 3; // "public", "limited", "restricted"
+  bool share_timeline = 4;
+  bool share_location = 5;
+  bool share_status = 6;
+}
+
+message UpdateFriendPrivacyRequest { FriendPrivacySettings settings = 1; }
 
 message FriendInfo {
   string id = 1;
@@ -414,7 +669,7 @@ message SendGroupMsgRequest {
 message SendMsgResponse {}
 
 message MsgResponse {
-  string local_id = 1;
+  string client_id = 1;
   string server_id = 2;
   int64 send_time = 3;
   string err = 4;

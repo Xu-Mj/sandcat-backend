@@ -52,11 +52,11 @@ impl MsgBox {
         debug!("create [receiver_id, seq] index for message box");
 
         let index_model = IndexModel::builder()
-            .keys(doc! {"send_id": 1, "send_seq":1})
+            .keys(doc! {"sender_id": 1, "send_seq":1})
             .options(IndexOptions::builder().unique(false).build())
             .build();
         mb.create_index(index_model, None).await.unwrap();
-        debug!("create [send_id, send_seq] index for message box");
+        debug!("create [sender_id, send_seq] index for message box");
 
         Self { mb }
     }
@@ -196,7 +196,7 @@ impl MsgRecBoxRepo for MsgBox {
                             "seq": { "$gt": rec_start, "$lte": rec_end }
                         },
                         {
-                            "send_id": user_id,
+                            "sender_id": user_id,
                             "send_seq": { "$gt": send_start, "$lte": send_end }
                         }
                     ]
@@ -206,7 +206,7 @@ impl MsgRecBoxRepo for MsgBox {
                 "$addFields": {
                     "sort_field": {
                         "$cond": {
-                            "if": { "$eq": ["$send_id", user_id] },
+                            "if": { "$eq": ["$sender_id", user_id] },
                             "then": "$send_seq",
                             "else": "$seq"
                         }
@@ -229,7 +229,7 @@ impl MsgRecBoxRepo for MsgBox {
         while let Some(result) = cursor.next().await {
             let mut msg = Msg::try_from(result?)?;
             // set seq to 0 if the message is sent by the user
-            if user_id == msg.send_id {
+            if user_id == msg.sender_id {
                 msg.seq = 0;
             }
             messages.push(msg)
@@ -352,13 +352,13 @@ mod tests {
 
     fn get_test_msg(msg_id: String) -> Msg {
         Msg {
-            local_id: "123".to_string(),
+            client_id: "123".to_string(),
             server_id: msg_id,
             create_time: 0,
             send_time: chrono::Local::now().timestamp(),
             content_type: 0,
             content: "test".to_string().into_bytes(),
-            send_id: "123".to_string(),
+            sender_id: "123".to_string(),
             receiver_id: "111".to_string(),
             seq: 0,
             send_seq: 0,

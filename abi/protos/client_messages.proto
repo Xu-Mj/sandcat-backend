@@ -1,0 +1,231 @@
+syntax = "proto3";
+package message;
+
+import "common.proto";
+
+// GroupInfo
+message GroupInfo {
+  string id = 1;
+  string owner = 2;
+  string name = 3;
+  string avatar = 4;
+  string description = 5;
+  string announcement = 6;
+  int64 create_time = 7;
+  int64 update_time = 8;
+  int32 max_members = 9;
+  bool is_public = 10;
+  bool join_approval_required = 11;
+  string category = 12;
+  repeated string tags = 13;
+  bool mute_all = 14;
+  bool only_admin_post = 15;
+  GroupMemberRole invite_permission = 16;
+  repeated string pinned_messages = 17;
+}
+
+// GroupMember
+message GroupMember {
+  int32 age = 1;
+  string group_id = 2;
+  string user_id = 3;
+  string group_name = 4;
+  string avatar = 5;
+  int64 joined_at = 6;
+  optional string region = 7;
+  string gender = 8;
+  optional string remark = 9;
+  string signature = 10;
+  GroupMemberRole role = 11;
+  bool is_muted = 12;
+  string notification_level = 13;
+  int64 last_read_time = 14;
+  int32 display_order = 15;
+  string joined_by = 16;
+}
+
+message GroupInvitation {
+  GroupInfo info = 1;
+  repeated GroupMember members = 2;
+}
+
+message GroupInviteNew {
+  string user_id = 1;
+  string group_id = 2;
+  repeated string members = 3;
+}
+
+message GroupUpdate {
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string description = 4;
+  string announcement = 5;
+  int64 update_time = 6;
+}
+
+message User {
+    string id = 1;
+    string name = 2;
+    string account = 3;
+    string password = 4;
+    string avatar = 5;
+    string gender = 6;
+    int32 age = 7;
+    optional string phone = 8;
+    optional string email = 9;
+    optional string address = 10;
+    optional string region = 11;
+    optional int64 birthday = 12;
+    int64 create_time = 13;
+    int64 update_time = 14;
+    string salt = 15;
+    string signature = 16;
+
+    // 账号与安全
+    optional int64 last_login_time = 17;
+    optional string last_login_ip = 18;
+    bool two_factor_enabled = 19;
+    string account_status = 20; // "active", "disabled", "locked"
+
+    // 在线状态管理
+    string status = 21; // "online", "offline", "busy", "dnd", "away"
+    optional int64 last_active_time = 22;
+    optional string status_message = 23; // 状态消息
+
+    // 隐私与设置
+    string privacy_settings = 24;      // JSON字符串
+    string notification_settings = 25; // JSON字符串
+    string language = 26;
+
+    // 社交与关系
+    string friend_requests_privacy = 27; // "all", "friends_of_friends", "none"
+    string profile_visibility = 28;      // "public", "friends", "private"
+
+    // 用户体验
+    string theme = 29; // "light", "dark", "system"
+    string timezone = 30;
+
+    // 保持与SQL一致的字段
+    bool is_delete = 31;
+  }
+
+message UserWithMatchType {
+  string id = 1;
+  string name = 2;
+  string account = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string email = 7;
+  optional string region = 8;
+  optional int64 birthday = 9;
+  optional string match_type = 10;
+  string signature = 11;
+  bool is_friend = 12;
+}
+
+message Friendship {
+  string id = 1;
+  string user_id = 2;
+  string friend_id = 3;
+  FriendshipStatus status = 4;
+  optional string apply_msg = 5;
+  optional string req_remark = 6;
+  optional string resp_msg = 7;
+  optional string resp_remark = 8;
+  string source = 9;
+  int64 create_time = 10;
+  int64 update_time = 11;
+}
+
+message FriendshipWithUser {
+  string fs_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string avatar = 4;
+  string gender = 5;
+  int32 age = 6;
+  optional string region = 7;
+  FriendshipStatus status = 8;
+  optional string apply_msg = 9;
+  string source = 10;
+  int64 create_time = 11;
+  string account = 12;
+  optional string remark = 13;
+  optional string email = 14;
+}
+
+message Friend {
+  string fs_id = 1;
+  string friend_id = 2;
+  string account = 3;
+  string name = 4;
+  string avatar = 5;
+  string gender = 6;
+  int32 age = 7;
+  optional string region = 8;
+  FriendshipStatus status = 9;
+  optional string remark = 10;
+  optional string email = 11;
+  string source = 12;
+  string signature = 13;
+  int64 create_time = 14;
+  int64 update_time = 15;
+  float interaction_score = 16;
+  repeated string tags = 17;
+  string group_name = 18;
+  string privacy_level = 19;
+  bool notifications_enabled = 20;
+  int64 last_interaction = 21;
+}
+
+message FriendInfo {
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string gender = 4;
+  int32 age = 5;
+  optional string region = 6;
+  string account = 7;
+  string signature = 8;
+  optional string email = 9;
+}
+
+message FsCreate {
+  string user_id = 1;
+  string friend_id = 2;
+  optional string apply_msg = 3;
+  optional string req_remark = 4;
+  string source = 5;
+}
+
+message AgreeReply {
+  string fs_id = 1;
+  optional string resp_msg = 2;
+  optional string resp_remark = 3;
+}
+
+message FsUpdate {
+  string id = 1;
+  string apply_msg = 2;
+  string req_remark = 3;
+}
+
+message GetGroupAndMembersResp {
+  GroupInfo group = 1;
+  repeated GroupMember members = 2;
+}
+
+// HTTP API 请求/响应结构
+message PullOfflineRequest {
+  string user_id = 1;
+  int64 send_start = 2;
+  int64 send_end = 3;
+  int64 rec_start = 4;
+  int64 rec_end = 5;
+}
+
+message PullOfflineResponse {
+  repeated Msg messages = 1;
+}

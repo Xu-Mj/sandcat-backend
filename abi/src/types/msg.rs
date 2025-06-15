@@ -10,7 +10,7 @@ use crate::message::{
 impl From<Status> for MsgResponse {
     fn from(status: Status) -> Self {
         MsgResponse {
-            local_id: String::new(),
+            client_id: String::new(),
             server_id: String::new(),
             send_time: 0,
             err: status.message().to_string(),
@@ -24,7 +24,7 @@ impl TryFrom<Document> for Msg {
 
     fn try_from(value: Document) -> Result<Self, Self::Error> {
         Ok(Self {
-            local_id: value.get_str("local_id").unwrap_or_default().to_string(),
+            client_id: value.get_str("client_id").unwrap_or_default().to_string(),
             server_id: value.get_str("server_id").unwrap_or_default().to_string(),
             create_time: value.get_i64("create_time").unwrap_or_default(),
             send_time: value.get_i64("send_time").unwrap_or_default(),
@@ -32,7 +32,7 @@ impl TryFrom<Document> for Msg {
             content: value
                 .get_binary_generic("content")
                 .map_or(vec![], |v| v.to_vec()),
-            send_id: value.get_str("send_id").unwrap_or_default().to_string(),
+            sender_id: value.get_str("sender_id").unwrap_or_default().to_string(),
             receiver_id: value.get_str("receiver_id").unwrap_or_default().to_string(),
             seq: value.get_i64("seq").unwrap_or_default(),
             send_seq: value.get_i64("send_seq").unwrap_or_default(),
@@ -50,10 +50,10 @@ impl TryFrom<Document> for Msg {
 }
 
 impl SendMsgRequest {
-    pub fn new_with_friend_del(send_id: String, receiver_id: String) -> Self {
+    pub fn new_with_friend_del(sender_id: String, receiver_id: String) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::FriendDelete as i32,
@@ -63,7 +63,7 @@ impl SendMsgRequest {
     }
 
     pub fn new_with_friend_ship_req(
-        send_id: String,
+        sender_id: String,
         receiver_id: String,
         fs: Vec<u8>,
         send_seq: i64,
@@ -71,7 +71,7 @@ impl SendMsgRequest {
         Self {
             message: Some(Msg {
                 send_seq,
-                send_id,
+                sender_id,
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
                 content: fs,
@@ -97,14 +97,14 @@ impl SendMsgRequest {
     /// when dismiss group, send id is the owner id,
     /// when member exit group, send id is the member id
     pub fn new_with_group_operation(
-        send_id: String,
+        sender_id: String,
         receiver_id: String,
         msg_type: MsgType,
         send_seq: i64,
     ) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
@@ -116,14 +116,14 @@ impl SendMsgRequest {
     }
 
     pub fn new_with_group_invitation(
-        send_id: String,
+        sender_id: String,
         receiver_id: String,
         send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
@@ -136,14 +136,14 @@ impl SendMsgRequest {
     }
 
     pub fn new_with_group_invite_new(
-        send_id: String,
+        sender_id: String,
         receiver_id: String,
         send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
@@ -156,14 +156,14 @@ impl SendMsgRequest {
     }
 
     pub fn new_with_group_remove_mem(
-        send_id: String,
+        sender_id: String,
         group_id: String,
         send_seq: i64,
         invitation: Vec<u8>,
     ) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 receiver_id: group_id.clone(),
                 group_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
@@ -176,20 +176,96 @@ impl SendMsgRequest {
     }
 
     pub fn new_with_group_update(
-        send_id: String,
+        sender_id: String,
         receiver_id: String,
         send_seq: i64,
         msg: Vec<u8>,
     ) -> Self {
         Self {
             message: Some(Msg {
-                send_id,
+                sender_id,
                 group_id: receiver_id.clone(),
                 receiver_id,
                 send_time: chrono::Utc::now().timestamp_millis(),
                 msg_type: MsgType::GroupUpdate as i32,
                 content: msg,
                 send_seq,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组文件消息
+    pub fn new_with_group_file(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                sender_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupFile as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组投票消息
+    pub fn new_with_group_poll(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                sender_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupPoll as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组禁言消息
+    pub fn new_with_group_mute(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                sender_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupMute as i32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    // 群组公告消息
+    pub fn new_with_group_announcement(
+        sender: String,
+        group_id: String,
+        seq: i64,
+        content: Vec<u8>,
+    ) -> Self {
+        Self {
+            message: Some(Msg {
+                sender_id: sender,
+                group_id,
+                seq,
+                content,
+                msg_type: MsgType::GroupAnnouncement as i32,
                 ..Default::default()
             }),
         }
